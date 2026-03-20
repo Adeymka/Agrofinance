@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activite extends Model
 {
+    /** Campagne en cours (équivalent « actif » métier). */
+    public const STATUT_EN_COURS = 'en_cours';
+
+    public const STATUT_TERMINE = 'termine';
+
     protected $fillable = [
         'exploitation_id', 'nom', 'type',
         'date_debut', 'date_fin', 'statut',

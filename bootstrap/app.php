@@ -13,8 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+        $middleware->redirectGuestsTo(fn () => route('connexion'));
+        $middleware->redirectUsersTo(fn () => route('dashboard'));
         $middleware->alias([
-            'subscribed' => \App\Http\Middleware\VerifierAbonnement::class,
+            'auth'         => \App\Http\Middleware\Authenticate::class,
+            'guest'        => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'subscribed'   => \App\Http\Middleware\VerifierAbonnement::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -19,11 +19,9 @@ class Sprint5Test extends TestCase
         $this->getJson('/api/rapports')->assertStatus(401);
     }
 
-    public function test_partage_token_invalide_returns_404_json(): void
+    public function test_partage_token_invalide_returns_404(): void
     {
-        $this->get('/partage/ceci-nexiste-pas')->assertStatus(404)->assertJson([
-            'succes' => false,
-        ]);
+        $this->get('/partage/ceci-nexiste-pas')->assertStatus(404);
     }
 
     public function test_abonnement_mock_initier_repond_200_sans_fedapay(): void

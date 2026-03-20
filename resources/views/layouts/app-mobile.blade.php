@@ -15,7 +15,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="min-h-screen bg-agro-fond text-gray-900 antialiased pb-24 md:pb-8 max-w-[375px] md:max-w-lg mx-auto shadow-xl min-h-[100dvh]">
+<body class="font-ui min-h-screen bg-agro-fond text-gray-900 antialiased pb-24 md:pb-8 max-w-[375px] md:max-w-lg mx-auto shadow-xl min-h-[100dvh]">
     <div id="offlineBanner" class="hidden bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-sm py-2 px-4">
         <span class="inline-flex items-center justify-center gap-2">
             <x-icon name="wifi-off" class="w-4 h-4 shrink-0" />
@@ -25,7 +25,7 @@
 
     <header class="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
         <div class="px-4 py-3 flex items-center justify-center">
-            <span class="text-agro-vert font-bold text-lg tracking-tight">AgroFinance+</span>
+            <span class="font-display text-lg font-bold text-agro-vert tracking-tight">AgroFinance<span class="text-green-600">+</span></span>
         </div>
     </header>
 
@@ -94,14 +94,6 @@
             window.addEventListener('online', sync);
             window.addEventListener('offline', sync);
             sync();
-        })();
-    </script>
-    <script>
-        (function () {
-            var meta = document.querySelector('meta[name="api-token"]');
-            var token = meta && meta.getAttribute('content');
-            if (token) localStorage.setItem('agrofinance_token', token);
-            else localStorage.removeItem('agrofinance_token');
         })();
     </script>
     @stack('scripts')
