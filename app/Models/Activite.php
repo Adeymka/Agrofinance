@@ -11,6 +11,9 @@ class Activite extends Model
 
     public const STATUT_TERMINE = 'termine';
 
+    /** Campagne interrompue (sinistre, échec, etc.) — hors tableau de bord actif. */
+    public const STATUT_ABANDONNE = 'abandonne';
+
     protected $fillable = [
         'exploitation_id', 'nom', 'type',
         'date_debut', 'date_fin', 'statut',

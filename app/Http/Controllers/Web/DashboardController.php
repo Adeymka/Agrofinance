@@ -101,7 +101,7 @@ class DashboardController extends Controller
                 'recettes' => $ind['PB'] ?? 0,
                 'depenses' => $ind['CT'] ?? 0,
                 'marge' => $ind['MB'] ?? 0,
-                'statut_fsa' => $ind['statut'] ?? 'rouge',
+                'statut_indicateurs' => $ind['statut'] ?? 'rouge',
                 'budget_pct' => $pctBudget,
                 'budget_prev' => $budget,
                 'days_since' => $daysSince,

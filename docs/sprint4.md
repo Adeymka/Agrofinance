@@ -1,10 +1,10 @@
-# Sprint 4 — Indicateurs FSA, évolution mensuelle & dashboard
+# Sprint 4 — Indicateurs financiers agricoles, évolution mensuelle & dashboard
 
 > Document vivant. Doc API détaillée : [`API_CLIENT.md`](./API_CLIENT.md).
 
 ## Objectif
 
-Exposer côté API les **indicateurs financiers FSA** par activité et par exploitation, une **série mensuelle** pour graphiques, et un **dashboard** consolidé pour l’utilisateur connecté.
+Exposer côté API les **indicateurs financiers agricoles** par activité et par exploitation, une **série mensuelle** pour graphiques, et un **dashboard** consolidé pour l’utilisateur connecté.
 
 ## Périmètre technique
 

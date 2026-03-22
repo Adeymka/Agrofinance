@@ -83,6 +83,12 @@ class TransactionController extends Controller
             $q->where('user_id', (int) auth()->user()->id);
         })->with('exploitation:id,type')->findOrFail($request->activite_id);
 
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            throw ValidationException::withMessages([
+                'activite_id' => ['Cette campagne n’accepte plus de nouvelles transactions.'],
+            ]);
+        }
+
         $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
 
         $libre = trim((string) $request->input('categorie_libre', ''));
@@ -158,6 +164,11 @@ class TransactionController extends Controller
             ->with('activite.exploitation:id,type,nom')
             ->findOrFail($id);
 
+        if ($transaction->activite->statut !== Activite::STATUT_EN_COURS) {
+            return redirect()->route('activites.show', $transaction->activite_id)
+                ->with('error', 'Les transactions d’une campagne terminée ou abandonnée ne sont plus modifiables.');
+        }
+
         $typeExploitation = $transaction->activite->exploitation?->type ?? 'cultures_vivrieres';
         $categories = TransactionCategories::getByType($typeExploitation);
 
@@ -228,6 +239,18 @@ class TransactionController extends Controller
             $q->where('user_id', (int) auth()->user()->id);
         })->with('exploitation:id,type')->findOrFail($request->activite_id);
 
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            throw ValidationException::withMessages([
+                'activite_id' => ['Cette campagne n’accepte plus de modifications de transactions.'],
+            ]);
+        }
+
+        if ($transaction->activite->statut !== Activite::STATUT_EN_COURS) {
+            throw ValidationException::withMessages([
+                'activite_id' => ['Cette transaction n’est plus modifiable (campagne terminée ou abandonnée).'],
+            ]);
+        }
+
         $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
 
         $libre = trim((string) $request->input('categorie_libre', ''));
@@ -277,7 +300,12 @@ class TransactionController extends Controller
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
-        })->findOrFail($id);
+        })->with('activite')->findOrFail($id);
+
+        if ($transaction->activite->statut !== Activite::STATUT_EN_COURS) {
+            return redirect()->back()
+                ->with('error', 'Impossible de supprimer une transaction sur une campagne terminée ou abandonnée.');
+        }
 
         $activiteId = $transaction->activite_id;
         $transaction->delete();

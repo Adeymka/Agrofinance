@@ -8,7 +8,9 @@ use App\Http\Controllers\Web\Auth\OtpController;
 use App\Http\Controllers\Web\Auth\PinController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\ExploitationController;
+use App\Http\Controllers\Web\HelpController;
 use App\Http\Controllers\Web\ProfilController;
+use App\Http\Controllers\Web\PublicController;
 use App\Http\Controllers\Web\RapportController;
 use App\Http\Controllers\Web\TransactionController;
 use Illuminate\Support\Facades\Auth;
@@ -17,8 +19,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('dashboard')
-        : redirect()->route('connexion');
+        : redirect()->route('accueil');
 })->name('home');
+
+Route::get('/accueil', [PublicController::class, 'accueil'])->name('accueil');
+Route::get('/comment-ca-marche', [PublicController::class, 'commentCaMarche'])->name('comment-ca-marche');
+Route::get('/a-propos', [PublicController::class, 'aPropos'])->name('a-propos');
+Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
+Route::post('/contact', [PublicController::class, 'envoyerContact'])->name('contact.envoyer');
+
+Route::prefix('aide')->name('aide.')->group(function () {
+    Route::get('/', [HelpController::class, 'index'])->name('index');
+    Route::get('/recherche', [HelpController::class, 'recherche'])->name('recherche');
+    Route::get('/{categorie}', [HelpController::class, 'categorie'])->name('categorie');
+    Route::get('/{categorie}/{article}', [HelpController::class, 'article'])->name('article');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/connexion', [ConnexionController::class, 'showForm'])->name('connexion');
@@ -63,6 +78,7 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/activites', [ActiviteController::class, 'store'])->name('activites.store');
     Route::get('/activites/{id}', [ActiviteController::class, 'show'])->whereNumber('id')->name('activites.show');
     Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer'])->whereNumber('id')->name('activites.cloturer');
+    Route::post('/activites/{id}/abandonner', [ActiviteController::class, 'abandonner'])->whereNumber('id')->name('activites.abandonner');
 
     Route::get('/transactions/nouvelle', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');

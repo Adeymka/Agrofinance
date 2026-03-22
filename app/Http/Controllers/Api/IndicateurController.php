@@ -18,7 +18,7 @@ class IndicateurController extends Controller
 
     /**
      * GET /api/indicateurs/activite/{id}
-     * Retourne les indicateurs FSA + statut pour une activité.
+     * Retourne les indicateurs financiers agricoles + statut pour une activité.
      * Paramètres optionnels : ?debut=2025-01-01&fin=2025-12-31
      */
     public function parActivite(Request $request, int $id)

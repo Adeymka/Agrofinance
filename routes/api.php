@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'subscribed'])->group(function () {
     Route::get('/activites/{id}', [ActiviteController::class, 'show']);
     Route::put('/activites/{id}', [ActiviteController::class, 'update']);
     Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer']);
+    Route::post('/activites/{id}/abandonner', [ActiviteController::class, 'abandonner']);
 
     // Module Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
@@ -61,7 +62,7 @@ Route::middleware(['auth:sanctum', 'subscribed'])->group(function () {
     Route::put('/transactions/{id}', [TransactionController::class, 'update']);
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
-    // Module Indicateurs FSA (route la plus spécifique en premier)
+    // Module indicateurs financiers agricoles (route la plus spécifique en premier)
     Route::get('/indicateurs/activite/{id}/evolution', [IndicateurController::class, 'evolution']);
     Route::get('/indicateurs/activite/{id}', [IndicateurController::class, 'parActivite']);
     Route::get('/indicateurs/exploitation/{id}', [IndicateurController::class, 'parExploitation']);

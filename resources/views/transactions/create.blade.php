@@ -64,18 +64,18 @@
                 </div>
             </div>
 
-            {{-- Catégorie : Liste FSA / Saisie libre + fusion suggestions --}}
+            {{-- Catégorie : référentiel standard / Saisie libre + fusion suggestions --}}
             <div class="card space-y-4">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <h2 class="text-sm font-semibold text-gray-800 font-display">Catégorie</h2>
                     <p class="text-xs text-gray-500 max-w-sm">
-                        FSA — {{ $labelsType[$typeExploitation] ?? $typeExploitation }}
+                        Référentiel — {{ $labelsType[$typeExploitation] ?? $typeExploitation }}
                     </p>
                 </div>
 
                 <div class="flex rounded-xl border border-white/15 p-1 gap-1 bg-white/[0.03]">
                     <button type="button" id="btnModeListe" class="txn-cat-mode-btn txn-cat-mode-btn--active flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors">
-                        Liste (FSA + mes libellés)
+                        Liste (standard + mes libellés)
                     </button>
                     <button type="button" id="btnModeLibre" class="txn-cat-mode-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors text-white/60">
                         Saisie libre
@@ -99,7 +99,7 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 pt-0">
                                     @foreach ($cats as $val => $label)
                                         <label class="block">
-                                            <input type="radio" name="categorie" value="{{ $val }}" class="peer sr-only cat-radio-fsa">
+                                            <input type="radio" name="categorie" value="{{ $val }}" class="peer sr-only cat-radio-std">
                                             <div class="txn-cat-pill p-2.5 text-sm">{{ $label }}</div>
                                         </label>
                                     @endforeach
@@ -118,7 +118,7 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 pt-0">
                                     @foreach ($cats as $val => $label)
                                         <label class="block">
-                                            <input type="radio" name="categorie_recette" value="{{ $val }}" class="peer sr-only cat-radio-fsa">
+                                            <input type="radio" name="categorie_recette" value="{{ $val }}" class="peer sr-only cat-radio-std">
                                             <div class="txn-cat-pill p-2.5 text-sm">{{ $label }}</div>
                                         </label>
                                     @endforeach
@@ -127,7 +127,7 @@
                         @endforeach
                     </div>
 
-                    <p class="text-[11px] text-white/40">En « Liste », choisissez un libellé FSA ci-dessus ou un de vos libellés en haut. Passez en « Saisie libre » pour tout taper.</p>
+                    <p class="text-[11px] text-white/40">En « Liste », choisissez un libellé du référentiel ci-dessus ou un de vos libellés en haut. Passez en « Saisie libre » pour tout taper.</p>
                 </div>
 
                 <div id="zoneLibre" class="hidden space-y-2">
@@ -235,7 +235,7 @@
                 }
 
                 function clearFsaRadios() {
-                    document.querySelectorAll('.cat-radio-fsa').forEach(function (i) { i.checked = false; });
+                    document.querySelectorAll('.cat-radio-std').forEach(function (i) { i.checked = false; });
                 }
 
                 function clearLibre() {
@@ -306,7 +306,7 @@
                 }
 
                 zoneListe.addEventListener('change', function (e) {
-                    if (e.target && e.target.classList.contains('cat-radio-fsa') && e.target.checked) {
+                    if (e.target && e.target.classList.contains('cat-radio-std') && e.target.checked) {
                         clearLibre();
                     }
                 });

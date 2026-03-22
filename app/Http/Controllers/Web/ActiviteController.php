@@ -35,6 +35,11 @@ class ActiviteController extends Controller
             ->orderByDesc('date_fin')
             ->get();
 
+        $abandonnees = $exploitation->activites()
+            ->where('statut', Activite::STATUT_ABANDONNE)
+            ->orderByDesc('date_fin')
+            ->get();
+
         $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 
         $indicateursParActivite = [];
@@ -47,12 +52,19 @@ class ActiviteController extends Controller
             $indicateursTerminees[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
         }
 
+        $indicateursAbandonnees = [];
+        foreach ($abandonnees as $a) {
+            $indicateursAbandonnees[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
+        }
+
         return view('activites.index', compact(
             'exploitation',
             'actives',
             'terminees',
+            'abandonnees',
             'indicateursParActivite',
-            'indicateursTerminees'
+            'indicateursTerminees',
+            'indicateursAbandonnees'
         ));
     }
 
@@ -141,6 +153,11 @@ class ActiviteController extends Controller
         $activite = Activite::whereHas('exploitation', fn ($q) => $q->where('user_id', (int) auth()->user()->id))
             ->findOrFail($id);
 
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            return redirect()->route('activites.index')
+                ->with('error', 'Seules les campagnes en cours peuvent être clôturées.');
+        }
+
         $nom = $activite->nom;
 
         $activite->update([
@@ -150,5 +167,26 @@ class ActiviteController extends Controller
 
         return redirect()->route('activites.index')
             ->with('success', "Campagne « {$nom} » clôturée.");
+    }
+
+    public function abandonner(int $id)
+    {
+        $activite = Activite::whereHas('exploitation', fn ($q) => $q->where('user_id', (int) auth()->user()->id))
+            ->findOrFail($id);
+
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            return redirect()->route('activites.index')
+                ->with('error', 'Seules les campagnes en cours peuvent être marquées comme abandonnées.');
+        }
+
+        $nom = $activite->nom;
+
+        $activite->update([
+            'statut' => Activite::STATUT_ABANDONNE,
+            'date_fin' => $activite->date_fin ?? now()->toDateString(),
+        ]);
+
+        return redirect()->route('activites.index')
+            ->with('success', "Campagne « {$nom} » marquée comme abandonnée.");
     }
 }

@@ -44,9 +44,9 @@ class AbonnementService
     public function montantFacturation(string $planFacturation): int
     {
         return match ($planFacturation) {
-            'mensuel' => 1000,
-            'annuel' => 10000,
-            'cooperative' => 25000,
+            'mensuel' => 1500,
+            'annuel' => 5000,
+            'cooperative' => 8000,
             default => 0,
         };
     }
@@ -194,11 +194,11 @@ class AbonnementService
             ->update(['statut' => 'expire']);
 
         $planDb = $this->planPourBase($plan);
-        // FedaPay : mensuel = 30 j, annuel = 365 j, coopérative = 365 j ; sinon durée selon plan stocké
+        // Facturation mensuelle : mensuel / annuel (Pro) / coopérative = 30 j par période
         if ($plan === 'annuel') {
-            $dureeJours = 365;
+            $dureeJours = 30;
         } elseif ($plan === 'cooperative') {
-            $dureeJours = 365;
+            $dureeJours = 30;
         } elseif ($plan === 'mensuel') {
             $dureeJours = 30;
         } elseif (in_array($plan, ['essai', 'gratuit'], true)) {

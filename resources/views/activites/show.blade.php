@@ -4,9 +4,11 @@
 @section('page-subtitle', ucfirst($activite->type) . ' · depuis le ' . $activite->date_debut->format('d/m/Y'))
 
 @section('topbar-actions')
-    <a href="{{ route('transactions.create', ['activite_id' => $activite->id]) }}" class="btn-primary inline-flex items-center gap-2">
-        <x-icon name="plus" class="w-4 h-4" /> Saisir une transaction
-    </a>
+    @if($activite->statut === \App\Models\Activite::STATUT_EN_COURS)
+        <a href="{{ route('transactions.create', ['activite_id' => $activite->id]) }}" class="btn-primary inline-flex items-center gap-2">
+            <x-icon name="plus" class="w-4 h-4" /> Saisir une transaction
+        </a>
+    @endif
     @if($infoAbonnement['peut_pdf'] ?? false)
         <form method="POST" action="{{ route('rapports.generer') }}" class="inline">
             @csrf
@@ -25,7 +27,23 @@
     @php
         $niv = $alerteBudget['niveau'] ?? null;
         $alertClass = $niv === 'rouge' ? 'bg-red-50 border-red-300 text-red-900' : ($niv === 'orange' ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-amber-50 border-amber-300 text-amber-900');
+        $statutLabels = [
+            \App\Models\Activite::STATUT_EN_COURS => 'En cours',
+            \App\Models\Activite::STATUT_TERMINE => 'Terminée',
+            \App\Models\Activite::STATUT_ABANDONNE => 'Abandonnée',
+        ];
     @endphp
+
+    @if($activite->statut !== \App\Models\Activite::STATUT_EN_COURS)
+        <div class="rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 mb-6 text-sm">
+            Statut : <strong>{{ $statutLabels[$activite->statut] ?? $activite->statut }}</strong>
+            @if($activite->statut === \App\Models\Activite::STATUT_TERMINE)
+                — Cette campagne est clôturée. Les transactions ne sont plus modifiables.
+            @elseif($activite->statut === \App\Models\Activite::STATUT_ABANDONNE)
+                — Cette campagne est marquée comme abandonnée. Les transactions ne sont plus modifiables.
+            @endif
+        </div>
+    @endif
 
     @if($alerteBudget)
         <div class="rounded-xl border p-4 mb-6 text-sm {{ $alertClass }}">
@@ -93,12 +111,16 @@
                         <td class="py-2 pr-3 text-right font-semibold">{{ number_format($t->montant, 0, ',', ' ') }}</td>
                         <td class="py-2 pr-3 max-w-xs truncate">{{ $t->note ?? '—' }}</td>
                         <td class="py-2 pr-3 whitespace-nowrap">
-                            <a href="{{ route('transactions.edit', $t->id) }}" class="mr-2 inline-flex text-agro-vert" title="Modifier"><x-icon name="pencil-square" class="w-4 h-4" /></a>
-                            <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 inline-flex p-0.5" title="Supprimer"><x-icon name="trash" class="w-4 h-4" /></button>
-                            </form>
+                            @if($activite->statut === \App\Models\Activite::STATUT_EN_COURS)
+                                <a href="{{ route('transactions.edit', $t->id) }}" class="mr-2 inline-flex text-agro-vert" title="Modifier"><x-icon name="pencil-square" class="w-4 h-4" /></a>
+                                <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 inline-flex p-0.5" title="Supprimer"><x-icon name="trash" class="w-4 h-4" /></button>
+                                </form>
+                            @else
+                                <span class="text-gray-400 text-xs">—</span>
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -110,9 +132,21 @@
     </div>
 
     @if($activite->statut === \App\Models\Activite::STATUT_EN_COURS)
-        <form method="POST" action="{{ route('activites.cloturer', $activite->id) }}" class="mt-8" onsubmit="return confirm('Clôturer cette campagne ? Le bilan final sera calculé.');">
-            @csrf
-            <button type="submit" class="btn-outline text-red-700 border-red-200">Clôturer la campagne</button>
-        </form>
+        <div class="mt-8 flex flex-wrap gap-3">
+            <form method="POST" action="{{ route('activites.cloturer', $activite->id) }}" onsubmit="return confirm('Clôturer cette campagne ? Le bilan final sera calculé.');">
+                @csrf
+                <button type="submit" class="btn-outline text-red-700 border-red-200">Clôturer la campagne</button>
+            </form>
+            <button
+                type="button"
+                class="btn-outline text-gray-600 border-gray-200"
+                data-open-abandon-modal
+                data-abandon-url="{{ route('activites.abandonner', $activite->id) }}"
+            >
+                Marquer comme abandonnée
+            </button>
+        </div>
     @endif
+
+    <x-confirm-abandon-modal />
 @endsection

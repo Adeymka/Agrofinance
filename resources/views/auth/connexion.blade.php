@@ -30,7 +30,7 @@
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:300px;">
     @foreach ([
         ['102 500+', 'Exploitants au Bénin'],
-        ['8', 'Indicateurs FSA-UAC'],
+        ['8', 'Indicateurs financiers agricoles'],
         ['75 jours', 'Essai gratuit'],
         ['24/7', 'Accès hors ligne'],
     ] as [$stat, $label])

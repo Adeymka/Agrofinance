@@ -21,7 +21,7 @@ Mettre en place la **hiérarchie métier** complète :
 avec :
 
 - **CRUD** côté API pour exploitations, activités, transactions ;
-- **Calcul d’indicateurs** (FSA) après création / mise à jour / suppression de transactions ;
+- **Calcul d’indicateurs financiers agricoles** après création / mise à jour / suppression de transactions ;
 - **Sécurité** : chaque utilisateur ne voit **que ses données** ; ressource inexistante ou d’un autre utilisateur → **404** (pas 403).
 
 ---

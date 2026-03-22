@@ -94,7 +94,7 @@
         <tr><td><strong>Statut campagne</strong></td><td>{{ $activite->statut }}</td></tr>
     </table>
 
-    <h2>Synthèse FSA-UAC</h2>
+    <h2>Synthèse des indicateurs financiers agricoles</h2>
     <table>
         <tr>
             <td class="kpi-cell">

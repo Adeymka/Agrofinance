@@ -1,12 +1,12 @@
 # AgroFinance+ — Logique métier
 
-Document de référence sur les **règles métier**, les **entités**, les **indicateurs financiers agricoles (FSA)** et les **droits par abonnement**. Il reflète l’état du code au moment de la rédaction.
+Document de référence sur les **règles métier**, les **entités**, les **indicateurs financiers agricoles** et les **droits par abonnement**. Il reflète l’état du code au moment de la rédaction.
 
 ---
 
 ## 1. Vision métier
 
-**AgroFinance+** est une application de **gestion financière agricole** : suivre les **recettes** et **dépenses** par **exploitation** et par **campagne / activité**, calculer des **indicateurs** (marge, rentabilité, statut FSA), générer des **rapports PDF** et gérer des **abonnements** payants (FedaPay).
+**AgroFinance+** est une application de **gestion financière agricole** : suivre les **recettes** et **dépenses** par **exploitation** et par **campagne / activité**, calculer des **indicateurs** (marge, rentabilité, statut feu tricolore), générer des **rapports PDF** et gérer des **abonnements** payants (FedaPay).
 
 Public cible : exploitants, structures de conseil, coopératives (selon le plan).
 
@@ -89,7 +89,7 @@ Les calculs s’appliquent à une **activité** sur une période (par défaut : 
 | **RF** | Rentabilité des frais = (RNE / CT) × 100 si CT > 0, sinon 0 |
 | **SR** | Seuil de rentabilité (approche coûts semi-variables : lien entre CF, marge sur coûts variables et PB) |
 
-### 3.2 Statut FSA (Feuille de route de la performance)
+### 3.2 Statut indicateurs (feu tricolore)
 
 Pour une activité ou un consolidé, un **statut** couleur est calculé :
 
@@ -145,7 +145,7 @@ Les valeurs **brutes** en base peuvent encore refléter la **facturation** (`men
 - **Abonnement valide** : ligne avec statut `actif` ou `essai`, **date_fin ≥ aujourd’hui** (début de journée).
 - **PDF** : génération / téléchargement des rapports type **campagne** (hors dossier crédit) → Essentielle **ou** supérieur ; **dossier crédit** → Pro **ou** Coopérative.
 - **Nombre d’exploitations** : gratuit / essentielle souvent **1** ; pro **plafonné** ; coopérative **illimité** (en pratique, entier max).
-- **Paiement** : montants et durées (ex. mensuel 30 j, annuel 365 j, coopérative 365 j) sont définis dans le service et les contrôleurs d’abonnement.
+- **Paiement** : montants (Essentielle 1 500, Pro 5 000, Coopérative 8 000 FCFA/mois) et durée de période **30 jours** par renouvellement pour les plans payants, définis dans `AbonnementService` et les contrôleurs d’abonnement.
 
 ### 5.3 Parcours sans abonnement actif
 
@@ -189,7 +189,7 @@ L’utilisateur connecté peut accéder à **abonnement**, **profil**, **déconn
 | Terme | Sens dans le projet |
 |-------|---------------------|
 | **Campagne** | Activité agricole sur une période (`activites`) |
-| **FSA** | Logique de statut vert / orange / rouge sur indicateurs |
+| **Feu tricolore** | Logique de statut vert / orange / rouge sur indicateurs |
 | **MB** | Marge brute |
 | **RNE** | Résultat net d’exploitation |
 | **Mixte** | Exploitation ou utilisateur couvrant plusieurs filières |

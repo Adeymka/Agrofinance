@@ -84,7 +84,7 @@
         <tr><td><strong>Statut</strong></td><td>{{ $activite->statut }}</td></tr>
     </table>
 
-    <h2>Indicateurs financiers FSA-UAC</h2>
+    <h2>Indicateurs financiers agricoles</h2>
     <table>
         <tr>
             <td class="kpi-cell">

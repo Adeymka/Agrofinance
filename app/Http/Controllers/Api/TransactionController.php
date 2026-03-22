@@ -68,10 +68,22 @@ class TransactionController extends Controller
             'transactions.*.est_imprevue' => 'boolean',
         ]);
 
+        foreach ($request->transactions as $data) {
+            $activite = Activite::whereHas('exploitation', function ($q) {
+                $q->where('user_id', auth()->user()->id);
+            })->findOrFail($data['activite_id']);
+
+            if ($activite->statut !== Activite::STATUT_EN_COURS) {
+                return response()->json([
+                    'succes' => false,
+                    'message' => 'La campagne n’accepte plus de nouvelles transactions (statut : '.$activite->statut.').',
+                ], 422);
+            }
+        }
+
         $creees = [];
 
         foreach ($request->transactions as $data) {
-            // Sécurité : vérifier que l'activité appartient à l'utilisateur
             $activite = Activite::whereHas('exploitation', function ($q) {
                 $q->where('user_id', auth()->user()->id);
             })->findOrFail($data['activite_id']);
@@ -92,7 +104,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        // Recalculer les indicateurs FSA pour chaque activité touchée
+        // Recalculer les indicateurs financiers agricoles pour chaque activité touchée
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 
         $idsUniques = collect($creees)->pluck('activite_id')->unique();
@@ -159,7 +171,14 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) {
             $q->where('user_id', auth()->user()->id);
-        })->findOrFail($id);
+        })->with('activite')->findOrFail($id);
+
+        if ($transaction->activite->statut !== Activite::STATUT_EN_COURS) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Impossible de supprimer une transaction sur une campagne terminée ou abandonnée.',
+            ], 422);
+        }
 
         $activiteId = $transaction->activite_id;
         $transaction->delete();

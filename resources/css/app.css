@@ -1532,3 +1532,305 @@ select.input-field option {
 .btn-recette:active {
     transform: scale(0.98);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   PAGE PUBLIQUE MARKETING (accueil, layouts/app-public)
+   Fond #0D1F0D, grilles responsive, ancres tarifs
+════════════════════════════════════════════════════════════════════ */
+
+.public-page-body {
+    background-color: #0d1f0d;
+}
+
+.public-hero-grid,
+.public-indicators-grid,
+.public-benefits-grid,
+.public-steps-grid,
+.public-pricing-grid,
+.public-footer-grid {
+    width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .public-hero-grid {
+        grid-template-columns: 1fr !important;
+        gap: 3rem !important;
+    }
+
+    .public-indicators-grid {
+        grid-template-columns: 1fr !important;
+        gap: 3rem !important;
+    }
+
+    .public-benefits-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .public-steps-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .public-pricing-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        max-width: 100% !important;
+    }
+
+    .public-footer-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .public-mock-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    #publicNav {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .public-nav-inner {
+        flex-wrap: wrap;
+        height: auto !important;
+        min-height: 68px;
+        padding: 0.75rem 0;
+        gap: 0.75rem;
+    }
+
+    .public-nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem !important;
+    }
+
+    .public-nav-cta {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .public-steps-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .public-pricing-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .public-footer-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .public-mock-kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Reveal : état initial (IntersectionObserver dans le layout) */
+.reveal {
+    will-change: opacity, transform;
+}
+
+/* Ancre tarifs sous navbar fixe */
+#tarifs {
+    scroll-margin-top: 5.5rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CENTRE D'AIDE — grilles responsive + typographie article
+════════════════════════════════════════════════════════════════════ */
+
+.aide-page-hero {
+    padding: 120px 48px 80px;
+}
+
+.aide-section {
+    padding-left: 48px;
+    padding-right: 48px;
+}
+
+.aide-page-inner {
+    padding: 100px 48px 80px;
+}
+
+.aide-cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.aide-pop-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.aide-cat-layout {
+    grid-template-columns: 1fr 280px;
+}
+
+.aide-article-layout {
+    grid-template-columns: 240px 1fr;
+}
+
+@media (max-width: 1100px) {
+    .aide-cat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 960px) {
+    .aide-cat-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .aide-cat-sidebar {
+        position: static !important;
+    }
+
+    .aide-article-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .aide-article-layout .aide-article-toc {
+        order: 2;
+    }
+
+    .aide-article-layout .aide-article-main {
+        order: 1;
+    }
+
+    .aide-article-toc {
+        position: static !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .aide-page-hero {
+        padding: 100px 20px 48px;
+    }
+
+    .aide-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .aide-page-inner {
+        padding: 100px 20px 64px;
+    }
+
+    .aide-cat-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .aide-pop-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .aide-article-nav {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* AIDE CONTENT — Styles de l'article (HTML riche) */
+.aide-content {
+    font-family: "Inter", sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.aide-content h2 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: -0.02em;
+    margin: 36px 0 14px;
+}
+
+.aide-content h3 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 28px 0 10px;
+}
+
+.aide-content p {
+    margin: 0 0 16px;
+}
+
+.aide-content ul,
+.aide-content ol {
+    margin: 0 0 16px;
+    padding-left: 24px;
+}
+
+.aide-content li {
+    margin-bottom: 6px;
+}
+
+.aide-content strong {
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 600;
+}
+
+.aide-content a {
+    color: #4ade80;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.aide-content code {
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    color: #4ade80;
+}
+
+.aide-content blockquote {
+    border-left: 3px solid rgba(74, 222, 128, 0.4);
+    background: rgba(74, 222, 128, 0.05);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+}
+
+.aide-content img {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 16px 0;
+}
+
+.aide-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.aide-content th {
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.38);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+}
+
+.aide-content td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+}
+
+.aide-content tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}

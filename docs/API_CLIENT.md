@@ -68,9 +68,9 @@ Les erreurs Laravel classiques s’appliquent (ex. **404** si ressource inexista
 
 ---
 
-# Indicateurs FSA
+# Indicateurs financiers agricoles
 
-Les indicateurs suivent la logique **FSA** (ex. **PB**, **CV**, **CF**, **Marge brute**, **RNE**, **Rentabilité financière RF**, **Seuil de rentabilit SR** quand applicable).
+Les indicateurs suivent une logique de gestion agricole standard (ex. **PB**, **CV**, **CF**, **Marge brute**, **RNE**, **Rentabilité financière RF**, **Seuil de rentabilit SR** quand applicable).
 
 ## GET `/indicateurs/activite/{id}`
 

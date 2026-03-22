@@ -43,7 +43,7 @@
 <!-- Avantages -->
 <div style="display:flex; flex-direction:column; gap:14px; margin-top:36px;">
     @foreach([
-        ['🌱', 'Indicateurs FSA-UAC automatiques', 'PB, MB, RNE, RF calculés en temps réel'],
+        ['🌱', 'Indicateurs financiers agricoles automatiques', 'PB, MB, RNE, RF calculés en temps réel'],
         ['📄', 'Rapports PDF professionnels', 'Partagez avec votre agent de microfinance'],
         ['📱', 'Fonctionne hors ligne', 'Saisissez vos données même sans connexion'],
     ] as [$emoji, $titre, $desc])

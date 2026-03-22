@@ -117,14 +117,46 @@ class ActiviteController extends Controller
             $q->where('user_id', auth()->user()->id);
         })->findOrFail($id);
 
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Seules les campagnes en cours peuvent être clôturées.',
+            ], 422);
+        }
+
         $activite->update([
-            'statut' => 'termine',
+            'statut' => Activite::STATUT_TERMINE,
             'date_fin' => now()->toDateString(),
         ]);
 
         return response()->json([
             'succes' => true,
             'message' => 'Activité clôturée.',
+            'data' => $activite,
+        ]);
+    }
+
+    public function abandonner(int $id)
+    {
+        $activite = Activite::whereHas('exploitation', function ($q) {
+            $q->where('user_id', auth()->user()->id);
+        })->findOrFail($id);
+
+        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Seules les campagnes en cours peuvent être marquées comme abandonnées.',
+            ], 422);
+        }
+
+        $activite->update([
+            'statut' => Activite::STATUT_ABANDONNE,
+            'date_fin' => $activite->date_fin ?? now()->toDateString(),
+        ]);
+
+        return response()->json([
+            'succes' => true,
+            'message' => 'Campagne marquée comme abandonnée.',
             'data' => $activite,
         ]);
     }

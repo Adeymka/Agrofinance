@@ -393,7 +393,7 @@
                 <a href="{{ route('activites.show', $c['id']) }}" class="card hover:shadow-lg transition-shadow cursor-pointer block no-underline">
                     <div class="flex justify-between items-start mb-2">
                         <p class="font-semibold text-emerald-400 font-ui">{{ $c['nom'] }}</p>
-                        <x-status-indicator :statut="$c['statut_fsa'] ?? 'rouge'" />
+                        <x-status-indicator :statut="$c['statut_indicateurs'] ?? 'rouge'" />
                     </div>
 
                     <div class="mt-3 mb-2">

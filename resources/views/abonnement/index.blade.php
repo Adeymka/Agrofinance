@@ -28,7 +28,7 @@
         <div class="card border-2 border-agro-vert ring-2 ring-agro-vert/20 relative">
             <span class="absolute -top-2 right-3 badge-vert text-[10px]">Populaire</span>
             <p class="badge-vert mb-2">Essentielle</p>
-            <p class="text-2xl font-bold text-gray-900">1 000 <span class="text-sm font-normal">FCFA / mois</span></p>
+            <p class="text-2xl font-bold text-gray-900">1 500 <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout le gratuit</li>
                 <li>• Rapports PDF avancés</li>
@@ -44,7 +44,7 @@
 
         <div class="card border-2 border-amber-200 bg-amber-50/30">
             <p class="badge-orange mb-2">Pro</p>
-            <p class="text-2xl font-bold text-gray-900">10 000 <span class="text-sm font-normal">FCFA / an</span></p>
+            <p class="text-2xl font-bold text-gray-900">5 000 <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout Essentielle</li>
                 <li>• Jusqu’à 5 exploitations</li>
@@ -60,7 +60,7 @@
 
         <div class="card border-2 border-violet-200 bg-violet-50/40">
             <p class="mb-2 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-800">Coopérative</p>
-            <p class="text-2xl font-bold text-gray-900">25 000 <span class="text-sm font-normal">FCFA / an</span></p>
+            <p class="text-2xl font-bold text-gray-900">8 000 <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout Pro</li>
                 <li>• Exploitations illimitées</li>
