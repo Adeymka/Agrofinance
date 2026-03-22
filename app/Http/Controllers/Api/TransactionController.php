@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Activite, Transaction};
+use App\Models\Activite;
+use App\Models\Transaction;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
     public function __construct(
-        private FinancialIndicatorsService $indicateurs
+        private FinancialIndicatorsService $indicateurs,
+        private AbonnementService $abonnementService
     ) {}
 
     public function index(Request $request)
@@ -18,6 +21,9 @@ class TransactionController extends Controller
         $query = Transaction::whereHas('activite.exploitation', function ($q) {
             $q->where('user_id', auth()->user()->id);
         });
+
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user());
+        $floorStr = $floor?->toDateString();
 
         // Filtres optionnels
         if ($request->activite_id) {
@@ -29,8 +35,14 @@ class TransactionController extends Controller
         if ($request->categorie) {
             $query->where('categorie', $request->categorie);
         }
-        if ($request->date_debut) {
-            $query->where('date_transaction', '>=', $request->date_debut);
+        $dateDebutEffective = $request->date_debut;
+        if ($floorStr) {
+            $dateDebutEffective = $dateDebutEffective
+                ? max($floorStr, $dateDebutEffective)
+                : $floorStr;
+        }
+        if ($dateDebutEffective) {
+            $query->where('date_transaction', '>=', $dateDebutEffective);
         }
         if ($request->date_fin) {
             $query->where('date_transaction', '<=', $request->date_fin);
@@ -38,22 +50,22 @@ class TransactionController extends Controller
 
         return response()->json([
             'succes' => true,
-            'data'   => $query->latest('date_transaction')->get(),
+            'data' => $query->latest('date_transaction')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'transactions'                      => 'required|array|min:1',
-            'transactions.*.activite_id'        => 'required|integer|exists:activites,id',
-            'transactions.*.type'               => 'required|in:depense,recette',
-            'transactions.*.nature'             => 'nullable|in:fixe,variable',
-            'transactions.*.categorie'          => 'required|string|max:100',
-            'transactions.*.montant'            => 'required|numeric|min:0',
-            'transactions.*.date_transaction'   => 'required|date',
-            'transactions.*.note'               => 'nullable|string|max:500',
-            'transactions.*.est_imprevue'       => 'boolean',
+            'transactions' => 'required|array|min:1',
+            'transactions.*.activite_id' => 'required|integer|exists:activites,id',
+            'transactions.*.type' => 'required|in:depense,recette',
+            'transactions.*.nature' => 'nullable|in:fixe,variable',
+            'transactions.*.categorie' => 'required|string|max:100',
+            'transactions.*.montant' => 'required|numeric|min:0',
+            'transactions.*.date_transaction' => 'required|date',
+            'transactions.*.note' => 'nullable|string|max:500',
+            'transactions.*.est_imprevue' => 'boolean',
         ]);
 
         $creees = [];
@@ -65,32 +77,34 @@ class TransactionController extends Controller
             })->findOrFail($data['activite_id']);
 
             $creees[] = Transaction::create([
-                'activite_id'       => $activite->id,
-                'type'              => $data['type'],
+                'activite_id' => $activite->id,
+                'type' => $data['type'],
                 // Les recettes n'ont pas de nature
-                'nature'            => $data['type'] === 'recette'
+                'nature' => $data['type'] === 'recette'
                                         ? null
                                         : ($data['nature'] ?? 'variable'),
-                'categorie'         => $data['categorie'],
-                'montant'           => $data['montant'],
-                'date_transaction'  => $data['date_transaction'],
-                'note'              => $data['note'] ?? null,
-                'est_imprevue'      => $data['est_imprevue'] ?? false,
-                'synced'            => true,
+                'categorie' => $data['categorie'],
+                'montant' => $data['montant'],
+                'date_transaction' => $data['date_transaction'],
+                'note' => $data['note'] ?? null,
+                'est_imprevue' => $data['est_imprevue'] ?? false,
+                'synced' => true,
             ]);
         }
 
         // Recalculer les indicateurs FSA pour chaque activité touchée
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+
         $idsUniques = collect($creees)->pluck('activite_id')->unique();
         $indicateurs = [];
         foreach ($idsUniques as $id) {
-            $indicateurs[$id] = $this->indicateurs->calculer($id);
+            $indicateurs[$id] = $this->indicateurs->calculer($id, null, null, $floor);
         }
 
         return response()->json([
-            'succes'                    => true,
-            'transactions_synchronisees'=> count($creees),
-            'indicateurs'               => $indicateurs,
+            'succes' => true,
+            'transactions_synchronisees' => count($creees),
+            'indicateurs' => $indicateurs,
         ], 201);
     }
 
@@ -102,7 +116,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'succes' => true,
-            'data'   => $transaction,
+            'data' => $transaction,
         ]);
     }
 
@@ -113,18 +127,18 @@ class TransactionController extends Controller
         })->findOrFail($id);
 
         $request->validate([
-            'type'             => 'sometimes|in:depense,recette',
-            'nature'           => 'nullable|in:fixe,variable',
-            'categorie'        => 'sometimes|string|max:100',
-            'montant'          => 'sometimes|numeric|min:0',
+            'type' => 'sometimes|in:depense,recette',
+            'nature' => 'nullable|in:fixe,variable',
+            'categorie' => 'sometimes|string|max:100',
+            'montant' => 'sometimes|numeric|min:0',
             'date_transaction' => 'sometimes|date',
-            'note'             => 'nullable|string|max:500',
-            'est_imprevue'     => 'boolean',
+            'note' => 'nullable|string|max:500',
+            'est_imprevue' => 'boolean',
         ]);
 
         $transaction->update($request->only([
             'type', 'nature', 'categorie', 'montant',
-            'date_transaction', 'note', 'est_imprevue'
+            'date_transaction', 'note', 'est_imprevue',
         ]));
 
         if ($transaction->type === 'recette') {
@@ -134,9 +148,9 @@ class TransactionController extends Controller
         $indicateurs = $this->indicateurs->calculer($transaction->activite_id);
 
         return response()->json([
-            'succes'      => true,
-            'message'     => 'Transaction mise à jour.',
-            'data'        => $transaction->fresh(),
+            'succes' => true,
+            'message' => 'Transaction mise à jour.',
+            'data' => $transaction->fresh(),
             'indicateurs' => $indicateurs,
         ]);
     }
@@ -150,13 +164,13 @@ class TransactionController extends Controller
         $activiteId = $transaction->activite_id;
         $transaction->delete();
 
-        $indicateurs = $this->indicateurs->calculer($activiteId);
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $indicateurs = $this->indicateurs->calculer($activiteId, null, null, $floor);
 
         return response()->json([
-            'succes'      => true,
-            'message'     => 'Transaction supprimée.',
+            'succes' => true,
+            'message' => 'Transaction supprimée.',
             'indicateurs' => $indicateurs,
         ]);
     }
 }
-

@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Http\Controllers\Concerns\HandlesPdfAbonnement;
 use App\Http\Controllers\Controller;
-use App\Models\{Activite, Exploitation, Rapport};
+use App\Models\Activite;
+use App\Models\Exploitation;
+use App\Models\Rapport;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -12,11 +16,14 @@ use Illuminate\Support\Str;
 
 class RapportController extends Controller
 {
+    use HandlesPdfAbonnement;
+
     public function __construct(
-        private FinancialIndicatorsService $fsa
+        private FinancialIndicatorsService $fsa,
+        private AbonnementService $abonnementService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)
             ->with('activites')
@@ -32,19 +39,34 @@ class RapportController extends Controller
             ->latest()
             ->get();
 
-        $activites = $exploitation->activites()->where('statut', \App\Models\Activite::STATUT_EN_COURS)->get();
+        $activites = $exploitation->activites()->where('statut', Activite::STATUT_EN_COURS)->get();
 
-        return view('rapports.index', compact('exploitation', 'rapports', 'activites'));
+        $pre = $request->query('activite_id');
+        $activitePreselect = null;
+        if ($pre !== null && $pre !== '' && $activites->contains('id', (int) $pre)) {
+            $activitePreselect = (int) $pre;
+        }
+
+        return view('rapports.index', compact('exploitation', 'rapports', 'activites', 'activitePreselect'));
     }
 
     public function generer(Request $request)
     {
         $request->validate([
-            'activite_id'   => 'required|integer|exists:activites,id',
-            'type'          => 'required|in:campagne,dossier_credit',
+            'activite_id' => 'required|integer|exists:activites,id',
+            'type' => 'required|in:campagne,dossier_credit',
             'periode_debut' => 'nullable|date',
-            'periode_fin'   => 'nullable|date|after_or_equal:periode_debut',
+            'periode_fin' => 'nullable|date|after_or_equal:periode_debut',
         ]);
+
+        $refus = $this->refuseSiPasGenerationRapport(
+            $this->abonnementService,
+            $request,
+            $request->type
+        );
+        if ($refus !== null) {
+            return $refus;
+        }
 
         $uid = (int) auth()->user()->id;
 
@@ -53,7 +75,7 @@ class RapportController extends Controller
         })->with('exploitation')->findOrFail($request->activite_id);
 
         $exploitation = $activite->exploitation;
-        $user         = auth()->user();
+        $user = auth()->user();
 
         $debut = $request->periode_debut
             ?? ($activite->date_debut?->toDateString() ?? now()->startOfMonth()->toDateString());
@@ -71,12 +93,12 @@ class RapportController extends Controller
 
         $rapport = Rapport::create([
             'exploitation_id' => $exploitation->id,
-            'type'            => $request->type,
-            'periode_debut'   => $debut,
-            'periode_fin'     => $fin,
-            'chemin_pdf'      => '',
-            'lien_token'      => $token,
-            'lien_expire_le'  => now()->addHours(72),
+            'type' => $request->type,
+            'periode_debut' => $debut,
+            'periode_fin' => $fin,
+            'chemin_pdf' => '',
+            'lien_token' => $token,
+            'lien_expire_le' => now()->addHours(72),
         ]);
 
         $template = $request->type === 'dossier_credit'
@@ -89,7 +111,7 @@ class RapportController extends Controller
         ));
 
         $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
-        $chemin     = 'rapports/'.$nomFichier;
+        $chemin = 'rapports/'.$nomFichier;
 
         Storage::disk('local')->makeDirectory('rapports');
         Storage::disk('local')->put($chemin, $pdf->output());
@@ -100,13 +122,22 @@ class RapportController extends Controller
             ->with('success', 'Rapport PDF généré !');
     }
 
-    public function telecharger(int $id)
+    public function telecharger(Request $request, int $id)
     {
         $uid = (int) auth()->user()->id;
 
         $rapport = Rapport::whereHas('exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
         })->findOrFail($id);
+
+        $refus = $this->refuseSiPasTelechargementRapport(
+            $this->abonnementService,
+            $request,
+            (string) $rapport->type
+        );
+        if ($refus !== null) {
+            return $refus;
+        }
 
         if (! Storage::disk('local')->exists($rapport->chemin_pdf)) {
             return back()->withErrors(['pdf' => 'Fichier introuvable.']);
@@ -130,7 +161,7 @@ class RapportController extends Controller
         $contenu = Storage::disk('local')->get($rapport->chemin_pdf);
 
         return response($contenu, 200, [
-            'Content-Type'        => 'application/pdf',
+            'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="rapport.pdf"',
         ]);
     }

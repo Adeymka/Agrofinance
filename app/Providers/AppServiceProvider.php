@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\AbonnementService;
+use App\Services\FinancialIndicatorsService;
+use App\Services\OtpService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AbonnementService::class);
+        $this->app->singleton(FinancialIndicatorsService::class);
+        $this->app->singleton(OtpService::class);
     }
 
     /**

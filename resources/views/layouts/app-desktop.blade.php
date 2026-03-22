@@ -18,12 +18,15 @@
     $exploitationType = auth()->check()
         ? (auth()->user()->exploitations()->first()?->type ?? 'cultures_vivrieres')
         : 'cultures_vivrieres';
+    $infoAbonnement = auth()->check()
+        ? app(\App\Services\AbonnementService::class)->infos(auth()->user())
+        : null;
+    $weeklyBackgroundUrls = \App\Support\WeeklyBackgroundImages::weeklySlideUrls();
 @endphp
 <body class="min-h-screen overflow-hidden font-ui">
 
-    <!-- Background layer A -->
-    <div id="bgLayerA"
-         class="bg-layer fade-in {{ $exploitationType !== 'mixte' ? 'bg-'.$exploitationType : '' }}">
+    <!-- Background layer A (fonds locaux : 4 images / semaine, carrousel pour tous les types) -->
+    <div id="bgLayerA" class="bg-layer fade-in">
     </div>
 
     <!-- Background layer B (fondu carrousel mixte) -->
@@ -342,65 +345,47 @@
 
     <script>
     (function () {
-        const EXPLOITATION_TYPE = @json($exploitationType);
-
-        const MIXTE_IMAGES = [
-            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80',
-            'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=1920&q=80',
-            'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1920&q=80',
-            'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&q=80',
-        ];
-
-        const TYPE_IMAGES = {
-            'cultures_vivrieres': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80',
-            'elevage': 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=1920&q=80',
-            'maraichage': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1920&q=80',
-            'transformation': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&q=80',
-        };
+        /* Ordre fixe : Agro, Agro, élevage, transformation — jeu changé chaque semaine (côté serveur) */
+        const ROTATION_IMAGES = @json($weeklyBackgroundUrls);
 
         const layerA = document.getElementById('bgLayerA');
         const layerB = document.getElementById('bgLayerB');
 
-        if (layerA && layerB) {
-            if (EXPLOITATION_TYPE === 'mixte') {
-                let currentIndex = 0;
-                let activeLayer = 'A';
+        if (layerA && layerB && ROTATION_IMAGES.length >= 1) {
+            let currentIndex = 0;
+            let activeLayer = 'A';
 
-                layerA.style.backgroundImage = 'url(\'' + MIXTE_IMAGES[0] + '\')';
-                layerA.style.opacity = '1';
-                layerB.style.opacity = '0';
+            layerA.style.backgroundImage = 'url(\'' + ROTATION_IMAGES[0] + '\')';
+            layerA.style.opacity = '1';
+            layerB.style.opacity = '0';
 
-                function nextBackground() {
-                    currentIndex = (currentIndex + 1) % MIXTE_IMAGES.length;
-                    const nextImage = MIXTE_IMAGES[currentIndex];
+            function nextBackground() {
+                currentIndex = (currentIndex + 1) % ROTATION_IMAGES.length;
+                const nextImage = ROTATION_IMAGES[currentIndex];
 
-                    if (activeLayer === 'A') {
-                        layerB.style.backgroundImage = 'url(\'' + nextImage + '\')';
-                        layerB.style.transition = 'opacity 2s ease-in-out';
-                        layerA.style.transition = 'opacity 2s ease-in-out';
-                        requestAnimationFrame(function () {
-                            layerB.style.opacity = '1';
-                            layerA.style.opacity = '0';
-                        });
-                        activeLayer = 'B';
-                    } else {
-                        layerA.style.backgroundImage = 'url(\'' + nextImage + '\')';
-                        layerA.style.transition = 'opacity 2s ease-in-out';
-                        layerB.style.transition = 'opacity 2s ease-in-out';
-                        requestAnimationFrame(function () {
-                            layerA.style.opacity = '1';
-                            layerB.style.opacity = '0';
-                        });
-                        activeLayer = 'A';
-                    }
+                if (activeLayer === 'A') {
+                    layerB.style.backgroundImage = 'url(\'' + nextImage + '\')';
+                    layerB.style.transition = 'opacity 2s ease-in-out';
+                    layerA.style.transition = 'opacity 2s ease-in-out';
+                    requestAnimationFrame(function () {
+                        layerB.style.opacity = '1';
+                        layerA.style.opacity = '0';
+                    });
+                    activeLayer = 'B';
+                } else {
+                    layerA.style.backgroundImage = 'url(\'' + nextImage + '\')';
+                    layerA.style.transition = 'opacity 2s ease-in-out';
+                    layerB.style.transition = 'opacity 2s ease-in-out';
+                    requestAnimationFrame(function () {
+                        layerA.style.opacity = '1';
+                        layerB.style.opacity = '0';
+                    });
+                    activeLayer = 'A';
                 }
+            }
 
+            if (ROTATION_IMAGES.length > 1) {
                 setInterval(nextBackground, 30000);
-            } else {
-                const imageUrl = TYPE_IMAGES[EXPLOITATION_TYPE] || TYPE_IMAGES['cultures_vivrieres'];
-                layerA.style.backgroundImage = 'url(\'' + imageUrl + '\')';
-                layerA.style.opacity = '1';
-                layerB.style.opacity = '0';
             }
         }
 

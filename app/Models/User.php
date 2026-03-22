@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\AbonnementService;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -13,7 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'nom', 'prenom', 'telephone', 'email', 'pin_hash',
-        'type_exploitation', 'departement', 'commune'
+        'type_exploitation', 'departement', 'commune',
     ];
 
     protected $hidden = ['pin_hash'];
@@ -48,7 +49,7 @@ class User extends Authenticatable
 
     public function aUnAbonnementActif(): bool
     {
-        return $this->abonnementActif()->exists();
+        return app(AbonnementService::class)->estActif($this);
     }
 
     public function verifierPin(string $pin): bool
@@ -56,4 +57,3 @@ class User extends Authenticatable
         return Hash::check($pin, $this->pin_hash);
     }
 }
-

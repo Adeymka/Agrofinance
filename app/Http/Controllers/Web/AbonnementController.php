@@ -4,14 +4,23 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
+use App\Models\User;
+use App\Services\AbonnementService;
 use FedaPay\FedaPay;
 use FedaPay\Transaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, Cache, Log, Session};
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
 class AbonnementController extends Controller
 {
+    public function __construct(
+        private AbonnementService $abonnementService
+    ) {}
+
     public function index()
     {
         $user = Auth::user();
@@ -23,13 +32,12 @@ class AbonnementController extends Controller
     public function initier(Request $request)
     {
         $request->validate([
-            'plan'      => 'required|in:mensuel,annuel',
+            'plan' => 'required|in:mensuel,annuel,cooperative',
             'telephone' => 'required|string',
         ]);
 
-        $montants = ['mensuel' => 1000, 'annuel' => 10000];
-        $user     = Auth::user();
-        $montant  = $montants[$request->plan];
+        $user = Auth::user();
+        $montant = $this->abonnementService->montantFacturation($request->plan);
 
         if (config('services.fedapay.mock')) {
             $ref = 'mock_'.Str::uuid()->toString();
@@ -37,11 +45,11 @@ class AbonnementController extends Controller
             Cache::put(
                 "fedapay_pending_mock:{$user->id}",
                 [
-                    'user_id'   => $user->id,
-                    'plan'      => $request->plan,
-                    'montant'   => $montant,
+                    'user_id' => $user->id,
+                    'plan' => $request->plan,
+                    'montant' => $montant,
                     'telephone' => $request->telephone,
-                    'ref'       => $ref,
+                    'ref' => $ref,
                 ],
                 now()->addHours(24)
             );
@@ -61,13 +69,13 @@ class AbonnementController extends Controller
             FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
 
             $transaction = Transaction::create([
-                'description'  => "AgroFinance+ — Abonnement {$request->plan}",
-                'amount'       => $montant,
-                'currency'     => ['iso' => 'XOF'],
+                'description' => "AgroFinance+ — Abonnement {$request->plan}",
+                'amount' => $montant,
+                'currency' => ['iso' => 'XOF'],
                 'callback_url' => route('abonnement.callback'),
-                'customer'     => [
-                    'firstname'    => $user->prenom,
-                    'lastname'     => $user->nom,
+                'customer' => [
+                    'firstname' => $user->prenom,
+                    'lastname' => $user->nom,
                     'phone_number' => ['number' => $request->telephone, 'country' => 'bj'],
                 ],
                 'include' => 'customer,currency',
@@ -79,15 +87,15 @@ class AbonnementController extends Controller
                 "fedapay_pending:{$txId}",
                 [
                     'user_id' => $user->id,
-                    'plan'    => $request->plan,
+                    'plan' => $request->plan,
                 ],
                 now()->addHours(48)
             );
 
             Session::put([
                 'fedapay_transaction_id' => $txId,
-                'fedapay_plan'           => $request->plan,
-                'fedapay_user_id'        => $user->id,
+                'fedapay_plan' => $request->plan,
+                'fedapay_user_id' => $user->id,
             ]);
 
             $token = $transaction->generateToken();
@@ -106,7 +114,7 @@ class AbonnementController extends Controller
             return back()->withErrors(['paiement' => 'Mode mock désactivé.']);
         }
 
-        $userId  = (int) Auth::user()->id;
+        $userId = (int) Auth::user()->id;
         $pending = Cache::pull("fedapay_pending_mock:{$userId}");
 
         if (! $pending || (int) $pending['user_id'] !== $userId) {
@@ -114,29 +122,11 @@ class AbonnementController extends Controller
         }
 
         $planChoisi = $pending['plan'];
-        $montant    = $pending['montant'];
-        $ref        = $pending['ref'] ?? 'mock_'.Str::uuid()->toString();
+        $montant = $pending['montant'];
+        $ref = $pending['ref'] ?? 'mock_'.Str::uuid()->toString();
 
-        if (Abonnement::where('ref_fedapay', $ref)->exists()) {
-            return redirect()->route('abonnement')
-                ->with('success', 'Abonnement déjà enregistré pour cette session mock.');
-        }
-
-        $duree = $planChoisi === 'annuel' ? 365 : 30;
-
-        Abonnement::where('user_id', $userId)
-            ->whereIn('statut', ['actif', 'essai'])
-            ->update(['statut' => 'expire']);
-
-        Abonnement::create([
-            'user_id'     => $userId,
-            'plan'        => $planChoisi,
-            'statut'      => 'actif',
-            'date_debut'  => now()->toDateString(),
-            'date_fin'    => now()->addDays($duree)->toDateString(),
-            'montant'     => $montant,
-            'ref_fedapay' => $ref,
-        ]);
+        $user = User::findOrFail($userId);
+        $this->abonnementService->activer($user, $planChoisi, $ref, (float) $montant);
 
         Log::info("Abonnement mock activé (web) — user {$userId} — plan {$planChoisi}");
 
@@ -171,10 +161,10 @@ class AbonnementController extends Controller
             $pending = Cache::pull("fedapay_pending:{$transactionId}");
             if ($pending) {
                 $planChoisi = $pending['plan'];
-                $userId     = $pending['user_id'];
+                $userId = $pending['user_id'];
             } else {
                 $planChoisi = session('fedapay_plan', 'mensuel');
-                $userId     = session('fedapay_user_id');
+                $userId = session('fedapay_user_id');
             }
 
             if (! $userId) {
@@ -185,33 +175,14 @@ class AbonnementController extends Controller
             }
 
             if (in_array($transaction->status, ['approved', 'transferred'], true)) {
+                $deja = Abonnement::where('ref_fedapay', (string) $transaction->id)->exists();
 
-                if (Abonnement::where('ref_fedapay', (string) $transaction->id)->exists()) {
-                    session()->forget([
-                        'fedapay_transaction_id',
-                        'fedapay_plan',
-                        'fedapay_user_id',
-                    ]);
-
-                    return redirect()->route('abonnement')
-                        ->with('success', 'Paiement déjà enregistré.');
-                }
-
-                $duree = $planChoisi === 'annuel' ? 365 : 30;
-
-                Abonnement::where('user_id', $userId)
-                    ->whereIn('statut', ['actif', 'essai'])
-                    ->update(['statut' => 'expire']);
-
-                Abonnement::create([
-                    'user_id'     => $userId,
-                    'plan'        => $planChoisi,
-                    'statut'      => 'actif',
-                    'date_debut'  => now()->toDateString(),
-                    'date_fin'    => now()->addDays($duree)->toDateString(),
-                    'montant'     => $transaction->amount ?? 0,
-                    'ref_fedapay' => (string) $transaction->id,
-                ]);
+                $this->abonnementService->activer(
+                    User::findOrFail($userId),
+                    $planChoisi,
+                    (string) $transaction->id,
+                    (float) ($transaction->amount ?? 0)
+                );
 
                 session()->forget([
                     'fedapay_transaction_id',
@@ -222,7 +193,9 @@ class AbonnementController extends Controller
                 Log::info("Abonnement activé (web) — user {$userId} — plan {$planChoisi}");
 
                 return redirect()->route('abonnement')
-                    ->with('success', "Abonnement {$planChoisi} activé avec succès !");
+                    ->with('success', $deja
+                        ? 'Paiement déjà enregistré.'
+                        : "Abonnement {$planChoisi} activé avec succès !");
             }
 
             return redirect()->route('abonnement')

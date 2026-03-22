@@ -7,7 +7,7 @@
     <a href="{{ route('transactions.create', ['activite_id' => $activite->id]) }}" class="btn-primary inline-flex items-center gap-2">
         <x-icon name="plus" class="w-4 h-4" /> Saisir une transaction
     </a>
-    @if(optional(auth()->user()->abonnementActif)->plan !== 'gratuit')
+    @if($infoAbonnement['peut_pdf'] ?? false)
         <form method="POST" action="{{ route('rapports.generer') }}" class="inline">
             @csrf
             <input type="hidden" name="activite_id" value="{{ $activite->id }}">

@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Exploitation, Transaction};
+use App\Models\Exploitation;
+use App\Models\Transaction;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        private FinancialIndicatorsService $service
+        private FinancialIndicatorsService $service,
+        private AbonnementService $abonnementService
     ) {}
 
     /**
@@ -19,6 +22,8 @@ class DashboardController extends Controller
     public function __invoke()
     {
         $user = Auth::user();
+
+        $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
 
         $exploitations = Exploitation::where('user_id', $user->id)
             ->with('activitesActives')
@@ -29,7 +34,7 @@ class DashboardController extends Controller
             if ($exploitation->activitesActives->count() > 0) {
                 $indicateursParExploitation[$exploitation->id] = array_merge(
                     ['nom' => $exploitation->nom],
-                    $this->service->calculerExploitation($exploitation->id)
+                    $this->service->calculerExploitation($exploitation->id, $dateDebutHistorique)
                 );
             }
         }
@@ -40,17 +45,18 @@ class DashboardController extends Controller
         $CTTotal = collect($indicateursParExploitation)->sum(fn ($item) => $item['consolide']['CT'] ?? 0);
 
         $consolideGlobal = [
-            'PB'     => round($PBTotal, 2),
-            'MB'     => round($MBTotal, 2),
-            'RNE'    => round($RNETotal, 2),
-            'CT'     => round($CTTotal, 2),
-            'RF'     => $CTTotal > 0 ? round(($RNETotal / $CTTotal) * 100, 2) : 0,
+            'PB' => round($PBTotal, 2),
+            'MB' => round($MBTotal, 2),
+            'RNE' => round($RNETotal, 2),
+            'CT' => round($CTTotal, 2),
+            'RF' => $CTTotal > 0 ? round(($RNETotal / $CTTotal) * 100, 2) : 0,
             'statut' => $this->determinerStatutGlobal($MBTotal, $RNETotal),
         ];
 
         $dernieresTransactions = Transaction::whereHas('activite.exploitation', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })
+            ->when($dateDebutHistorique, fn ($q) => $q->where('date_transaction', '>=', $dateDebutHistorique))
             ->with('activite:id,nom')
             ->latest('date_transaction')
             ->limit(10)
@@ -59,10 +65,10 @@ class DashboardController extends Controller
         $alertes = [];
         foreach ($exploitations as $exploitation) {
             foreach ($exploitation->activitesActives as $activite) {
-                $alerte = $activite->alerteBudget();
+                $alerte = $activite->alerteBudget($dateDebutHistorique);
                 if ($alerte) {
                     $alertes[] = array_merge($alerte, [
-                        'activite_id'  => $activite->id,
+                        'activite_id' => $activite->id,
                         'activite_nom' => $activite->nom,
                     ]);
                 }
@@ -73,17 +79,17 @@ class DashboardController extends Controller
 
         return response()->json([
             'succes' => true,
-            'data'   => [
+            'data' => [
                 'user' => [
-                    'nom'    => $user->nom,
+                    'nom' => $user->nom,
                     'prenom' => $user->prenom,
                 ],
-                'consolide_global'             => $consolideGlobal,
+                'consolide_global' => $consolideGlobal,
                 'indicateurs_par_exploitation' => $indicateursParExploitation,
-                'dernieres_transactions'       => $dernieresTransactions,
-                'alertes_budget'               => $alertes,
-                'nb_exploitations'             => $exploitations->count(),
-                'abonnement'                   => $abonnement
+                'dernieres_transactions' => $dernieresTransactions,
+                'alertes_budget' => $alertes,
+                'nb_exploitations' => $exploitations->count(),
+                'abonnement' => $abonnement
                     ? ['plan' => $abonnement->plan, 'statut' => $abonnement->statut]
                     : ['plan' => 'aucun', 'statut' => 'inactif'],
             ],

@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Activite, Exploitation};
+use App\Models\Activite;
+use App\Models\Exploitation;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
 
 class IndicateurController extends Controller
 {
     public function __construct(
-        private FinancialIndicatorsService $service
+        private FinancialIndicatorsService $service,
+        private AbonnementService $abonnementService
     ) {}
 
     /**
@@ -26,19 +29,22 @@ class IndicateurController extends Controller
             $q->where('user_id', $userId);
         })->findOrFail($id);
 
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+
         $indicateurs = $this->service->calculer(
             $id,
             $request->debut,
-            $request->fin
+            $request->fin,
+            $floor
         );
 
         return response()->json([
             'succes' => true,
-            'data'   => array_merge([
-                'activite_id'       => $activite->id,
-                'activite_nom'      => $activite->nom,
-                'type'              => $activite->type,
-                'statut_campagne'   => $activite->statut,
+            'data' => array_merge([
+                'activite_id' => $activite->id,
+                'activite_nom' => $activite->nom,
+                'type' => $activite->type,
+                'statut_campagne' => $activite->statut,
             ], $indicateurs),
         ]);
     }
@@ -48,16 +54,18 @@ class IndicateurController extends Controller
      */
     public function parExploitation(int $id)
     {
-        $exploitation = Exploitation::where('user_id', auth()->user()->id)
+        $user = auth()->user();
+        $exploitation = Exploitation::where('user_id', $user->id)
             ->findOrFail($id);
 
-        $resultat = $this->service->calculerExploitation($id);
+        $floor = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
+        $resultat = $this->service->calculerExploitation($id, $floor);
 
         return response()->json([
             'succes' => true,
-            'data'   => array_merge([
-                'exploitation_id'  => $exploitation->id,
-                'exploitation_nom'   => $exploitation->nom,
+            'data' => array_merge([
+                'exploitation_id' => $exploitation->id,
+                'exploitation_nom' => $exploitation->nom,
             ], $resultat),
         ]);
     }
@@ -73,14 +81,15 @@ class IndicateurController extends Controller
             $q->where('user_id', $userId);
         })->findOrFail($id);
 
-        $evolution = $this->service->evolutionMensuelle($id);
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $evolution = $this->service->evolutionMensuelle($id, $floor);
 
         return response()->json([
             'succes' => true,
-            'data'   => [
-                'activite_id'  => $activite->id,
+            'data' => [
+                'activite_id' => $activite->id,
                 'activite_nom' => $activite->nom,
-                'evolution'    => $evolution,
+                'evolution' => $evolution,
             ],
         ]);
     }

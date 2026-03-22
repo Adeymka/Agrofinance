@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Activite, Exploitation, Rapport, User};
+use App\Models\Abonnement;
+use App\Models\Activite;
+use App\Models\Exploitation;
+use App\Models\Rapport;
+use App\Models\User;
 use Barryvdh\DomPDF\PDF as DomPdfWrapper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -29,17 +33,17 @@ class Sprint5Test extends TestCase
         Config::set('services.fedapay.mock', true);
 
         $user = User::create([
-            'nom'               => 'Test',
-            'prenom'            => 'User',
-            'telephone'         => '+22967000099',
-            'pin_hash'          => null,
+            'nom' => 'Test',
+            'prenom' => 'User',
+            'telephone' => '+22967000099',
+            'pin_hash' => null,
             'type_exploitation' => 'mixte',
         ]);
 
         Sanctum::actingAs($user);
 
         $this->postJson('/api/abonnement/initier', [
-            'plan'      => 'mensuel',
+            'plan' => 'mensuel',
             'telephone' => '+22967000099',
         ])
             ->assertStatus(200)
@@ -62,17 +66,17 @@ class Sprint5Test extends TestCase
         Config::set('services.fedapay.mock', true);
 
         $user = User::create([
-            'nom'               => 'Test',
-            'prenom'            => 'User',
-            'telephone'         => '+22967000100',
-            'pin_hash'          => null,
+            'nom' => 'Test',
+            'prenom' => 'User',
+            'telephone' => '+22967000100',
+            'pin_hash' => null,
             'type_exploitation' => 'mixte',
         ]);
 
         Sanctum::actingAs($user);
 
         $this->postJson('/api/abonnement/initier', [
-            'plan'      => 'mensuel',
+            'plan' => 'mensuel',
             'telephone' => '+22967000100',
         ])->assertStatus(200);
 
@@ -83,8 +87,8 @@ class Sprint5Test extends TestCase
 
         $this->assertDatabaseHas('abonnements', [
             'user_id' => $user->id,
-            'plan'    => 'mensuel',
-            'statut'  => 'actif',
+            'plan' => 'mensuel',
+            'statut' => 'actif',
         ]);
     }
 
@@ -93,10 +97,10 @@ class Sprint5Test extends TestCase
         Config::set('services.fedapay.mock', false);
 
         $user = User::create([
-            'nom'               => 'Test',
-            'prenom'            => 'User',
-            'telephone'         => '+22967000098',
-            'pin_hash'          => null,
+            'nom' => 'Test',
+            'prenom' => 'User',
+            'telephone' => '+22967000098',
+            'pin_hash' => null,
             'type_exploitation' => 'mixte',
         ]);
 
@@ -114,37 +118,46 @@ class Sprint5Test extends TestCase
         $this->instance('dompdf.wrapper', $pdfMock);
 
         $user = User::create([
-            'nom'               => 'PDF',
-            'prenom'            => 'Tester',
-            'telephone'         => '+22967000097',
-            'pin_hash'          => null,
+            'nom' => 'PDF',
+            'prenom' => 'Tester',
+            'telephone' => '+22967000097',
+            'pin_hash' => null,
             'type_exploitation' => 'mixte',
         ]);
 
         $exploitation = Exploitation::create([
-            'user_id'     => $user->id,
-            'nom'         => 'Ferme test',
-            'type'        => 'mixte',
-            'localisation'=> 'Test',
+            'user_id' => $user->id,
+            'nom' => 'Ferme test',
+            'type' => 'mixte',
+            'localisation' => 'Test',
         ]);
 
         $activite = Activite::create([
-            'exploitation_id'       => $exploitation->id,
-            'nom'                   => 'Campagne test',
-            'type'                  => 'culture',
-            'date_debut'            => '2025-01-01',
-            'date_fin'              => '2025-12-31',
-            'statut'                => 'actif',
-            'budget_previsionnel'   => null,
+            'exploitation_id' => $exploitation->id,
+            'nom' => 'Campagne test',
+            'type' => 'culture',
+            'date_debut' => '2025-01-01',
+            'date_fin' => '2025-12-31',
+            'statut' => 'actif',
+            'budget_previsionnel' => null,
+        ]);
+
+        Abonnement::create([
+            'user_id' => $user->id,
+            'plan' => 'essentielle',
+            'statut' => 'actif',
+            'date_debut' => now()->subDay()->toDateString(),
+            'date_fin' => now()->addMonth()->toDateString(),
+            'montant' => 0,
         ]);
 
         Sanctum::actingAs($user);
 
         $this->postJson('/api/rapports/generer', [
-            'activite_id'   => $activite->id,
-            'type'          => 'campagne',
+            'activite_id' => $activite->id,
+            'type' => 'campagne',
             'periode_debut' => '2025-01-01',
-            'periode_fin'   => '2025-12-31',
+            'periode_fin' => '2025-12-31',
         ])
             ->assertStatus(201)
             ->assertJsonPath('succes', true);

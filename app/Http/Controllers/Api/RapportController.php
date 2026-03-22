@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\HandlesPdfAbonnement;
 use App\Http\Controllers\Controller;
-use App\Models\{Activite, Rapport};
+use App\Models\Activite;
+use App\Models\Rapport;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -12,8 +15,11 @@ use Illuminate\Support\Str;
 
 class RapportController extends Controller
 {
+    use HandlesPdfAbonnement;
+
     public function __construct(
-        private FinancialIndicatorsService $indicateurs
+        private FinancialIndicatorsService $indicateurs,
+        private AbonnementService $abonnementService
     ) {}
 
     /**
@@ -32,7 +38,7 @@ class RapportController extends Controller
 
         return response()->json([
             'succes' => true,
-            'data'   => $rapports,
+            'data' => $rapports,
         ]);
     }
 
@@ -42,11 +48,25 @@ class RapportController extends Controller
     public function generer(Request $request)
     {
         $request->validate([
-            'activite_id'   => 'required|integer|exists:activites,id',
-            'type'          => 'required|in:campagne,dossier_credit,mensuel,annuel',
+            'activite_id' => 'required|integer|exists:activites,id',
+            'type' => 'required|in:campagne,dossier_credit,mensuel,annuel',
             'periode_debut' => 'required|date',
-            'periode_fin'   => 'required|date|after_or_equal:periode_debut',
+            'periode_fin' => 'required|date|after_or_equal:periode_debut',
         ]);
+
+        $typePermission = match ($request->type) {
+            'dossier_credit' => 'dossier_credit',
+            default => 'campagne',
+        };
+
+        $refus = $this->refuseSiPasGenerationRapport(
+            $this->abonnementService,
+            $request,
+            $typePermission
+        );
+        if ($refus !== null) {
+            return $refus;
+        }
 
         $userId = auth()->user()->id;
 
@@ -55,7 +75,7 @@ class RapportController extends Controller
         })->with('exploitation')->findOrFail($request->activite_id);
 
         $exploitation = $activite->exploitation;
-        $user         = auth()->user();
+        $user = auth()->user();
 
         $indicateurs = $this->indicateurs->calculer(
             $activite->id,
@@ -75,12 +95,12 @@ class RapportController extends Controller
 
         $rapport = Rapport::create([
             'exploitation_id' => $exploitation->id,
-            'type'            => $request->type,
-            'periode_debut'   => $request->periode_debut,
-            'periode_fin'     => $request->periode_fin,
-            'chemin_pdf'      => '',
-            'lien_token'      => $token,
-            'lien_expire_le'  => now()->addHours(72),
+            'type' => $request->type,
+            'periode_debut' => $request->periode_debut,
+            'periode_fin' => $request->periode_fin,
+            'chemin_pdf' => '',
+            'lien_token' => $token,
+            'lien_expire_le' => now()->addHours(72),
         ]);
 
         $template = $request->type === 'dossier_credit'
@@ -93,7 +113,7 @@ class RapportController extends Controller
         ));
 
         $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
-        $chemin     = 'rapports/'.$nomFichier;
+        $chemin = 'rapports/'.$nomFichier;
 
         Storage::disk('local')->makeDirectory('rapports');
         Storage::disk('local')->put($chemin, $pdf->output());
@@ -101,15 +121,15 @@ class RapportController extends Controller
         $rapport->update(['chemin_pdf' => $chemin]);
 
         return response()->json([
-            'succes'  => true,
+            'succes' => true,
             'message' => 'Rapport généré avec succès.',
-            'data'    => [
-                'rapport_id'     => $rapport->id,
-                'type'           => $rapport->type,
-                'lien_token'     => $token,
+            'data' => [
+                'rapport_id' => $rapport->id,
+                'type' => $rapport->type,
+                'lien_token' => $token,
                 'lien_expire_le' => $rapport->lien_expire_le->format('d/m/Y H:i'),
-                'lien_partage'   => rtrim(config('app.url'), '/').'/partage/'.$token,
-                'indicateurs'    => $indicateurs,
+                'lien_partage' => rtrim(config('app.url'), '/').'/partage/'.$token,
+                'indicateurs' => $indicateurs,
             ],
         ], 201);
     }
@@ -117,7 +137,7 @@ class RapportController extends Controller
     /**
      * GET /api/rapports/{id}/telecharger
      */
-    public function telecharger(int $id)
+    public function telecharger(Request $request, int $id)
     {
         $userId = auth()->user()->id;
 
@@ -125,9 +145,18 @@ class RapportController extends Controller
             $q->where('user_id', $userId);
         })->findOrFail($id);
 
+        $refus = $this->refuseSiPasTelechargementRapport(
+            $this->abonnementService,
+            $request,
+            (string) $rapport->type
+        );
+        if ($refus !== null) {
+            return $refus;
+        }
+
         if ($rapport->chemin_pdf === '' || ! Storage::disk('local')->exists($rapport->chemin_pdf)) {
             return response()->json([
-                'succes'  => false,
+                'succes' => false,
                 'message' => 'Fichier PDF introuvable.',
             ], 404);
         }

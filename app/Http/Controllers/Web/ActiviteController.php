@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Activite, Exploitation};
+use App\Models\Activite;
+use App\Models\Exploitation;
+use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
 
 class ActiviteController extends Controller
 {
     public function __construct(
-        private FinancialIndicatorsService $service
+        private FinancialIndicatorsService $service,
+        private AbonnementService $abonnementService
     ) {}
 
     public function index()
@@ -32,14 +35,16 @@ class ActiviteController extends Controller
             ->orderByDesc('date_fin')
             ->get();
 
+        $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+
         $indicateursParActivite = [];
         foreach ($actives as $a) {
-            $indicateursParActivite[$a->id] = $this->service->calculer($a->id);
+            $indicateursParActivite[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
         }
 
         $indicateursTerminees = [];
         foreach ($terminees as $a) {
-            $indicateursTerminees[$a->id] = $this->service->calculer($a->id);
+            $indicateursTerminees[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
         }
 
         return view('activites.index', compact(
@@ -66,23 +71,23 @@ class ActiviteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nom'                 => 'required|string|max:150',
-            'type'                => 'required|in:culture,elevage,transformation',
-            'date_debut'          => 'required|date',
-            'date_fin'            => 'nullable|date|after:date_debut',
+            'nom' => 'required|string|max:150',
+            'type' => 'required|in:culture,elevage,transformation',
+            'date_debut' => 'required|date',
+            'date_fin' => 'nullable|date|after:date_debut',
             'budget_previsionnel' => 'nullable|numeric|min:0',
         ]);
 
         $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)->firstOrFail();
 
         Activite::create([
-            'exploitation_id'     => $exploitation->id,
-            'nom'                 => $request->nom,
-            'type'                => $request->type,
-            'date_debut'          => $request->date_debut,
-            'date_fin'            => $request->date_fin,
+            'exploitation_id' => $exploitation->id,
+            'nom' => $request->nom,
+            'type' => $request->type,
+            'date_debut' => $request->date_debut,
+            'date_fin' => $request->date_fin,
             'budget_previsionnel' => $request->budget_previsionnel,
-            'statut'              => Activite::STATUT_EN_COURS,
+            'statut' => Activite::STATUT_EN_COURS,
         ]);
 
         return redirect()->route('activites.index')
@@ -95,8 +100,15 @@ class ActiviteController extends Controller
             ->with('transactions')
             ->findOrFail($id);
 
-        $indicateurs = $this->service->calculer($id);
-        $transactions = $activite->transactions()->orderByDesc('date_transaction')->paginate(20);
+        $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+
+        $indicateurs = $this->service->calculer($id, null, null, $dateMin);
+
+        $txQuery = $activite->transactions()->orderByDesc('date_transaction');
+        if ($dateMin) {
+            $txQuery->where('date_transaction', '>=', $dateMin);
+        }
+        $transactions = $txQuery->paginate(20);
 
         $alerteBudget = null;
         if ($activite->budget_previsionnel && (float) $activite->budget_previsionnel > 0) {
@@ -132,7 +144,7 @@ class ActiviteController extends Controller
         $nom = $activite->nom;
 
         $activite->update([
-            'statut'   => Activite::STATUT_TERMINE,
+            'statut' => Activite::STATUT_TERMINE,
             'date_fin' => now()->toDateString(),
         ]);
 

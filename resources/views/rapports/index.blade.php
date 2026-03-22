@@ -10,6 +10,11 @@
 
                 @if ($activites->isEmpty())
                     <p class="text-sm text-gray-600">Créez une campagne en cours pour générer un PDF.</p>
+                @elseif (! ($infoAbonnement['peut_pdf'] ?? false))
+                    <p class="text-sm text-gray-600">
+                        La génération de rapports PDF nécessite le plan <strong>Essentielle</strong> ou supérieur.
+                        <a href="{{ route('abonnement') }}" class="text-agro-vert font-medium underline">Voir les plans</a>.
+                    </p>
                 @else
                     <form method="POST" action="{{ route('rapports.generer') }}" class="space-y-4">
                         @csrf
@@ -17,7 +22,7 @@
                             <label class="block text-xs font-medium text-gray-600 mb-1">Campagne</label>
                             <select name="activite_id" required class="input-field">
                                 @foreach ($activites as $a)
-                                    <option value="{{ $a->id }}">{{ $a->nom }}</option>
+                                    <option value="{{ $a->id }}" @selected(($activitePreselect ?? $activites->first()?->id) == $a->id)>{{ $a->nom }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -25,9 +30,14 @@
                             <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
                             <select name="type" class="input-field">
                                 <option value="campagne">Campagne</option>
-                                <option value="dossier_credit">Dossier crédit</option>
+                                @if ($infoAbonnement['peut_dossier'] ?? false)
+                                    <option value="dossier_credit">Dossier crédit</option>
+                                @endif
                             </select>
                         </div>
+                        @if (! ($infoAbonnement['peut_dossier'] ?? false))
+                            <p class="text-xs text-gray-500">Le rapport <strong>dossier crédit</strong> (Pro / Coopérative) n’est pas inclus dans votre plan.</p>
+                        @endif
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Début</label>

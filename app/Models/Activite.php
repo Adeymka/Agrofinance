@@ -18,8 +18,8 @@ class Activite extends Model
     ];
 
     protected $casts = [
-        'date_debut'          => 'date',
-        'date_fin'            => 'date',
+        'date_debut' => 'date',
+        'date_fin' => 'date',
         'budget_previsionnel' => 'decimal:2',
     ];
 
@@ -33,33 +33,39 @@ class Activite extends Model
         return $this->hasMany(Transaction::class);
     }
 
-    // Calcul alerte budget (70%, 90%, 100%)
-    public function alerteBudget(): ?array
+    /**
+     * Alerte budget (70%, 90%, 100%).
+     *
+     * @param  string|null  $dateTransactionMin  Si défini, seules les dépenses à partir de cette date (ex. plan gratuit).
+     */
+    public function alerteBudget(?string $dateTransactionMin = null): ?array
     {
-        if (!$this->budget_previsionnel || $this->budget_previsionnel <= 0) {
+        if (! $this->budget_previsionnel || $this->budget_previsionnel <= 0) {
             return null;
         }
 
-        $totalDepenses = $this->transactions()
-            ->where('type', 'depense')
-            ->sum('montant');
+        $q = $this->transactions()->where('type', 'depense');
+        if ($dateTransactionMin) {
+            $q->where('date_transaction', '>=', $dateTransactionMin);
+        }
+
+        $totalDepenses = $q->sum('montant');
 
         $pourcentage = ($totalDepenses / $this->budget_previsionnel) * 100;
 
         if ($pourcentage >= 100) {
             return ['niveau' => 'danger', 'pourcentage' => round($pourcentage, 1),
-                    'message' => 'Budget dépassé !'];
+                'message' => 'Budget dépassé !'];
         }
         if ($pourcentage >= 90) {
             return ['niveau' => 'warning', 'pourcentage' => round($pourcentage, 1),
-                    'message' => '90% du budget consommé.'];
+                'message' => '90% du budget consommé.'];
         }
         if ($pourcentage >= 70) {
             return ['niveau' => 'info', 'pourcentage' => round($pourcentage, 1),
-                    'message' => '70% du budget consommé.'];
+                'message' => '70% du budget consommé.'];
         }
 
         return null;
     }
 }
-

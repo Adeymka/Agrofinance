@@ -47,6 +47,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/abonnement', [AbonnementController::class, 'index'])->name('abonnement');
     Route::post('/abonnement/initier', [AbonnementController::class, 'initier'])->name('abonnement.initier');
     Route::post('/abonnement/finaliser-mock', [AbonnementController::class, 'finaliserMock'])->name('abonnement.finaliser-mock');
+
+    Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
+    Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
 });
 
 Route::middleware(['auth', 'subscribed'])->group(function () {
@@ -70,7 +73,4 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');
     Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger'])->whereNumber('id')->name('rapports.telecharger');
-
-    Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
-    Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
 });

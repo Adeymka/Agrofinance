@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\{Activite, Exploitation};
+use App\Models\Activite;
+use App\Models\Exploitation;
 
 class FinancialIndicatorsService
 {
-    public function calculer(int $activiteId, ?string $debut = null, ?string $fin = null): array
+    /**
+     * @param  string|null  $dateDebutMin  Plancher absolu (ex. plan gratuit : 6 derniers mois) — fusionné avec $debut
+     */
+    public function calculer(int $activiteId, ?string $debut = null, ?string $fin = null, ?string $dateDebutMin = null): array
     {
+        $debut = $this->mergeDateDebut($debut, $dateDebutMin);
+
         $activite = Activite::with('transactions')->findOrFail($activiteId);
         $transactions = $activite->transactions;
 
@@ -30,13 +36,13 @@ class FinancialIndicatorsService
             'semences', 'engrais_mineraux', 'engrais_organiques',
             'pesticides', 'herbicides', 'fongicides', 'vaccins',
             'medicaments_veterinaires', 'aliments_animaux', 'eau_abreuvement',
-            'energie_transformation', 'emballages', 'matieres_premieres', 'carburant',
+            'energie_transformation', 'emballages', 'matieres_premieres', 'produits_chimiques', 'carburant',
         ];
-        $CI  = $depenses->whereIn('categorie', $categoriesCI)->sum('montant');
+        $CI = $depenses->whereIn('categorie', $categoriesCI)->sum('montant');
         $VAB = $PB - $CI;
-        $MB  = $PB - $CV;
+        $MB = $PB - $CV;
         $RNE = $PB - $CT;
-        $RF  = $CT > 0 ? round(($RNE / $CT) * 100, 2) : 0;
+        $RF = $CT > 0 ? round(($RNE / $CT) * 100, 2) : 0;
 
         $SR = null;
         if ($PB > 0) {
@@ -47,25 +53,25 @@ class FinancialIndicatorsService
         }
 
         return [
-            'PB'              => round($PB, 2),
-            'CV'              => round($CV, 2),
-            'CF'              => round($CF, 2),
-            'CT'              => round($CT, 2),
-            'CI'              => round($CI, 2),
-            'VAB'             => round($VAB, 2),
-            'MB'              => round($MB, 2),
-            'RNE'             => round($RNE, 2),
-            'RF'              => $RF,
-            'SR'              => $SR,
-            'statut'          => $this->determinerStatut($PB, $MB, $RNE, $SR),
+            'PB' => round($PB, 2),
+            'CV' => round($CV, 2),
+            'CF' => round($CF, 2),
+            'CT' => round($CT, 2),
+            'CI' => round($CI, 2),
+            'VAB' => round($VAB, 2),
+            'MB' => round($MB, 2),
+            'RNE' => round($RNE, 2),
+            'RF' => $RF,
+            'SR' => $SR,
+            'statut' => $this->determinerStatut($PB, $MB, $RNE, $SR),
             'nb_transactions' => $transactions->count(),
-            'nb_depenses'     => $depenses->count(),
-            'nb_recettes'     => $recettes->count(),
+            'nb_depenses' => $depenses->count(),
+            'nb_recettes' => $recettes->count(),
             'derniere_saisie' => $transactions->max('updated_at'),
         ];
     }
 
-    public function calculerExploitation(int $exploitationId): array
+    public function calculerExploitation(int $exploitationId, ?string $dateDebutMin = null): array
     {
         $exploitation = Exploitation::with('activitesActives.transactions')
             ->findOrFail($exploitationId);
@@ -74,23 +80,23 @@ class FinancialIndicatorsService
         foreach ($exploitation->activitesActives as $activite) {
             $parActivite[$activite->id] = array_merge(
                 ['nom' => $activite->nom, 'type' => $activite->type],
-                $this->calculer($activite->id)
+                $this->calculer($activite->id, null, null, $dateDebutMin)
             );
         }
 
-        $PBt  = collect($parActivite)->sum('PB');
-        $CTt  = collect($parActivite)->sum('CT');
-        $MBt  = collect($parActivite)->sum('MB');
+        $PBt = collect($parActivite)->sum('PB');
+        $CTt = collect($parActivite)->sum('CT');
+        $MBt = collect($parActivite)->sum('MB');
         $RNEt = collect($parActivite)->sum('RNE');
 
         return [
             'par_activite' => $parActivite,
-            'consolide'    => [
-                'PB'     => round($PBt, 2),
-                'CT'     => round($CTt, 2),
-                'MB'     => round($MBt, 2),
-                'RNE'    => round($RNEt, 2),
-                'RF'     => $CTt > 0 ? round(($RNEt / $CTt) * 100, 2) : 0,
+            'consolide' => [
+                'PB' => round($PBt, 2),
+                'CT' => round($CTt, 2),
+                'MB' => round($MBt, 2),
+                'RNE' => round($RNEt, 2),
+                'RF' => $CTt > 0 ? round(($RNEt / $CTt) * 100, 2) : 0,
                 'statut' => $this->determinerStatut($PBt, $MBt, $RNEt, null),
             ],
         ];
@@ -98,28 +104,57 @@ class FinancialIndicatorsService
 
     /**
      * Évolution mensuelle sur 12 mois (pour le graphique du dashboard).
+     *
+     * @param  string|null  $dateDebutMin  Plancher (plans gratuits : pas de données avant cette date).
      */
-    public function evolutionMensuelle(int $activiteId): array
+    public function evolutionMensuelle(int $activiteId, ?string $dateDebutMin = null): array
     {
         $evolution = [];
         for ($i = 11; $i >= 0; $i--) {
             $mois = now()->subMonths($i);
-            $ind = $this->calculer(
-                $activiteId,
-                $mois->copy()->startOfMonth()->toDateString(),
-                $mois->copy()->endOfMonth()->toDateString()
-            );
+            $start = $mois->copy()->startOfMonth()->toDateString();
+            $end = $mois->copy()->endOfMonth()->toDateString();
+
+            if ($dateDebutMin && $end < $dateDebutMin) {
+                $evolution[] = [
+                    'mois' => $mois->format('M Y'),
+                    'mois_num' => $mois->format('Y-m'),
+                    'MB' => 0.0,
+                    'RNE' => 0.0,
+                    'PB' => 0.0,
+                    'CT' => 0.0,
+                ];
+
+                continue;
+            }
+
+            $ind = $this->calculer($activiteId, $start, $end, $dateDebutMin);
             $evolution[] = [
-                'mois'     => $mois->format('M Y'),
+                'mois' => $mois->format('M Y'),
                 'mois_num' => $mois->format('Y-m'),
-                'MB'       => $ind['MB'],
-                'RNE'      => $ind['RNE'],
-                'PB'       => $ind['PB'],
-                'CT'       => $ind['CT'],
+                'MB' => $ind['MB'],
+                'RNE' => $ind['RNE'],
+                'PB' => $ind['PB'],
+                'CT' => $ind['CT'],
             ];
         }
 
         return $evolution;
+    }
+
+    /**
+     * Garde la borne la plus récente entre une période demandée et le plancher d’abonnement.
+     */
+    private function mergeDateDebut(?string $debut, ?string $dateDebutMin): ?string
+    {
+        if ($dateDebutMin === null || $dateDebutMin === '') {
+            return $debut;
+        }
+        if ($debut === null || $debut === '') {
+            return $dateDebutMin;
+        }
+
+        return max($debut, $dateDebutMin);
     }
 
     private function determinerStatut(float $PB, float $MB, float $RNE, ?float $SR): string
@@ -130,7 +165,7 @@ class FinancialIndicatorsService
         if ($MB > 0) {
             return 'orange';
         }
+
         return 'rouge';
     }
 }
-

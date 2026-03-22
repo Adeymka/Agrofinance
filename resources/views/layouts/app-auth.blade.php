@@ -12,7 +12,7 @@
 <body class="auth-page-body" style="margin:0; padding:0; font-family:'Inter',sans-serif;
              background:#050f05; min-height:100vh; overflow-x:hidden; overflow-y:auto;">
 
-    <!-- BACKGROUND PLEIN ÉCRAN -->
+    <!-- BACKGROUND PLEIN ÉCRAN (image fixe — inchangée pour inscription / connexion) -->
     <div style="position:fixed; inset:0; z-index:0;
                 background-image: url('https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=1920&q=80');
                 background-size:cover; background-position:center;">

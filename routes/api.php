@@ -1,62 +1,64 @@
 <?php
 
-use App\Http\Controllers\Api\Auth\{
-    InscriptionController,
-    VerificationOtpController,
-    PinController,
-    ConnexionController,
-    MeController
-};
-use App\Http\Controllers\Api\{
-    AbonnementController,
-    ActiviteController,
-    DashboardController,
-    ExploitationController,
-    IndicateurController,
-    RapportController,
-    TransactionController,
-};
+use App\Http\Controllers\Api\AbonnementController;
+use App\Http\Controllers\Api\ActiviteController;
+use App\Http\Controllers\Api\Auth\ConnexionController;
+use App\Http\Controllers\Api\Auth\InscriptionController;
+use App\Http\Controllers\Api\Auth\MeController;
+use App\Http\Controllers\Api\Auth\PinController;
+use App\Http\Controllers\Api\Auth\VerificationOtpController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExploitationController;
+use App\Http\Controllers\Api\IndicateurController;
+use App\Http\Controllers\Api\RapportController;
+use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Routes publiques (sans token)
 Route::prefix('auth')->group(function () {
-    Route::post('/inscription',      InscriptionController::class);
+    Route::post('/inscription', InscriptionController::class);
     Route::post('/verification-otp', VerificationOtpController::class);
-    Route::post('/renvoyer-otp',     [VerificationOtpController::class, 'renvoyer']);
-    Route::post('/creer-pin',        PinController::class);
-    Route::post('/connexion',        ConnexionController::class);
+    Route::post('/renvoyer-otp', [VerificationOtpController::class, 'renvoyer']);
+    Route::post('/creer-pin', PinController::class);
+    Route::post('/connexion', ConnexionController::class);
 });
 
-// Routes protégées (token Sanctum requis)
-Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
-    Route::post('/deconnexion', function () {
-        auth()->user()->currentAccessToken()->delete();
-        return response()->json(['succes' => true, 'message' => 'Déconnecté.']);
-    });
-    Route::get('/me', MeController::class);
-});
-
-// Toutes ces routes nécessitent un token Sanctum valide
+// Auth Sanctum — renouvellement / méta (sans abonnement actif requis)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('auth')->group(function () {
+        Route::post('/deconnexion', function () {
+            auth()->user()->currentAccessToken()->delete();
+
+            return response()->json(['succes' => true, 'message' => 'Déconnecté.']);
+        });
+        Route::get('/me', MeController::class);
+    });
+
+    Route::post('/abonnement/initier', [AbonnementController::class, 'initier']);
+    Route::post('/abonnement/finaliser-mock', [AbonnementController::class, 'finaliserMock']);
+});
+
+// Abonnement actif requis
+Route::middleware(['auth:sanctum', 'subscribed'])->group(function () {
 
     // Module Exploitations
-    Route::get('/exploitations',       [ExploitationController::class, 'index']);
-    Route::post('/exploitations',      [ExploitationController::class, 'store']);
-    Route::get('/exploitations/{id}',  [ExploitationController::class, 'show']);
-    Route::put('/exploitations/{id}',  [ExploitationController::class, 'update']);
+    Route::get('/exploitations', [ExploitationController::class, 'index']);
+    Route::post('/exploitations', [ExploitationController::class, 'store']);
+    Route::get('/exploitations/{id}', [ExploitationController::class, 'show']);
+    Route::put('/exploitations/{id}', [ExploitationController::class, 'update']);
 
     // Module Activités
-    Route::get('/activites',                       [ActiviteController::class, 'index']);
-    Route::post('/activites',                      [ActiviteController::class, 'store']);
-    Route::get('/activites/{id}',                  [ActiviteController::class, 'show']);
-    Route::put('/activites/{id}',                  [ActiviteController::class, 'update']);
-    Route::post('/activites/{id}/cloturer',        [ActiviteController::class, 'cloturer']);
+    Route::get('/activites', [ActiviteController::class, 'index']);
+    Route::post('/activites', [ActiviteController::class, 'store']);
+    Route::get('/activites/{id}', [ActiviteController::class, 'show']);
+    Route::put('/activites/{id}', [ActiviteController::class, 'update']);
+    Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer']);
 
     // Module Transactions
-    Route::get('/transactions',         [TransactionController::class, 'index']);
-    Route::post('/transactions',        [TransactionController::class, 'store']);
-    Route::get('/transactions/{id}',    [TransactionController::class, 'show']);
-    Route::put('/transactions/{id}',    [TransactionController::class, 'update']);
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+    Route::put('/transactions/{id}', [TransactionController::class, 'update']);
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
     // Module Indicateurs FSA (route la plus spécifique en premier)
@@ -70,13 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rapports', [RapportController::class, 'index']);
     Route::post('/rapports/generer', [RapportController::class, 'generer']);
     Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger']);
-
-    // Abonnement — initiation (auth requise)
-    Route::post('/abonnement/initier', [AbonnementController::class, 'initier']);
-    // Sans FedaPay : finalise l’abonnement après initier (FEDAPAY_MOCK=true uniquement)
-    Route::post('/abonnement/finaliser-mock', [AbonnementController::class, 'finaliserMock']);
 });
 
 // Callback FedaPay : redirection navigateur, sans token Sanctum
 Route::get('/abonnement/callback', [AbonnementController::class, 'callback']);
-
