@@ -23,6 +23,12 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/accueil', [PublicController::class, 'accueil'])->name('accueil');
+
+// Page de fallback pour le Service Worker (mode hors ligne)
+Route::get('/offline', function () {
+    return response()->view('public.offline', [], 200)
+        ->header('Cache-Control', 'no-store');
+})->name('offline');
 Route::get('/comment-ca-marche', [PublicController::class, 'commentCaMarche'])->name('comment-ca-marche');
 Route::get('/a-propos', [PublicController::class, 'aPropos'])->name('a-propos');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');

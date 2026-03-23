@@ -1,4 +1,4 @@
-@extends('layouts.app-desktop')
+﻿@extends($layout)
 @section('title', 'Nouvelle campagne — AgroFinance+')
 @section('page-title', 'Nouvelle campagne')
 @section('page-subtitle', $exploitation->nom)

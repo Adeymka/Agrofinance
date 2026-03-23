@@ -1,4 +1,4 @@
-@extends('layouts.app-desktop')
+﻿@extends($layout)
 @section('title', 'Modifier transaction — AgroFinance+')
 @section('page-title', 'Modifier la transaction')
 

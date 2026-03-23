@@ -1,6 +1,48 @@
 @extends('layouts.app-auth')
 @section('title', 'Connexion')
 
+{{-- ════ MOBILE ════ --}}
+@section('mobile-topbar-link')
+    <a href="{{ route('inscription') }}" class="auth-mobile-topbar-link">Créer un compte</a>
+@endsection
+
+@section('mobile-hero')
+<div class="auth-mobile-hero">
+    <h1 class="auth-mobile-hero-title">
+        Bon retour<br><span>parmi nous.</span>
+    </h1>
+    <p class="auth-mobile-hero-sub">
+        Connectez-vous pour accéder à votre tableau de bord agricole.
+    </p>
+</div>
+@endsection
+
+@section('mobile-form')
+<form method="POST" action="{{ route('connexion.store') }}">
+    @csrf
+    <div class="auth-mobile-field">
+        <label class="auth-mobile-label">Numéro de téléphone</label>
+        <input type="tel" name="telephone" value="{{ old('telephone') }}"
+               placeholder="+229 XX XX XX XX"
+               class="auth-mobile-input" required autofocus inputmode="tel">
+    </div>
+    <div class="auth-mobile-field" style="margin-bottom:6px;">
+        <label class="auth-mobile-label">PIN (4 chiffres)</label>
+        <input type="password" name="pin" maxlength="4"
+               inputmode="numeric" placeholder="• • • •"
+               class="auth-mobile-pin" required>
+    </div>
+    <button type="submit" class="auth-mobile-btn" style="margin-top:20px;">
+        Se connecter →
+    </button>
+</form>
+<div class="auth-mobile-link-row">
+    Pas encore de compte ?
+    <a href="{{ route('inscription') }}" class="auth-mobile-link">Créer un compte</a>
+</div>
+@endsection
+
+{{-- ════ DESKTOP (inchangé) ════ --}}
 @section('branding')
 <div style="display:flex; align-items:center; gap:12px; margin-bottom:56px;">
     <div style="width:42px; height:42px; border-radius:12px;
@@ -13,7 +55,6 @@
                     color:rgba(255,255,255,0.30); text-transform:uppercase; letter-spacing:0.12em;">Gestion agricole</div>
     </div>
 </div>
-
 <h1 style="font-family:'Space Grotesk',sans-serif; font-size:44px;
            font-weight:700; color:white; line-height:1.08;
            letter-spacing:-0.04em; margin:0 0 20px 0;">
@@ -25,8 +66,6 @@
           max-width:300px; margin:0 0 48px 0;">
     Vos données financières agricoles sont prêtes. Connectez-vous pour accéder à votre tableau de bord.
 </p>
-
-<!-- Stats rapides -->
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:300px;">
     @foreach ([
         ['102 500+', 'Exploitants au Bénin'],

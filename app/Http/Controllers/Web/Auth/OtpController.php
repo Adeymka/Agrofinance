@@ -38,6 +38,11 @@ class OtpController extends Controller
             return back()->withErrors(['code' => $resultat['message']]);
         }
 
+        if (User::where('telephone', $data['telephone'])->exists()) {
+            return redirect()->route('connexion')
+                ->with('success', 'Ce numéro est déjà enregistré. Connectez-vous avec votre PIN.');
+        }
+
         $user = User::create([
             'nom'               => $data['nom'],
             'prenom'            => $data['prenom'],
@@ -48,7 +53,7 @@ class OtpController extends Controller
 
         Abonnement::create([
             'user_id'    => $user->id,
-            'plan'       => 'essai',
+            'plan'       => 'gratuit',
             'statut'     => 'essai',
             'date_debut' => now()->toDateString(),
             'date_fin'   => now()->addDays(75)->toDateString(),

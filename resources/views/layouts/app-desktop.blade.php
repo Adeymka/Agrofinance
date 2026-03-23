@@ -7,11 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0D1F0D">
+    <meta name="description" content="@yield('meta-description', 'AgroFinance+ — Gérez vos exploitations agricoles et calculez vos indicateurs financiers.')">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @auth
         <meta name="api-token" content="{{ session('api_token') }}">
         <meta name="user-id" content="{{ auth()->user()->id }}">
     @endauth
+    @stack('styles')
     @stack('head')
 </head>
 @php
@@ -546,5 +550,13 @@
     })();
     </script>
     @stack('scripts')
+    @stack('modals')
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('{{ asset('sw.js') }}').catch(function () {});
+        });
+    }
+    </script>
 </body>
 </html>

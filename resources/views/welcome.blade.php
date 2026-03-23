@@ -1,4 +1,4 @@
-@extends('layouts.app-desktop')
+﻿@extends($layout)
 
 @section('content')
     <main class="max-w-md mx-auto px-4 pt-12 text-center">
