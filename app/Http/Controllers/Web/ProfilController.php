@@ -34,8 +34,8 @@ class ProfilController extends Controller
 
         if ($request->filled('pin')) {
             $request->validate([
-                'pin_actuel' => 'required|digits:4',
-                'pin'        => 'required|digits:4|confirmed',
+                'pin_actuel' => 'required|digits_between:4,6',
+                'pin'        => 'required|digits_between:4,6|confirmed',
             ]);
 
             if (! $user->verifierPin((string) $request->input('pin_actuel'))) {

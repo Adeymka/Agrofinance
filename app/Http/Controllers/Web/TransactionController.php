@@ -120,6 +120,7 @@ class TransactionController extends Controller
             'est_imprevue' => $request->boolean('est_imprevue'),
             'synced' => true,
         ]);
+        $this->fsa->invalidateForActivity((int) $request->activite_id);
 
         $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
@@ -217,6 +218,7 @@ class TransactionController extends Controller
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
         })->with('activite.exploitation:id,type')->findOrFail($id);
+        $oldActiviteId = (int) $transaction->activite_id;
 
         $rules = [
             'activite_id' => 'required|integer|exists:activites,id',
@@ -281,6 +283,8 @@ class TransactionController extends Controller
             'note' => $request->note,
             'est_imprevue' => $request->boolean('est_imprevue'),
         ]);
+        $this->fsa->invalidateForActivity($oldActiviteId);
+        $this->fsa->invalidateForActivity((int) $request->activite_id);
 
         $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
@@ -309,6 +313,7 @@ class TransactionController extends Controller
 
         $activiteId = $transaction->activite_id;
         $transaction->delete();
+        $this->fsa->invalidateForActivity((int) $activiteId);
 
         return redirect()->route('activites.show', $activiteId)
             ->with('success', 'Transaction supprimée.');

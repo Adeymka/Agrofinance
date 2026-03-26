@@ -27,9 +27,9 @@
                class="auth-mobile-input" required autofocus inputmode="tel">
     </div>
     <div class="auth-mobile-field" style="margin-bottom:6px;">
-        <label class="auth-mobile-label">PIN (4 chiffres)</label>
-        <input type="password" name="pin" maxlength="4"
-               inputmode="numeric" placeholder="• • • •"
+        <label class="auth-mobile-label">PIN (4-6 chiffres)</label>
+        <input type="password" name="pin" maxlength="6"
+               inputmode="numeric" placeholder="• • • • • •"
                class="auth-mobile-pin" required>
     </div>
     <button type="submit" class="auth-mobile-btn" style="margin-top:20px;">
@@ -108,9 +108,9 @@
                class="auth-input" required autofocus>
     </div>
     <div class="auth-field">
-        <label class="auth-label">PIN (4 chiffres)</label>
-        <input type="password" name="pin" maxlength="4"
-               inputmode="numeric" placeholder="• • • •"
+        <label class="auth-label">PIN (4-6 chiffres)</label>
+        <input type="password" name="pin" maxlength="6"
+               inputmode="numeric" placeholder="• • • • • •"
                class="pin-input" required>
     </div>
     <button type="submit" class="auth-btn" style="margin-top:24px;">

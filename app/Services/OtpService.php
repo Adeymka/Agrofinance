@@ -2,14 +2,19 @@
 
 namespace App\Services;
 
+use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Vonage\Client;
+use Vonage\Client\Credentials\Basic;
+use Vonage\SMS\Message\SMS;
 
 class OtpService
 {
     private const EXPIRY = 10;
     private const MAX_TRIES = 5;
     private const LOCKOUT = 15;
+    private const SMS_RETRY_ATTEMPTS = 3;
 
     public function genererEtEnvoyer(string $telephone): bool
     {
@@ -57,32 +62,84 @@ class OtpService
         return ['succes' => true, 'message' => 'Code vérifié avec succès.'];
     }
 
+    public function creerTokenCreationPin(string $telephone): string
+    {
+        $telephoneNettoye = preg_replace('/[^0-9]/', '', $telephone);
+        $token = bin2hex(random_bytes(16));
+        $key = "pin_creation_token_{$telephoneNettoye}";
+        Cache::put($key, $token, now()->addMinutes(15));
+
+        return $token;
+    }
+
+    public function consommerTokenCreationPin(string $telephone, string $token): bool
+    {
+        $telephoneNettoye = preg_replace('/[^0-9]/', '', $telephone);
+        $key = "pin_creation_token_{$telephoneNettoye}";
+        $storedToken = Cache::get($key);
+        if (! $storedToken || ! hash_equals((string) $storedToken, $token)) {
+            return false;
+        }
+
+        Cache::forget($key);
+
+        return true;
+    }
+
     private function envoyerSMS(string $telephone, string $code): bool
     {
-        if (app()->environment(['local', 'testing'])) {
-            Log::info("[OTP LOCAL] Tel: {$telephone} | Code: {$code}");
+        if (app()->environment('local') && env('OTP_DEBUG_LOG', false)) {
+            Log::info("[OTP DEBUG] Tel: {$telephone} | Code: {$code}");
             return true;
         }
 
-        try {
-            $client = new \Vonage\Client(
-                new \Vonage\Client\Credentials\Basic(
-                    config('services.vonage.api_key'),
-                    config('services.vonage.api_secret')
-                )
-            );
-            $client->sms()->send(
-                new \Vonage\SMS\Message\SMS(
-                    $telephone,
-                    config('services.vonage.sms_from'),
-                    "AgroFinance+ : votre code est {$code}. Valable 10 minutes."
-                )
-            );
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Vonage SMS : ' . $e->getMessage());
-            return false;
+        $derniereErreur = null;
+        for ($tentative = 0; $tentative < self::SMS_RETRY_ATTEMPTS; $tentative++) {
+            try {
+                $httpClient = new GuzzleClient([
+                    'timeout' => (float) config('services.vonage.timeout_seconds', 15),
+                    'connect_timeout' => (float) config('services.vonage.connect_timeout_seconds', 5),
+                ]);
+
+                $client = new Client(
+                    new Basic(
+                        (string) config('services.vonage.api_key'),
+                        (string) config('services.vonage.api_secret')
+                    ),
+                    [],
+                    $httpClient
+                );
+
+                $client->sms()->send(
+                    new SMS(
+                        $telephone,
+                        (string) config('services.vonage.sms_from'),
+                        "AgroFinance+ : votre code est {$code}. Valable 10 minutes."
+                    )
+                );
+
+                return true;
+            } catch (\Throwable $e) {
+                $derniereErreur = $e;
+                Log::warning('Vonage SMS: échec envoi', [
+                    'tentative' => $tentative + 1,
+                    'error_class' => $e::class,
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                if ($tentative < self::SMS_RETRY_ATTEMPTS - 1) {
+                    $backoffSeconds = (int) pow(2, $tentative); // 1,2,4...
+                    usleep($backoffSeconds * 1000000);
+                }
+            }
         }
+
+        Log::error('Vonage SMS: abandon après tentatives', [
+            'error_class' => $derniereErreur ? $derniereErreur::class : null,
+            'error_message' => $derniereErreur?->getMessage(),
+        ]);
+
+        return false;
     }
 }
 

@@ -7,6 +7,7 @@ use App\Models\Activite;
 use App\Models\Transaction;
 use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -82,27 +83,28 @@ class TransactionController extends Controller
         }
 
         $creees = [];
+        DB::transaction(function () use ($request, &$creees) {
+            foreach ($request->transactions as $data) {
+                $activite = Activite::whereHas('exploitation', function ($q) {
+                    $q->where('user_id', auth()->user()->id);
+                })->findOrFail($data['activite_id']);
 
-        foreach ($request->transactions as $data) {
-            $activite = Activite::whereHas('exploitation', function ($q) {
-                $q->where('user_id', auth()->user()->id);
-            })->findOrFail($data['activite_id']);
-
-            $creees[] = Transaction::create([
-                'activite_id' => $activite->id,
-                'type' => $data['type'],
-                // Les recettes n'ont pas de nature
-                'nature' => $data['type'] === 'recette'
-                                        ? null
-                                        : ($data['nature'] ?? 'variable'),
-                'categorie' => $data['categorie'],
-                'montant' => $data['montant'],
-                'date_transaction' => $data['date_transaction'],
-                'note' => $data['note'] ?? null,
-                'est_imprevue' => $data['est_imprevue'] ?? false,
-                'synced' => true,
-            ]);
-        }
+                $creees[] = Transaction::create([
+                    'activite_id' => $activite->id,
+                    'type' => $data['type'],
+                    // Les recettes n'ont pas de nature
+                    'nature' => $data['type'] === 'recette'
+                                            ? null
+                                            : ($data['nature'] ?? 'variable'),
+                    'categorie' => $data['categorie'],
+                    'montant' => $data['montant'],
+                    'date_transaction' => $data['date_transaction'],
+                    'note' => $data['note'] ?? null,
+                    'est_imprevue' => $data['est_imprevue'] ?? false,
+                    'synced' => true,
+                ]);
+            }
+        });
 
         // Recalculer les indicateurs financiers agricoles pour chaque activité touchée
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
@@ -110,6 +112,7 @@ class TransactionController extends Controller
         $idsUniques = collect($creees)->pluck('activite_id')->unique();
         $indicateurs = [];
         foreach ($idsUniques as $id) {
+            $this->indicateurs->invalidateForActivity((int) $id);
             $indicateurs[$id] = $this->indicateurs->calculer($id, null, null, $floor);
         }
 
@@ -137,6 +140,7 @@ class TransactionController extends Controller
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) {
             $q->where('user_id', auth()->user()->id);
         })->findOrFail($id);
+        $oldActiviteId = (int) $transaction->activite_id;
 
         $request->validate([
             'type' => 'sometimes|in:depense,recette',
@@ -157,12 +161,15 @@ class TransactionController extends Controller
             $transaction->update(['nature' => null]);
         }
 
-        $indicateurs = $this->indicateurs->calculer($transaction->activite_id);
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $this->indicateurs->invalidateForActivity($oldActiviteId);
+        $this->indicateurs->invalidateForActivity((int) $transaction->activite_id);
+        $indicateurs = $this->indicateurs->calculer((int) $transaction->activite_id, null, null, $floor);
 
         return response()->json([
             'succes' => true,
             'message' => 'Transaction mise à jour.',
-            'data' => $transaction->fresh(),
+            'data' => $transaction,
             'indicateurs' => $indicateurs,
         ]);
     }
@@ -184,6 +191,7 @@ class TransactionController extends Controller
         $transaction->delete();
 
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $this->indicateurs->invalidateForActivity((int) $activiteId);
         $indicateurs = $this->indicateurs->calculer($activiteId, null, null, $floor);
 
         return response()->json([

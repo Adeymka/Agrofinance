@@ -6,10 +6,11 @@ use App\Http\Controllers\Concerns\HandlesPdfAbonnement;
 use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Rapport;
+use App\Jobs\GenerateRapportPdfJob;
 use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -75,21 +76,12 @@ class RapportController extends Controller
         })->with('exploitation')->findOrFail($request->activite_id);
 
         $exploitation = $activite->exploitation;
-        $user = auth()->user();
 
         $indicateurs = $this->indicateurs->calculer(
             $activite->id,
             $request->periode_debut,
             $request->periode_fin
         );
-
-        $transactions = $activite->transactions()
-            ->whereBetween('date_transaction', [
-                $request->periode_debut,
-                $request->periode_fin,
-            ])
-            ->orderBy('date_transaction')
-            ->get();
 
         $token = Str::random(40);
 
@@ -103,26 +95,24 @@ class RapportController extends Controller
             'lien_expire_le' => now()->addHours(72),
         ]);
 
-        $template = $request->type === 'dossier_credit'
-            ? 'rapports.pdf.dossier-credit'
-            : 'rapports.pdf.campagne';
+        $job = new GenerateRapportPdfJob(
+            $rapport->id,
+            $activite->id,
+            $request->type,
+            $request->periode_debut,
+            $request->periode_fin,
+            $indicateurs
+        );
 
-        $pdf = Pdf::loadView($template, compact(
-            'user', 'exploitation', 'activite',
-            'rapport', 'indicateurs', 'transactions'
-        ));
-
-        $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
-        $chemin = 'rapports/'.$nomFichier;
-
-        Storage::disk('local')->makeDirectory('rapports');
-        Storage::disk('local')->put($chemin, $pdf->output());
-
-        $rapport->update(['chemin_pdf' => $chemin]);
+        if (app()->environment(['local', 'testing'])) {
+            $job->handle($this->indicateurs);
+        } else {
+            dispatch($job->onQueue('rapports'));
+        }
 
         return response()->json([
             'succes' => true,
-            'message' => 'Rapport généré avec succès.',
+            'message' => 'Rapport en cours de génération.',
             'data' => [
                 'rapport_id' => $rapport->id,
                 'type' => $rapport->type,
@@ -154,16 +144,31 @@ class RapportController extends Controller
             return $refus;
         }
 
-        if ($rapport->chemin_pdf === '' || ! Storage::disk('local')->exists($rapport->chemin_pdf)) {
+        if ($rapport->chemin_pdf === '') {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Rapport en cours de génération.',
+            ], 425);
+        }
+
+        if (! Storage::disk('local')->exists($rapport->chemin_pdf)) {
             return response()->json([
                 'succes' => false,
                 'message' => 'Fichier PDF introuvable.',
             ], 404);
         }
+        $contenuStocke = Storage::disk('local')->get($rapport->chemin_pdf);
 
-        return Storage::disk('local')->download(
-            $rapport->chemin_pdf,
-            "rapport_{$rapport->id}.pdf"
-        );
+        try {
+            $pdfBytes = Crypt::decryptString($contenuStocke);
+        } catch (\Throwable) {
+            // Compatibilité avec d'anciens rapports encore non chiffrés.
+            $pdfBytes = $contenuStocke;
+        }
+
+        return response($pdfBytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="rapport_'.$rapport->id.'.pdf"',
+        ]);
     }
 }

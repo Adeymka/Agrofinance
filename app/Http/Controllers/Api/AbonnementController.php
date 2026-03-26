@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
+use App\Support\FedaPayHttpConfig;
 use App\Models\User;
 use App\Services\AbonnementService;
 use FedaPay\FedaPay;
@@ -70,24 +71,36 @@ class AbonnementController extends Controller
         }
 
         try {
-            FedaPay::setApiKey(config('services.fedapay.secret_key'));
-            FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
+            // Retry uniquement sur les appels FedaPay (side-effects distants possibles).
+            [$transaction, $token] = $this->appelerFedaPayAvecRetry(
+                function () use ($request, $user, $montant) {
+                    FedaPay::setApiKey(config('services.fedapay.secret_key'));
+                    FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
+                    FedaPayHttpConfig::appliquer();
 
-            $transaction = Transaction::create([
-                'description' => "AgroFinance+ — Abonnement {$request->plan}",
-                'amount' => $montant,
-                'currency' => ['iso' => 'XOF'],
-                'callback_url' => rtrim(config('app.url'), '/').'/api/abonnement/callback',
-                'customer' => [
-                    'firstname' => $user->prenom,
-                    'lastname' => $user->nom,
-                    'phone_number' => [
-                        'number' => $request->telephone,
-                        'country' => 'bj',
-                    ],
-                ],
-                'include' => 'customer,currency',
-            ]);
+                    $transaction = Transaction::create([
+                        'description' => "AgroFinance+ — Abonnement {$request->plan}",
+                        'amount' => $montant,
+                        'currency' => ['iso' => 'XOF'],
+                        'callback_url' => rtrim(config('app.url'), '/').'/api/abonnement/callback',
+                        'customer' => [
+                            'firstname' => $user->prenom,
+                            'lastname' => $user->nom,
+                            'phone_number' => [
+                                'number' => $request->telephone,
+                                'country' => 'bj',
+                            ],
+                        ],
+                        'include' => 'customer,currency',
+                    ]);
+
+                    $token = $transaction->generateToken();
+
+                    return [$transaction, $token];
+                },
+                'initier',
+                3
+            );
 
             $txId = (string) $transaction->id;
 
@@ -106,8 +119,6 @@ class AbonnementController extends Controller
                 'fedapay_user_id' => $user->id,
             ]);
 
-            $token = $transaction->generateToken();
-
             return response()->json([
                 'succes' => true,
                 'message' => "Transaction initiée. Redirigez l'utilisateur vers l'URL de paiement.",
@@ -119,11 +130,14 @@ class AbonnementController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
-            Log::error('FedaPay initier : '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('FedaPay initier: echec appel fournisseur', [
+                'error_class' => $e::class,
+                'error_message' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'succes' => false,
-                'message' => "Erreur lors de l'initiation du paiement : ".$e->getMessage(),
+                'message' => "Erreur lors de l'initiation du paiement.",
             ], 500);
         }
     }
@@ -141,6 +155,7 @@ class AbonnementController extends Controller
         try {
             FedaPay::setApiKey(config('services.fedapay.secret_key'));
             FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
+            FedaPayHttpConfig::appliquer();
 
             $transactionId = $request->query('id')
                 ?? $request->input('id')
@@ -152,7 +167,13 @@ class AbonnementController extends Controller
                 return response()->json(['succes' => false, 'message' => 'Transaction inconnue.'], 422);
             }
 
-            $transaction = Transaction::retrieve($transactionId);
+            $transaction = $this->appelerFedaPayAvecRetry(
+                function () use ($transactionId) {
+                    return Transaction::retrieve($transactionId);
+                },
+                'callback_retrieve',
+                3
+            );
 
             $pending = Cache::pull("fedapay_pending:{$transactionId}");
             if ($pending) {
@@ -195,9 +216,12 @@ class AbonnementController extends Controller
 
             return response()->json(['succes' => true]);
         } catch (\Throwable $e) {
-            Log::error('FedaPay callback : '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('FedaPay callback: echec traitement', [
+                'error_class' => $e::class,
+                'error_message' => $e->getMessage(),
+            ]);
 
-            return response()->json(['succes' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['succes' => false, 'message' => 'Erreur lors de la confirmation du paiement.'], 500);
         }
     }
 
@@ -241,5 +265,30 @@ class AbonnementController extends Controller
                 'statut' => 'actif',
             ],
         ]);
+    }
+
+    private function appelerFedaPayAvecRetry(callable $operation, string $operationNom, int $maxTentatives = 3): mixed
+    {
+        $derniereErreur = null;
+
+        for ($tentative = 0; $tentative < $maxTentatives; $tentative++) {
+            try {
+                return $operation();
+            } catch (\Throwable $e) {
+                $derniereErreur = $e;
+                Log::warning("FedaPay {$operationNom}: echec externe", [
+                    'tentative' => $tentative + 1,
+                    'error_class' => $e::class,
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                if ($tentative < $maxTentatives - 1) {
+                    $backoffSeconds = (int) pow(2, $tentative); // 1,2,4...
+                    usleep($backoffSeconds * 1000000);
+                }
+            }
+        }
+
+        throw $derniereErreur;
     }
 }

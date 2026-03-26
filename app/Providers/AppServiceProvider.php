@@ -7,6 +7,7 @@ use App\Services\FinancialIndicatorsService;
 use App\Services\OtpService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,5 +27,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useTailwind();
+
+        if ($this->app->environment('production') && config('services.fedapay.mock')) {
+            throw new RuntimeException(
+                'FEDAPAY_MOCK ne doit pas être activé en production (paiements simulés).'
+            );
+        }
     }
 }

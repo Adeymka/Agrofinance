@@ -304,13 +304,13 @@
         <div class="prf-block-title">Changer le PIN</div>
         <form method="POST" action="{{ route('profil.update') }}">
             @csrf @method('PUT')
-            <p style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.28); margin-bottom:14px;">
-                Laissez vide pour ne pas modifier. 4 chiffres uniquement.
+                <p style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.28); margin-bottom:14px;">
+                Laissez vide pour ne pas modifier. 4-6 chiffres uniquement.
             </p>
 
             <div class="prf-field">
                 <div class="prf-label">PIN actuel</div>
-                <input type="password" name="pin_actuel" maxlength="4" inputmode="numeric"
+                <input type="password" name="pin_actuel" maxlength="6" inputmode="numeric"
                        autocomplete="current-password" class="prf-input" placeholder="••••">
                 @error('pin_actuel') <p class="prf-error">{{ $message }}</p> @enderror
             </div>
@@ -318,14 +318,14 @@
             <div class="prf-input-grid prf-field">
                 <div>
                     <div class="prf-label">Nouveau PIN</div>
-                    <input type="password" name="pin" maxlength="4" inputmode="numeric"
-                           class="prf-input" placeholder="••••">
+                    <input type="password" name="pin" maxlength="6" inputmode="numeric"
+                           class="prf-input" placeholder="••••••">
                     @error('pin') <p class="prf-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <div class="prf-label">Confirmer</div>
-                    <input type="password" name="pin_confirmation" maxlength="4" inputmode="numeric"
-                           class="prf-input" placeholder="••••">
+                    <input type="password" name="pin_confirmation" maxlength="6" inputmode="numeric"
+                           class="prf-input" placeholder="••••••">
                 </div>
             </div>
 
@@ -400,11 +400,11 @@
                 <hr class="border-gray-100">
                 <div>
                     <p class="text-sm font-semibold text-gray-800 mb-3">Changer le PIN</p>
-                    <p class="text-xs text-gray-500 mb-3">Laissez vide pour ne pas modifier. 4 chiffres.</p>
+                    <p class="text-xs text-gray-500 mb-3">Laissez vide pour ne pas modifier. 4-6 chiffres.</p>
                     <div class="space-y-3">
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">PIN actuel</label><input type="password" name="pin_actuel" maxlength="4" inputmode="numeric" autocomplete="current-password" class="input-field" placeholder="••••">@error('pin_actuel') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror</div>
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nouveau PIN</label><input type="password" name="pin" maxlength="4" inputmode="numeric" class="input-field" placeholder="••••">@error('pin') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror</div>
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Confirmer le PIN</label><input type="password" name="pin_confirmation" maxlength="4" inputmode="numeric" class="input-field" placeholder="••••"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">PIN actuel</label><input type="password" name="pin_actuel" maxlength="6" inputmode="numeric" autocomplete="current-password" class="input-field" placeholder="••••••">@error('pin_actuel') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror</div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nouveau PIN</label><input type="password" name="pin" maxlength="6" inputmode="numeric" class="input-field" placeholder="••••••">@error('pin') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror</div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Confirmer le PIN</label><input type="password" name="pin_confirmation" maxlength="6" inputmode="numeric" class="input-field" placeholder="••••••"></div>
                     </div>
                 </div>
                 <button type="submit" class="btn-primary w-full py-3">Enregistrer</button>

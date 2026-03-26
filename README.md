@@ -64,3 +64,19 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Production Hardening
+
+Before any production deployment, verify these minimum settings:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `SESSION_SECURE_COOKIE=true`
+- `SESSION_ENCRYPT=true`
+- `FEDAPAY_MOCK=false`
+
+Recommended for multi-instance deployment:
+
+- `SESSION_DRIVER=redis`
+- `CACHE_STORE=redis`
+- `QUEUE_CONNECTION=redis`

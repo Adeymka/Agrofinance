@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rapport extends Model
 {
+    protected static function booted(): void
+    {
+        static::creating(function (Rapport $rapport) {
+            if ($rapport->lien_expire_le === null) {
+                $rapport->lien_expire_le = now()->addHours(72);
+            }
+        });
+    }
+
     protected $fillable = [
         'exploitation_id', 'type', 'periode_debut',
         'periode_fin', 'chemin_pdf', 'lien_token', 'lien_expire_le',

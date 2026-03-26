@@ -44,10 +44,13 @@ class AuthFlowTest extends TestCase
                 'succes' => true,
             ]);
 
+        $pinToken = $verification->json('pin_creation_token');
+
         $this->postJson('/api/auth/creer-pin', [
             'telephone' => $telephone,
             'pin' => '1234',
             'pin_confirmation' => '1234',
+            'otp_token' => $pinToken,
         ])->assertStatus(200)->assertJson([
             'succes' => true,
         ]);

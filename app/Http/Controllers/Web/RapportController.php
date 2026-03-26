@@ -9,8 +9,9 @@ use App\Models\Exploitation;
 use App\Models\Rapport;
 use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Jobs\GenerateRapportPdfJob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -74,25 +75,15 @@ class RapportController extends Controller
             $q->where('user_id', $uid);
         })->with('exploitation')->findOrFail($request->activite_id);
 
-        $exploitation = $activite->exploitation;
-        $user = auth()->user();
-
         $debut = $request->periode_debut
             ?? ($activite->date_debut?->toDateString() ?? now()->startOfMonth()->toDateString());
         $fin = $request->periode_fin
             ?? ($activite->date_fin?->toDateString() ?? now()->toDateString());
 
-        $indicateurs = $this->fsa->calculer($activite->id, $debut, $fin);
-
-        $transactions = $activite->transactions()
-            ->whereBetween('date_transaction', [$debut, $fin])
-            ->orderBy('date_transaction')
-            ->get();
-
         $token = Str::random(40);
 
         $rapport = Rapport::create([
-            'exploitation_id' => $exploitation->id,
+            'exploitation_id' => $activite->exploitation->id,
             'type' => $request->type,
             'periode_debut' => $debut,
             'periode_fin' => $fin,
@@ -100,26 +91,22 @@ class RapportController extends Controller
             'lien_token' => $token,
             'lien_expire_le' => now()->addHours(72),
         ]);
+        $job = new GenerateRapportPdfJob(
+            $rapport->id,
+            $activite->id,
+            $request->type,
+            $debut,
+            $fin
+        );
 
-        $template = $request->type === 'dossier_credit'
-            ? 'rapports.pdf.dossier-credit'
-            : 'rapports.pdf.campagne';
-
-        $pdf = Pdf::loadView($template, compact(
-            'user', 'exploitation', 'activite',
-            'rapport', 'indicateurs', 'transactions'
-        ));
-
-        $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
-        $chemin = 'rapports/'.$nomFichier;
-
-        Storage::disk('local')->makeDirectory('rapports');
-        Storage::disk('local')->put($chemin, $pdf->output());
-
-        $rapport->update(['chemin_pdf' => $chemin]);
+        if (app()->environment(['local', 'testing'])) {
+            $job->handle($this->fsa);
+        } else {
+            dispatch($job->onQueue('rapports'));
+        }
 
         return redirect()->route('rapports.index')
-            ->with('success', 'Rapport PDF généré !');
+            ->with('success', 'Rapport PDF en cours de génération !');
     }
 
     public function telecharger(Request $request, int $id)
@@ -139,18 +126,35 @@ class RapportController extends Controller
             return $refus;
         }
 
+        if ($rapport->chemin_pdf === '') {
+            return back()->withErrors(['pdf' => 'Rapport en cours de génération.']);
+        }
+
         if (! Storage::disk('local')->exists($rapport->chemin_pdf)) {
             return back()->withErrors(['pdf' => 'Fichier introuvable.']);
         }
 
-        return Storage::disk('local')->download($rapport->chemin_pdf, "rapport_{$rapport->id}.pdf");
+        $contenuStocke = Storage::disk('local')->get($rapport->chemin_pdf);
+
+        try {
+            $pdfBytes = Crypt::decryptString($contenuStocke);
+        } catch (\Throwable) {
+            // Compatibilité avec d'anciens rapports encore non chiffrés.
+            $pdfBytes = $contenuStocke;
+        }
+
+        return response($pdfBytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="rapport_'.$rapport->id.'.pdf"',
+        ]);
     }
 
     public function partager(string $token)
     {
         $rapport = Rapport::where('lien_token', $token)->firstOrFail();
 
-        if ($rapport->lien_expire_le && now()->isAfter($rapport->lien_expire_le)) {
+        // Expiration obligatoire : absence de date = lien invalide (pas d’accès illimité).
+        if (! $rapport->lien_expire_le || now()->isAfter($rapport->lien_expire_le)) {
             return response()->view('rapports.expire', [], 410);
         }
 
@@ -158,7 +162,14 @@ class RapportController extends Controller
             abort(404);
         }
 
-        $contenu = Storage::disk('local')->get($rapport->chemin_pdf);
+        $contenuStocke = Storage::disk('local')->get($rapport->chemin_pdf);
+
+        try {
+            $contenu = Crypt::decryptString($contenuStocke);
+        } catch (\Throwable) {
+            // Compatibilité avec d'anciens rapports encore non chiffrés.
+            $contenu = $contenuStocke;
+        }
 
         return response($contenu, 200, [
             'Content-Type' => 'application/pdf',

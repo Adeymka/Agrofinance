@@ -7,6 +7,7 @@ use App\Models\Abonnement;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class OtpController extends Controller
 {
@@ -67,15 +68,25 @@ class OtpController extends Controller
 
     public function renvoyer(Request $request, OtpService $otp)
     {
-        $request->merge([
-            'telephone' => session('inscription_data.telephone'),
-        ]);
+        $telephone = session('inscription_data.telephone');
+        $request->merge(['telephone' => $telephone]);
 
         $request->validate([
             'telephone' => 'required|string',
         ]);
 
+        $telephoneNettoye = preg_replace('/[^0-9]/', '', (string) $telephone);
+        $rateKey = 'web_otp_resend:'.$telephoneNettoye.':'.$request->ip();
+        if (RateLimiter::tooManyAttempts($rateKey, 3)) {
+            $secondes = RateLimiter::availableIn($rateKey);
+
+            return back()->withErrors([
+                'code' => "Trop de renvois OTP. Réessayez dans {$secondes} secondes.",
+            ]);
+        }
+
         $otp->genererEtEnvoyer($request->telephone);
+        RateLimiter::hit($rateKey, 15 * 60);
 
         return back()->with('success', 'Nouveau code envoyé.');
     }

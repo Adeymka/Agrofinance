@@ -42,20 +42,22 @@ class ActiviteController extends Controller
 
         $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 
-        $indicateursParActivite = [];
-        foreach ($actives as $a) {
-            $indicateursParActivite[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
-        }
+        $allIds = $actives->pluck('id')
+            ->merge($terminees->pluck('id'))
+            ->merge($abandonnees->pluck('id'))
+            ->unique()
+            ->values();
+        $indicateursTous = $this->service->calculerPourActivites($allIds, null, null, $dateMin);
 
-        $indicateursTerminees = [];
-        foreach ($terminees as $a) {
-            $indicateursTerminees[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
-        }
-
-        $indicateursAbandonnees = [];
-        foreach ($abandonnees as $a) {
-            $indicateursAbandonnees[$a->id] = $this->service->calculer($a->id, null, null, $dateMin);
-        }
+        $indicateursParActivite = $actives->mapWithKeys(
+            fn ($a) => [$a->id => $indicateursTous[$a->id] ?? $this->service->calculer($a->id, null, null, $dateMin)]
+        )->all();
+        $indicateursTerminees = $terminees->mapWithKeys(
+            fn ($a) => [$a->id => $indicateursTous[$a->id] ?? $this->service->calculer($a->id, null, null, $dateMin)]
+        )->all();
+        $indicateursAbandonnees = $abandonnees->mapWithKeys(
+            fn ($a) => [$a->id => $indicateursTous[$a->id] ?? $this->service->calculer($a->id, null, null, $dateMin)]
+        )->all();
 
         return view('activites.index', compact(
             'exploitation',

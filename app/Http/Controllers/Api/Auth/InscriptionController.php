@@ -33,7 +33,7 @@ class InscriptionController extends Controller
 
         return response()->json([
             'succes'  => true,
-            'message' => 'Compte créé. Vérifiez votre code OTP dans les logs (environnement local).',
+            'message' => 'Compte créé. Vérifiez votre code OTP (uniquement en local si `OTP_DEBUG_LOG=true`).',
             'data'    => ['user_id' => $user->id],
         ], 201);
     }

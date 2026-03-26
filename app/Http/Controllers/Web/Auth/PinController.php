@@ -21,8 +21,8 @@ class PinController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'pin'              => 'required|digits:4|confirmed',
-            'pin_confirmation' => 'required|digits:4',
+            'pin'              => 'required|digits_between:4,6|confirmed',
+            'pin_confirmation' => 'required|digits_between:4,6',
         ]);
 
         $tel = session('inscription_data.telephone');

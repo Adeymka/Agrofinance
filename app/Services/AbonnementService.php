@@ -6,6 +6,7 @@ use App\Models\Abonnement;
 use App\Models\Exploitation;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\QueryException;
 
 class AbonnementService
 {
@@ -211,14 +212,32 @@ class AbonnementService
             };
         }
 
-        return Abonnement::create([
-            'user_id' => $user->id,
-            'plan' => $planDb,
-            'statut' => 'actif',
-            'date_debut' => now()->toDateString(),
-            'date_fin' => now()->addDays($dureeJours)->toDateString(),
-            'montant' => $montant ?? 0,
-            'ref_fedapay' => $refFedapay,
-        ]);
+        try {
+            return Abonnement::create([
+                'user_id' => $user->id,
+                'plan' => $planDb,
+                'statut' => 'actif',
+                'date_debut' => now()->toDateString(),
+                'date_fin' => now()->addDays($dureeJours)->toDateString(),
+                'montant' => $montant ?? 0,
+                'ref_fedapay' => $refFedapay,
+            ]);
+        } catch (QueryException $e) {
+            // Race condition : si deux callbacks arrivent en même temps, la 2e création échoue.
+            // On re-lira l'enregistrement existant.
+            if ($this->isDuplicateFedapayKeyException($e)) {
+                return Abonnement::where('ref_fedapay', $refFedapay)->firstOrFail();
+            }
+
+            throw $e;
+        }
+    }
+
+    private function isDuplicateFedapayKeyException(QueryException $e): bool
+    {
+        $message = $e->getMessage();
+
+        return str_contains(strtolower($message), 'duplicate')
+            || str_contains(strtolower($message), 'uq_abonnements_ref_fedapay');
     }
 }

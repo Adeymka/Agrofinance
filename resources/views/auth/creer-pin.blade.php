@@ -12,7 +12,7 @@
         Dernière<br><span>étape.</span>
     </h1>
     <p class="auth-mobile-hero-sub">
-        Choisissez un PIN à 4 chiffres. Vous l'utiliserez à chaque connexion.
+        Choisissez un PIN entre 4 et 6 chiffres. Vous l'utiliserez à chaque connexion.
     </p>
 </div>
 @endsection
@@ -49,14 +49,14 @@
     @csrf
     <div class="auth-mobile-field">
         <label class="auth-mobile-label">Votre PIN</label>
-        <input type="password" name="pin" maxlength="4"
-               inputmode="numeric" placeholder="• • • •"
+        <input type="password" name="pin" maxlength="6"
+               inputmode="numeric" placeholder="• • • • • •"
                class="auth-mobile-pin" required autofocus>
     </div>
     <div class="auth-mobile-field" style="margin-bottom:8px;">
         <label class="auth-mobile-label">Confirmer le PIN</label>
-        <input type="password" name="pin_confirmation" maxlength="4"
-               inputmode="numeric" placeholder="• • • •"
+        <input type="password" name="pin_confirmation" maxlength="6"
+               inputmode="numeric" placeholder="• • • • • •"
                class="auth-mobile-pin" required>
     </div>
     <button type="submit" class="auth-mobile-btn" style="margin-top:16px;">
@@ -80,9 +80,9 @@
 <h1 style="font-family:'Space Grotesk',sans-serif; font-size:40px; font-weight:700; color:white; line-height:1.1; letter-spacing:-0.04em; margin:0 0 20px 0;">
     Dernière<br><span style="color:#4ade80;">étape.</span>
 </h1>
-<p style="font-family:'Inter',sans-serif; font-size:15px; color:rgba(255,255,255,0.42); line-height:1.65; max-width:300px; margin:0 0 36px 0;">
-    Choisissez un PIN à 4 chiffres. Vous l'utiliserez à chaque connexion à la place d'un mot de passe.
-</p>
+    <p style="font-family:'Inter',sans-serif; font-size:15px; color:rgba(255,255,255,0.42); line-height:1.65; max-width:300px; margin:0 0 36px 0;">
+    Choisissez un PIN entre 4 et 6 chiffres. Vous l'utiliserez à chaque connexion à la place d'un mot de passe.
+    </p>
 <div style="display:flex; flex-direction:column; gap:10px; max-width:300px;">
     @foreach ([
         ['✅', 'Facile à retenir pour vous'],
@@ -105,7 +105,7 @@
     <div class="step-item"><div class="step-circle active">3</div><div class="step-label active">PIN</div></div>
 </div>
 <div class="auth-form-title">Créez votre PIN</div>
-<div class="auth-form-subtitle">4 chiffres — rapide et sécurisé</div>
+<div class="auth-form-subtitle">4-6 chiffres — rapide et sécurisé</div>
 @if ($errors->any())
     <div class="auth-error">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
 @endif
@@ -113,11 +113,11 @@
     @csrf
     <div class="auth-field">
         <label class="auth-label">Votre PIN</label>
-        <input type="password" name="pin" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required autofocus>
+        <input type="password" name="pin" maxlength="6" inputmode="numeric" placeholder="• • • • • •" class="pin-input" required autofocus>
     </div>
     <div class="auth-field">
         <label class="auth-label">Confirmer le PIN</label>
-        <input type="password" name="pin_confirmation" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required>
+        <input type="password" name="pin_confirmation" maxlength="6" inputmode="numeric" placeholder="• • • • • •" class="pin-input" required>
     </div>
     <button type="submit" class="auth-btn" style="margin-top:16px;">Créer mon compte ✓</button>
 </form>

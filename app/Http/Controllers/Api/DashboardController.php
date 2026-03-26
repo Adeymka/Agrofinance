@@ -34,7 +34,7 @@ class DashboardController extends Controller
             if ($exploitation->activitesActives->count() > 0) {
                 $indicateursParExploitation[$exploitation->id] = array_merge(
                     ['nom' => $exploitation->nom],
-                    $this->service->calculerExploitation($exploitation->id, $dateDebutHistorique)
+                    $this->service->calculerExploitation($exploitation, $dateDebutHistorique)
                 );
             }
         }

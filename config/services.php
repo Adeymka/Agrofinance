@@ -37,6 +37,21 @@ return [
         'environment' => env('FEDAPAY_ENVIRONMENT', 'sandbox'),
         /** À activer uniquement en local / démo — sans appel API FedaPay */
         'mock'        => filter_var(env('FEDAPAY_MOCK', false), FILTER_VALIDATE_BOOL),
+        'timeout_seconds' => (int) env('FEDAPAY_HTTP_TIMEOUT', 15),
+        'connect_timeout_seconds' => (int) env('FEDAPAY_HTTP_CONNECT_TIMEOUT', 5),
+    ],
+
+    'vonage' => [
+        'api_key' => env('VONAGE_API_KEY'),
+        'api_secret' => env('VONAGE_API_SECRET'),
+        'sms_from' => env('VONAGE_SMS_FROM'),
+        'timeout_seconds' => (int) env('VONAGE_HTTP_TIMEOUT', 15),
+        'connect_timeout_seconds' => (int) env('VONAGE_HTTP_CONNECT_TIMEOUT', 5),
+    ],
+
+    /** Token optionnel (Bearer ou ?token=) pour sécuriser GET /metrics en production */
+    'metrics' => [
+        'token' => env('METRICS_TOKEN'),
     ],
 
 ];

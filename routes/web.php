@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\ProfilController;
 use App\Http\Controllers\Web\PublicController;
 use App\Http\Controllers\Web\RapportController;
 use App\Http\Controllers\Web\TransactionController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -96,3 +97,76 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');
     Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger'])->whereNumber('id')->name('rapports.telecharger');
 });
+
+// Healthcheck minimal (DB/cache/storage). Utile pour observabilité sous charge.
+Route::get('/health', function () {
+    $checks = [
+        'database' => function () {
+            \Illuminate\Support\Facades\DB::select('SELECT 1');
+        },
+        'cache' => function () {
+            \Illuminate\Support\Facades\Cache::put('health', true, 5);
+        },
+        'storage' => function () {
+            return \Illuminate\Support\Facades\Storage::disk('local')->exists('.gitignore');
+        },
+    ];
+
+    $results = [];
+    foreach ($checks as $name => $check) {
+        try {
+            $check();
+            $results[$name] = 'ok';
+        } catch (\Throwable $e) {
+            $results[$name] = 'fail: ' . $e->getMessage();
+        }
+    }
+
+    $hasFail = collect($results)->contains(fn ($v) => is_string($v) && str_starts_with($v, 'fail'));
+    $status = $hasFail ? 503 : 200;
+
+    return response()->json($results, $status);
+})->name('health');
+
+// Métriques minimales (format Prometheus texte). Protégez avec METRICS_TOKEN en production.
+Route::get('/metrics', function (Request $request) {
+    $expected = config('services.metrics.token');
+    if (is_string($expected) && $expected !== '') {
+        $ok = hash_equals($expected, (string) $request->bearerToken())
+            || hash_equals($expected, (string) $request->query('token'));
+        if (! $ok) {
+            abort(403);
+        }
+    }
+
+    $opcache = 0;
+    if (function_exists('opcache_get_status')) {
+        $st = @opcache_get_status(false);
+        $opcache = is_array($st) && ! empty($st['opcache_enabled']) ? 1 : 0;
+    }
+
+    $lines = [
+        '# HELP agrofinance_up Processus PHP répond.',
+        '# TYPE agrofinance_up gauge',
+        'agrofinance_up 1',
+        '',
+        '# HELP php_memory_usage_bytes Mémoire résidente du processus PHP.',
+        '# TYPE php_memory_usage_bytes gauge',
+        'php_memory_usage_bytes '.memory_get_usage(true),
+        '',
+        '# HELP php_memory_peak_bytes Pic mémoire du processus PHP.',
+        '# TYPE php_memory_peak_bytes gauge',
+        'php_memory_peak_bytes '.memory_get_peak_usage(true),
+        '',
+        '# HELP php_opcache_enabled Opcache activé (1) ou non (0).',
+        '# TYPE php_opcache_enabled gauge',
+        'php_opcache_enabled '.$opcache,
+        '',
+    ];
+
+    $body = implode("\n", $lines)."\n";
+
+    return response($body, 200, [
+        'Content-Type' => 'text/plain; version=0.0.4; charset=utf-8',
+    ]);
+})->name('metrics');

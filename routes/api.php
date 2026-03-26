@@ -41,38 +41,50 @@ Route::middleware('auth:sanctum')->group(function () {
 // Abonnement actif requis
 Route::middleware(['auth:sanctum', 'subscribed'])->group(function () {
 
-    // Module Exploitations
-    Route::get('/exploitations', [ExploitationController::class, 'index']);
-    Route::post('/exploitations', [ExploitationController::class, 'store']);
-    Route::get('/exploitations/{id}', [ExploitationController::class, 'show']);
-    Route::put('/exploitations/{id}', [ExploitationController::class, 'update']);
+    // Throttle "général" (lecture dashboard/indicateurs + actions métiers légères)
+    Route::middleware('throttle:60,1')->group(function () {
 
-    // Module Activités
-    Route::get('/activites', [ActiviteController::class, 'index']);
-    Route::post('/activites', [ActiviteController::class, 'store']);
-    Route::get('/activites/{id}', [ActiviteController::class, 'show']);
-    Route::put('/activites/{id}', [ActiviteController::class, 'update']);
-    Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer']);
-    Route::post('/activites/{id}/abandonner', [ActiviteController::class, 'abandonner']);
+        // Module Exploitations
+        Route::get('/exploitations', [ExploitationController::class, 'index']);
+        Route::post('/exploitations', [ExploitationController::class, 'store']);
+        Route::get('/exploitations/{id}', [ExploitationController::class, 'show']);
+        Route::put('/exploitations/{id}', [ExploitationController::class, 'update']);
 
-    // Module Transactions
-    Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::post('/transactions', [TransactionController::class, 'store']);
-    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-    Route::put('/transactions/{id}', [TransactionController::class, 'update']);
-    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
+        // Module Activités
+        Route::get('/activites', [ActiviteController::class, 'index']);
+        Route::post('/activites', [ActiviteController::class, 'store']);
+        Route::get('/activites/{id}', [ActiviteController::class, 'show']);
+        Route::put('/activites/{id}', [ActiviteController::class, 'update']);
+        Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer']);
+        Route::post('/activites/{id}/abandonner', [ActiviteController::class, 'abandonner']);
 
-    // Module indicateurs financiers agricoles (route la plus spécifique en premier)
-    Route::get('/indicateurs/activite/{id}/evolution', [IndicateurController::class, 'evolution']);
-    Route::get('/indicateurs/activite/{id}', [IndicateurController::class, 'parActivite']);
-    Route::get('/indicateurs/exploitation/{id}', [IndicateurController::class, 'parExploitation']);
+        // Module Transactions
+        Route::get('/transactions', [TransactionController::class, 'index']);
+        Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+        Route::put('/transactions/{id}', [TransactionController::class, 'update']);
+        Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
-    Route::get('/dashboard', DashboardController::class);
+        // Module indicateurs financiers agricoles (route la plus spécifique en premier)
+        Route::get('/indicateurs/activite/{id}/evolution', [IndicateurController::class, 'evolution']);
+        Route::get('/indicateurs/activite/{id}', [IndicateurController::class, 'parActivite']);
+        Route::get('/indicateurs/exploitation/{id}', [IndicateurController::class, 'parExploitation']);
 
-    // Module Rapports (route fixe avant {id})
-    Route::get('/rapports', [RapportController::class, 'index']);
-    Route::post('/rapports/generer', [RapportController::class, 'generer']);
-    Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger']);
+        Route::get('/dashboard', DashboardController::class);
+
+        // Module Rapports (hors génération PDF lourde)
+        Route::get('/rapports', [RapportController::class, 'index']);
+        Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger']);
+    });
+
+    // Génération PDF (opération lourde)
+    Route::middleware('throttle:5,15')->group(function () {
+        Route::post('/rapports/generer', [RapportController::class, 'generer']);
+    });
+
+    // Création de transactions (peut être utilisée en batch)
+    Route::middleware('throttle:200,1')->group(function () {
+        Route::post('/transactions', [TransactionController::class, 'store']);
+    });
 });
 
 // Callback FedaPay : redirection navigateur, sans token Sanctum
