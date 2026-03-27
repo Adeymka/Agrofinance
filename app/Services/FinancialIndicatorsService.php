@@ -12,7 +12,13 @@ class FinancialIndicatorsService
     private const CACHE_TTL_MINUTES = 15;
 
     /**
-     * @param  string|null  $dateDebutMin  Plancher absolu (ex. plan gratuit : 6 derniers mois) — fusionné avec $debut
+     * Calcule les indicateurs financiers (PB, CV, CF, CT, CI, VAB, MB, RNE, RF, SR, statut) pour une activite.
+     *
+     * @param  int          $activiteId      ID de l'activite
+     * @param  string|null  $debut           Date de debut de periode (Y-m-d). Null = all time.
+     * @param  string|null  $fin             Date de fin de periode (Y-m-d). Null = all time.
+     * @param  string|null  $dateDebutMin    Plancher absolu (plan gratuit : 6 derniers mois) — fusionne avec $debut
+     * @return array{PB:float,CV:float,CF:float,CT:float,CI:float,VAB:float,MB:float,RNE:float,RF:float,SR:float|null,statut:string,nb_transactions:int,nb_depenses:int,nb_recettes:int,derniere_saisie:mixed}
      */
     public function calculer(int $activiteId, ?string $debut = null, ?string $fin = null, ?string $dateDebutMin = null): array
     {
@@ -27,6 +33,13 @@ class FinancialIndicatorsService
         });
     }
 
+    /**
+     * Calcule les indicateurs consolides pour toutes les activites en cours d'une exploitation.
+     *
+     * @param  Exploitation|int  $exploitation   Modele ou ID d'exploitation
+     * @param  string|null       $dateDebutMin   Plancher absolu selon le plan (ex. -6 mois)
+     * @return array{par_activite:array,consolide:array{PB:float,CT:float,MB:float,RNE:float,RF:float,statut:string}}
+     */
     public function calculerExploitation(Exploitation|int $exploitation, ?string $dateDebutMin = null): array
     {
         $exploitationModel = $exploitation instanceof Exploitation
@@ -46,8 +59,11 @@ class FinancialIndicatorsService
     }
 
     /**
+     * Calcule les indicateurs pour un lot d'activites en une seule requete SQL agrege.
+     * Evite le N+1 sur le dashboard (remplace N appels a calculer()).
+     *
      * @param  iterable<int>  $activiteIds
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string, mixed>>  Tableau indexe par activite_id
      */
     public function calculerPourActivites(iterable $activiteIds, ?string $debut = null, ?string $fin = null, ?string $dateDebutMin = null): array
     {
@@ -98,9 +114,11 @@ class FinancialIndicatorsService
     }
 
     /**
-     * Évolution mensuelle sur 12 mois (pour le graphique du dashboard).
+     * Evolution mensuelle sur 12 mois glissants (pour le graphique du dashboard).
      *
-     * @param  string|null  $dateDebutMin  Plancher (plans gratuits : pas de données avant cette date).
+     * @param  int          $activiteId
+     * @param  string|null  $dateDebutMin  Plancher (plans gratuits : pas de donnees avant cette date).
+     * @return array<int, array{mois:string,mois_num:string,MB:float,RNE:float,PB:float,CT:float}>
      */
     public function evolutionMensuelle(int $activiteId, ?string $dateDebutMin = null): array
     {
@@ -112,6 +130,9 @@ class FinancialIndicatorsService
         });
     }
 
+    /**
+     * Invalide le cache de l'activite et de son exploitation (a appeler apres toute mutation de transaction).
+     */
     public function invalidateForActivity(int $activiteId): void
     {
         $this->bumpActivityCacheVersion($activiteId);

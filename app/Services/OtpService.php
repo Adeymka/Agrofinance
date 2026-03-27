@@ -16,6 +16,12 @@ class OtpService
     private const LOCKOUT = 15;
     private const SMS_RETRY_ATTEMPTS = 3;
 
+    /**
+     * Genere un code OTP a 6 chiffres, le stocke en cache (10 min) et l'envoie par SMS.
+     *
+     * @param  string  $telephone  Numero au format +229XXXXXXXX
+     * @return bool                true si le SMS a ete envoye (ou simule en local), false sinon
+     */
     public function genererEtEnvoyer(string $telephone): bool
     {
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -29,6 +35,15 @@ class OtpService
         return $this->envoyerSMS($telephone, $code);
     }
 
+    /**
+     * Verifie un code OTP fourni par l'utilisateur.
+     *
+     * Compte les tentatives echouees et bloque le numero apres MAX_TRIES (5).
+     *
+     * @param  string  $telephone  Numero au format +229XXXXXXXX
+     * @param  string  $code       Code saisi par l'utilisateur
+     * @return array{succes:bool, message:string}
+     */
     public function verifier(string $telephone, string $code): array
     {
         $key = 'otp_' . preg_replace('/[^0-9]/', '', $telephone);
@@ -62,6 +77,13 @@ class OtpService
         return ['succes' => true, 'message' => 'Code vérifié avec succès.'];
     }
 
+    /**
+     * Genere un token de creation de PIN a usage unique (valable 15 min).
+     * Ce token doit etre transmis a POST /auth/creer-pin pour prouver que l'OTP a ete verifie.
+     *
+     * @param  string  $telephone  Numero normalise
+     * @return string              Token hexadecimal 32 caracteres
+     */
     public function creerTokenCreationPin(string $telephone): string
     {
         $telephoneNettoye = preg_replace('/[^0-9]/', '', $telephone);
@@ -72,6 +94,13 @@ class OtpService
         return $token;
     }
 
+    /**
+     * Consomme (invalide) le token de creation de PIN.
+     *
+     * @param  string  $telephone
+     * @param  string  $token      Token recu dans la reponse de verification OTP
+     * @return bool                false si le token est invalide ou expire
+     */
     public function consommerTokenCreationPin(string $telephone, string $token): bool
     {
         $telephoneNettoye = preg_replace('/[^0-9]/', '', $telephone);

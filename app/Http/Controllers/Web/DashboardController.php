@@ -5,32 +5,45 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Exploitation;
-use App\Models\Transaction;
 use App\Services\AbonnementService;
+use App\Services\DashboardService;
 use App\Services\FinancialIndicatorsService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+/**
+ * DashboardController — Tableau de bord Web.
+ *
+ * Orchestre la requete HTTP et delogue la logique metier dans DashboardService (#15).
+ * Supporte le multi-exploitation via ?exploitation_id=X (#1).
+ */
 class DashboardController extends Controller
 {
     public function __construct(
         private FinancialIndicatorsService $service,
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private DashboardService $dashboardService
     ) {}
 
     public function index(Request $request)
     {
         $user = auth()->user();
-        $uid = (int) $user->id;
+        $uid  = (int) $user->id;
 
-        $exploitation = Exploitation::where('user_id', $uid)
-            ->with(['activitesActives' => fn ($q) => $q->with('transactions')])
-            ->first();
+        // Multi-exploitation : charge toutes les exploitations (#1)
+        $exploitations = Exploitation::where('user_id', $uid)
+            ->orderBy('id')
+            ->get(['id', 'nom']);
 
-        if (! $exploitation) {
+        if ($exploitations->isEmpty()) {
             return redirect()->route('exploitations.create')
-                ->with('info', 'Créez d’abord votre exploitation pour accéder au tableau de bord.');
+                ->with('info', "Créez d'abord votre exploitation pour accéder au tableau de bord.");
         }
+
+        $exploitationIdQuery = (int) $request->query('exploitation_id', 0);
+        $exploitation = $exploitations->firstWhere('id', $exploitationIdQuery)
+            ?? $exploitations->first();
+
+        $exploitation->load(['activitesActives' => fn ($q) => $q->with('transactions')]);
 
         $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
 
@@ -39,122 +52,69 @@ class DashboardController extends Controller
 
         $recettes = $consolide['PB'] ?? 0;
         $depenses = $consolide['CT'] ?? 0;
-        $marge = $consolide['MB'] ?? 0;
-        $rf = $consolide['RF'] ?? 0;
-        $statut = $consolide['statut'] ?? 'rouge';
+        $marge    = $consolide['MB'] ?? 0;
+        $rf       = $consolide['RF'] ?? 0;
+        $statut   = $consolide['statut'] ?? 'rouge';
 
         $activiteIds = $exploitation->activites()
             ->where('statut', Activite::STATUT_EN_COURS)
             ->pluck('id');
 
         $parActivite = $resultats['par_activite'] ?? [];
-        $firstParActiviteId = $parActivite !== []
-            ? (int) array_key_first($parActivite)
-            : null;
 
-        $campagneQuery = $request->query('campagne');
-        $heroActiviteId = null;
-        if ($campagneQuery !== null && $campagneQuery !== ''
-            && $activiteIds->contains((int) $campagneQuery)) {
-            $heroActiviteId = (int) $campagneQuery;
-        } elseif ($firstParActiviteId) {
-            $heroActiviteId = $firstParActiviteId;
-        }
+        // Logique metier deplacee dans DashboardService (#15)
+        $heroActiviteId = $this->dashboardService->determinerHeroActiviteId(
+            $activiteIds,
+            $parActivite,
+            $request->query('campagne')
+        );
 
         $heroInd = ($heroActiviteId && isset($parActivite[$heroActiviteId]))
             ? $parActivite[$heroActiviteId]
             : null;
 
-        $chartActiviteId = $heroActiviteId ?: $firstParActiviteId;
+        $chartActiviteId = $heroActiviteId ?: ($parActivite !== [] ? (int) array_key_first($parActivite) : null);
 
-        $activitesCards = [];
-
-        foreach ($exploitation->activitesActives as $activite) {
-            $ind = $parActivite[$activite->id] ?? null;
-            if (! $ind) {
-                continue;
-            }
-
-            $txForStats = $activite->transactions;
-            if ($dateDebutHistorique) {
-                $txForStats = $txForStats->filter(
-                    fn ($t) => (string) $t->date_transaction >= $dateDebutHistorique
-                );
-            }
-
-            $lastTx = $txForStats->max('date_transaction');
-            $daysSince = $lastTx
-                ? now()->diffInDays(Carbon::parse($lastTx))
-                : 999;
-
-            $totalDep = $txForStats->where('type', 'depense')->sum('montant');
-            $budget = $activite->budget_previsionnel;
-            $pctBudget = ($budget && $budget > 0)
-                ? min(100, round(($totalDep / $budget) * 100, 1))
-                : null;
-
-            $activitesCards[] = [
-                'id' => $activite->id,
-                'nom' => $activite->nom,
-                'type' => $activite->type,
-                'statut' => $activite->statut,
-                'recettes' => $ind['PB'] ?? 0,
-                'depenses' => $ind['CT'] ?? 0,
-                'marge' => $ind['MB'] ?? 0,
-                'statut_indicateurs' => $ind['statut'] ?? 'rouge',
-                'budget_pct' => $pctBudget,
-                'budget_prev' => $budget,
-                'days_since' => $daysSince,
-            ];
-        }
+        $activitesCards = $this->dashboardService->construireActivitesCards(
+            $exploitation,
+            $parActivite,
+            $dateDebutHistorique
+        );
 
         $premierActiviteId = $chartActiviteId
             ?? ($parActivite !== [] ? array_key_first($parActivite) : $exploitation->activitesActives->first()?->id);
 
-        $alertesBudget = array_values(array_filter($activitesCards, function (array $c) {
-            $pct = $c['budget_pct'] ?? null;
-            $prev = $c['budget_prev'] ?? 0;
-
-            return $prev > 0 && $pct !== null && $pct >= 85;
-        }));
-        usort($alertesBudget, fn (array $a, array $b) => ($b['budget_pct'] ?? 0) <=> ($a['budget_pct'] ?? 0));
-
+        $alertesBudget        = $this->dashboardService->extraireAlertesBudget($activitesCards);
         $bannerBudgetCritique = collect($alertesBudget)->contains(fn ($c) => ($c['budget_pct'] ?? 0) >= 100);
 
-        $dernieresTransactions = Transaction::query()
-            ->when($activiteIds->isNotEmpty(), fn ($q) => $q->whereIn('activite_id', $activiteIds))
-            ->when($activiteIds->isEmpty(), fn ($q) => $q->whereRaw('1 = 0'))
-            ->when($dateDebutHistorique, fn ($q) => $q->where('date_transaction', '>=', $dateDebutHistorique))
-            ->with('activite:id,nom')
-            ->orderByDesc('date_transaction')
-            ->limit(20)
-            ->get();
+        $dernieresTransactions = $this->dashboardService->dernieresTransactions($activiteIds, $dateDebutHistorique);
 
-        $apiToken = session('api_token');
+        $apiToken       = session('api_token');
         $infoAbonnement = $this->abonnementService->infos($user);
 
         return view('dashboard.index', [
-            'user' => $user,
-            'exploitation' => $exploitation,
-            'resultats' => $resultats,
-            'consolide' => $consolide,
-            'recettes' => $recettes,
-            'depenses' => $depenses,
-            'marge' => $marge,
-            'rf' => $rf,
-            'statut' => $statut,
+            'user'                  => $user,
+            'exploitation'          => $exploitation,
+            'exploitations'         => $exploitations,
+            'resultats'             => $resultats,
+            'consolide'             => $consolide,
+            'recettes'              => $recettes,
+            'depenses'              => $depenses,
+            'marge'                 => $marge,
+            'rf'                    => $rf,
+            'statut'                => $statut,
             'dernieresTransactions' => $dernieresTransactions,
-            'activitesCards' => $activitesCards,
-            'premierActiviteId' => $premierActiviteId,
-            'parActivite' => $parActivite,
-            'apiToken' => $apiToken,
-            'infoAbonnement' => $infoAbonnement,
-            'nav' => 'dashboard',
-            'heroActiviteId' => $heroActiviteId,
-            'heroInd' => $heroInd,
-            'chartActiviteId' => $chartActiviteId,
-            'alertesBudget' => $alertesBudget,
-            'bannerBudgetCritique' => $bannerBudgetCritique,
+            'activitesCards'        => $activitesCards,
+            'premierActiviteId'     => $premierActiviteId,
+            'parActivite'           => $parActivite,
+            'apiToken'              => $apiToken,
+            'infoAbonnement'        => $infoAbonnement,
+            'nav'                   => 'dashboard',
+            'heroActiviteId'        => $heroActiviteId,
+            'heroInd'               => $heroInd,
+            'chartActiviteId'       => $chartActiviteId,
+            'alertesBudget'         => $alertesBudget,
+            'bannerBudgetCritique'  => $bannerBudgetCritique,
         ]);
     }
 }

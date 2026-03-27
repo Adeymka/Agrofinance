@@ -4,6 +4,22 @@
 @section('page-subtitle', $exploitation->nom)
 
 @section('topbar-actions')
+    {{-- Sélecteur d'exploitation (visible uniquement si l'utilisateur en a plusieurs) --}}
+    @if($exploitations->count() > 1)
+        <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
+            @if(request()->query('campagne'))
+                <input type="hidden" name="campagne" value="{{ request()->query('campagne') }}">
+            @endif
+            <select name="exploitation_id" onchange="this.form.submit()"
+                    class="input-glass text-sm py-1.5 min-w-[180px]">
+                @foreach($exploitations as $expl)
+                    <option value="{{ $expl->id }}" @selected($exploitation->id == $expl->id)>
+                        {{ $expl->nom }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+    @endif
     <a href="{{ route('transactions.create') }}" class="btn-primary text-sm px-4 py-2 inline-flex items-center gap-2">
         <x-icon name="plus" class="w-4 h-4" /> Nouvelle saisie
     </a>
@@ -487,7 +503,24 @@
 <div class="dash-greeting">
     <p class="dash-greeting-hello">Bonjour,</p>
     <h1 class="dash-greeting-name">{{ $user->prenom ?? '' }} {{ mb_strtoupper(mb_substr($user->nom ?? '', 0, 1)) }}. 👋</h1>
-    <p class="dash-greeting-exploit">{{ $exploitation->nom }}</p>
+    {{-- Sélecteur d'exploitation mobile (si plusieurs) --}}
+    @if($exploitations->count() > 1)
+        <form method="get" action="{{ route('dashboard') }}" style="margin-top:6px;">
+            <select name="exploitation_id" onchange="this.form.submit()"
+                style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.55);
+                       background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+                       border-radius:8px; padding:4px 10px; appearance:none; cursor:pointer;">
+                @foreach($exploitations as $expl)
+                    <option value="{{ $expl->id }}" @selected($exploitation->id == $expl->id)
+                            style="background:#1a2535; color:rgba(255,255,255,0.85);">
+                        {{ $expl->nom }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+    @else
+        <p class="dash-greeting-exploit">{{ $exploitation->nom }}</p>
+    @endif
 </div>
 
 {{-- ── Sélecteur campagne (chips scrollables) ── --}}

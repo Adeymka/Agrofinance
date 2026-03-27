@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Activite extends Model
@@ -34,6 +35,17 @@ class Activite extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Scope : filtre les activites appartenant a un utilisateur donne.
+     * Remplace le whereHas('exploitation', fn => where user_id) repete partout. (#17)
+     *
+     * Exemple : Activite::pourUtilisateur($userId)->get()
+     */
+    public function scopePourUtilisateur(Builder $query, int $userId): Builder
+    {
+        return $query->whereHas('exploitation', fn ($q) => $q->where('user_id', $userId));
     }
 
     /**

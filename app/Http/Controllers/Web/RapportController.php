@@ -9,11 +9,10 @@ use App\Models\Exploitation;
 use App\Models\Rapport;
 use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
-use App\Jobs\GenerateRapportPdfJob;
+use App\Services\RapportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class RapportController extends Controller
 {
@@ -21,18 +20,21 @@ class RapportController extends Controller
 
     public function __construct(
         private FinancialIndicatorsService $fsa,
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private RapportService $rapportService
     ) {}
 
     public function index(Request $request)
     {
-        $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)
+        $uid = (int) auth()->user()->id;
+
+        $exploitation = Exploitation::where('user_id', $uid)
             ->with('activites')
             ->first();
 
         if (! $exploitation) {
             return redirect()->route('exploitations.create')
-                ->with('info', 'Créez d’abord votre exploitation.');
+                ->with('info', "Créez d'abord votre exploitation.");
         }
 
         $rapports = Rapport::where('exploitation_id', $exploitation->id)
@@ -54,10 +56,10 @@ class RapportController extends Controller
     public function generer(Request $request)
     {
         $request->validate([
-            'activite_id' => 'required|integer|exists:activites,id',
-            'type' => 'required|in:campagne,dossier_credit',
+            'activite_id'   => 'required|integer|exists:activites,id',
+            'type'          => 'required|in:campagne,dossier_credit',
             'periode_debut' => 'nullable|date',
-            'periode_fin' => 'nullable|date|after_or_equal:periode_debut',
+            'periode_fin'   => 'nullable|date|after_or_equal:periode_debut',
         ]);
 
         $refus = $this->refuseSiPasGenerationRapport(
@@ -80,33 +82,11 @@ class RapportController extends Controller
         $fin = $request->periode_fin
             ?? ($activite->date_fin?->toDateString() ?? now()->toDateString());
 
-        $token = Str::random(40);
-
-        $rapport = Rapport::create([
-            'exploitation_id' => $activite->exploitation->id,
-            'type' => $request->type,
-            'periode_debut' => $debut,
-            'periode_fin' => $fin,
-            'chemin_pdf' => '',
-            'lien_token' => $token,
-            'lien_expire_le' => now()->addHours(72),
-        ]);
-        $job = new GenerateRapportPdfJob(
-            $rapport->id,
-            $activite->id,
-            $request->type,
-            $debut,
-            $fin
-        );
-
-        if (app()->environment(['local', 'testing'])) {
-            $job->handle($this->fsa);
-        } else {
-            dispatch($job->onQueue('rapports'));
-        }
+        // Delegation au service (DRY) : cree le Rapport + dispatche le Job
+        $this->rapportService->creerEtDispatcher($activite, $request->type, $debut, $fin);
 
         return redirect()->route('rapports.index')
-            ->with('success', 'Rapport PDF en cours de génération !');
+            ->with('success', 'Rapport PDF en cours de generation !');
     }
 
     public function telecharger(Request $request, int $id)
@@ -127,7 +107,7 @@ class RapportController extends Controller
         }
 
         if ($rapport->chemin_pdf === '') {
-            return back()->withErrors(['pdf' => 'Rapport en cours de génération.']);
+            return back()->withErrors(['pdf' => 'Rapport en cours de generation.']);
         }
 
         if (! Storage::disk('local')->exists($rapport->chemin_pdf)) {
@@ -139,12 +119,12 @@ class RapportController extends Controller
         try {
             $pdfBytes = Crypt::decryptString($contenuStocke);
         } catch (\Throwable) {
-            // Compatibilité avec d'anciens rapports encore non chiffrés.
+            // Compatibilite avec d'anciens rapports encore non chiffres.
             $pdfBytes = $contenuStocke;
         }
 
         return response($pdfBytes, 200, [
-            'Content-Type' => 'application/pdf',
+            'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="rapport_'.$rapport->id.'.pdf"',
         ]);
     }
@@ -153,7 +133,7 @@ class RapportController extends Controller
     {
         $rapport = Rapport::where('lien_token', $token)->firstOrFail();
 
-        // Expiration obligatoire : absence de date = lien invalide (pas d’accès illimité).
+        // Expiration obligatoire : absence de date = lien invalide (pas d'acces illimite).
         if (! $rapport->lien_expire_le || now()->isAfter($rapport->lien_expire_le)) {
             return response()->view('rapports.expire', [], 410);
         }
@@ -167,12 +147,12 @@ class RapportController extends Controller
         try {
             $contenu = Crypt::decryptString($contenuStocke);
         } catch (\Throwable) {
-            // Compatibilité avec d'anciens rapports encore non chiffrés.
+            // Compatibilite avec d'anciens rapports encore non chiffres.
             $contenu = $contenuStocke;
         }
 
         return response($contenu, 200, [
-            'Content-Type' => 'application/pdf',
+            'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'inline; filename="rapport.pdf"',
         ]);
     }

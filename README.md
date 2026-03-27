@@ -1,82 +1,202 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AgroFinance+
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application web et mobile de gestion financière agricole pour les exploitants du Bénin et d'Afrique de l'Ouest.
 
-## About Laravel
+## Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Authentification** par numéro de téléphone + OTP (Vonage SMS) + code PIN bcrypt
+- **Gestion des exploitations** (multi-exploitation selon le plan)
+- **Activités agricoles** (campagnes, élevage, maraîchage, transformation, mixte)
+- **Transactions** (recettes / dépenses, catégories, nature fixe/variable)
+- **Indicateurs financiers agricoles** — PB, CV, CF, CT, CI, VAB, MB, RNE, RF, SR (méthode FSA)
+- **Rapports PDF chiffrés** (génération asynchrone via Job, lien de partage 72h)
+- **Abonnements** — Gratuit / Essentielle / Pro / Coopérative (paiement FedaPay)
+- **Dashboard Web** glassmorphisme desktop + dark mobile
+- **PWA** (Service Worker, manifest, mode hors ligne)
+- **API REST** complète (Sanctum Bearer)
+- **Centre d'aide** avec articles et FAQ
+- **Pages marketing** — accueil, à propos, contact
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Prérequis
 
-## Learning Laravel
+| Outil | Version |
+|---|---|
+| PHP | 8.2+ |
+| Composer | 2.x |
+| MySQL / MariaDB | 8.0+ |
+| Node.js | 20+ |
+| XAMPP (local) | 8.2 |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Installation locale (XAMPP)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1. Cloner le dépôt dans htdocs
+# git clone ... C:\xampp1\htdocs\agrofinanceplus
 
-## Laravel Sponsors
+# 2. Installer les dépendances PHP
+C:\xampp1\php\php.exe composer.phar install
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 3. Copier et configurer le fichier d'environnement
+copy .env.example .env
+# Éditer .env : DB_DATABASE, VONAGE_*, FEDAPAY_* ou FEDAPAY_MOCK=true
 
-### Premium Partners
+# 4. Générer la clé d'application
+C:\xampp1\php\php.exe artisan key:generate
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+# 5. Migrer la base de données
+C:\xampp1\php\php.exe artisan migrate --seed
 
-## Contributing
+# 6. Compiler les assets
+npm install
+npm run dev
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 7. Optionnel : lancer le worker de queue (PDF asynchrone)
+C:\xampp1\php\php.exe artisan queue:work --queue=rapports
+```
 
-## Code of Conduct
+**URL locale :** `http://localhost/agrofinanceplus/public`  
+**URL API :** `http://localhost/agrofinanceplus/public/api`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Variables d'environnement clés
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Variable | Description |
+|---|---|
+| `APP_ENV` | `local` ou `production` |
+| `FEDAPAY_MOCK=true` | Mode simulation (dev sans clés FedaPay) |
+| `FEDAPAY_SECRET_KEY` | Clé secrète FedaPay (sandbox ou live) |
+| `VONAGE_API_KEY` | Clé Vonage pour les SMS OTP |
+| `OTP_DEBUG_LOG=true` | Log OTP dans `storage/logs/laravel.log` (local seulement) |
+| `METRICS_TOKEN` | Jeton pour l'endpoint `GET /metrics` |
+| `QUEUE_CONNECTION=database` | File d'attente (utiliser `redis` en production) |
 
-## License
+Consulter `.env.example` pour le développement local et `.env.production.example` pour la production.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
 
-## Production Hardening
+## Architecture
 
-Before any production deployment, verify these minimum settings:
+```
+app/
+├── Http/Controllers/
+│   ├── Api/          # Contrôleurs API REST (Sanctum)
+│   └── Web/          # Contrôleurs Web (Blade + session)
+├── Services/
+│   ├── AbonnementService.php     # Logique abonnement + FedaPay
+│   ├── DashboardService.php      # Logique métier tableau de bord
+│   ├── FinancialIndicatorsService.php  # Calcul indicateurs FSA
+│   ├── OtpService.php            # OTP + PIN creation tokens
+│   └── RapportService.php        # Création Rapport + dispatch Job
+├── Models/           # Eloquent : User, Exploitation, Activite, Transaction, Rapport, Abonnement
+├── Jobs/             # GenerateRapportPdfJob (chiffrée en AES-256-CBC)
+└── Enums/            # IndicateurFinancier (acronymes FSA)
+resources/views/      # Blade (layouts: app-desktop, app-mobile, app-public)
+```
 
-- `APP_ENV=production`
-- `APP_DEBUG=false`
-- `SESSION_SECURE_COOKIE=true`
-- `SESSION_ENCRYPT=true`
-- `FEDAPAY_MOCK=false`
+---
 
-Recommended for multi-instance deployment:
+## Queue workers (production) — #25
 
-- `SESSION_DRIVER=redis`
-- `CACHE_STORE=redis`
-- `QUEUE_CONNECTION=redis`
+Les rapports PDF sont générés de façon asynchrone via Laravel Queue (`rapports`).  
+En production, configurer **Supervisor** pour maintenir les workers :
+
+```ini
+; /etc/supervisor/conf.d/agrofinance-worker.conf
+[program:agrofinance-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/agrofinanceplus/artisan queue:work redis --queue=rapports --sleep=3 --tries=3 --timeout=120
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/agrofinance-worker.log
+```
+
+```bash
+supervisorctl reread
+supervisorctl update
+supervisorctl start agrofinance-worker:*
+```
+
+---
+
+## Déploiement production
+
+Voir `.env.production.example` pour la configuration complète.  
+Étapes essentielles :
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan migrate --force
+php artisan queue:restart
+```
+
+**Stack recommandée :** Nginx + PHP-FPM + Redis (sessions, cache, queues) + S3 (PDFs).
+
+---
+
+## Tests
+
+```bash
+# Tests PHPUnit
+php artisan test
+
+# Vérification des routes
+php artisan route:list
+
+# Indicateurs (local)
+php artisan tinker
+```
+
+---
+
+## Endpoints API principaux
+
+| Méthode | Route | Description |
+|---|---|---|
+| `POST` | `/api/auth/connexion` | Connexion (téléphone + PIN) |
+| `GET` | `/api/exploitations` | Liste des exploitations |
+| `GET` | `/api/activites` | Liste des activités |
+| `POST` | `/api/transactions` | Saisir des transactions |
+| `POST` | `/api/rapports/generer` | Générer un rapport PDF |
+| `POST` | `/api/abonnement/initier` | Initier un paiement FedaPay |
+| `GET` | `/health` | Health check (BDD, cache, stockage) |
+
+Voir la collection Postman dans `docs/` pour la liste exhaustive.
+
+---
+
+## Sécurité
+
+- Rate limiting sur toutes les routes sensibles (OTP : 5/15min, PIN : 10/5min)
+- PDFs chiffrés en AES-256-CBC (Crypt::encryptString)
+- Sessions chiffrées et cookie sécurisé en production
+- FEDAPAY_MOCK bloqué automatiquement en production
+- Expiration obligatoire sur les liens de partage PDF (72h par défaut)
+
+---
+
+## Abonnements
+
+| Plan | Tarif | Exploitations | PDF |
+|---|---|---|---|
+| Gratuit | 0 FCFA | 1 | Non |
+| Essentielle | 1 500 FCFA/mois | 1 | Oui |
+| Pro | 5 000 FCFA/mois | 5 | Oui + dossier crédit |
+| Coopérative | 8 000 FCFA/mois | Illimité | Oui + dossier crédit |
+
+---
+
+## Licence
+
+Projet propriétaire — © AgroFinance+ 2026

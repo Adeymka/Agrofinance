@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Abonnement;
-use App\Support\FedaPayHttpConfig;
 use App\Models\User;
 use App\Services\AbonnementService;
-use FedaPay\FedaPay;
-use FedaPay\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
+/**
+ * Api\AbonnementController — Paiement et abonnements via FedaPay.
+ *
+ * La logique metier FedaPay (initiation, callback, retry, lock) est desormais
+ * centralisee dans AbonnementService pour eviter la duplication avec le controleur Web.
+ */
 class AbonnementController extends Controller
 {
     public function __construct(
@@ -23,272 +24,145 @@ class AbonnementController extends Controller
 
     /**
      * POST /api/abonnement/initier
+     * #4, #5 — Delegue a AbonnementService::initierPaiementFedaPay() ; pas de Session::put en API.
      */
     public function initier(Request $request)
     {
         $request->validate([
-            'plan' => 'required|in:mensuel,annuel,cooperative',
+            'plan'      => 'required|in:mensuel,annuel,cooperative',
             'telephone' => 'required|string',
         ]);
 
-        $montant = $this->abonnementService->montantFacturation($request->plan);
-        $user = auth()->user();
-
-        if (config('services.fedapay.mock')) {
-            $ref = 'mock_'.Str::uuid()->toString();
-
-            Cache::put(
-                "fedapay_pending_mock:{$user->id}",
-                [
-                    'user_id' => $user->id,
-                    'plan' => $request->plan,
-                    'montant' => $montant,
-                    'telephone' => $request->telephone,
-                    'ref' => $ref,
-                ],
-                now()->addHours(24)
-            );
-
+        if (! config('services.fedapay.mock') && empty(config('services.fedapay.secret_key'))) {
             return response()->json([
-                'succes' => true,
-                'message' => 'Mode simulation (FEDAPAY_MOCK) : aucun appel FedaPay. Appelez POST /api/abonnement/finaliser-mock pour activer l’abonnement.',
-                'data' => [
-                    'mock' => true,
-                    'transaction_id' => $ref,
-                    'montant' => $montant,
-                    'plan' => $request->plan,
-                    'url_paiement' => null,
-                    'finaliser_mock' => 'POST '.rtrim(config('app.url'), '/').'/api/abonnement/finaliser-mock',
-                ],
-            ]);
-        }
-
-        if (empty(config('services.fedapay.secret_key'))) {
-            return response()->json([
-                'succes' => false,
-                'message' => 'Paiement non configuré : ajoutez FEDAPAY_SECRET_KEY dans .env, ou FEDAPAY_MOCK=true pour le développement sans API.',
+                'succes'  => false,
+                'message' => 'Paiement non configure : ajoutez FEDAPAY_SECRET_KEY dans .env, ou FEDAPAY_MOCK=true pour le developpement.',
             ], 503);
         }
 
+        $user = auth()->user();
+
         try {
-            // Retry uniquement sur les appels FedaPay (side-effects distants possibles).
-            [$transaction, $token] = $this->appelerFedaPayAvecRetry(
-                function () use ($request, $user, $montant) {
-                    FedaPay::setApiKey(config('services.fedapay.secret_key'));
-                    FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
-                    FedaPayHttpConfig::appliquer();
-
-                    $transaction = Transaction::create([
-                        'description' => "AgroFinance+ — Abonnement {$request->plan}",
-                        'amount' => $montant,
-                        'currency' => ['iso' => 'XOF'],
-                        'callback_url' => rtrim(config('app.url'), '/').'/api/abonnement/callback',
-                        'customer' => [
-                            'firstname' => $user->prenom,
-                            'lastname' => $user->nom,
-                            'phone_number' => [
-                                'number' => $request->telephone,
-                                'country' => 'bj',
-                            ],
-                        ],
-                        'include' => 'customer,currency',
-                    ]);
-
-                    $token = $transaction->generateToken();
-
-                    return [$transaction, $token];
-                },
-                'initier',
-                3
+            $result = $this->abonnementService->initierPaiementFedaPay(
+                $user,
+                $request->plan,
+                $request->telephone,
+                rtrim(config('app.url'), '/').'/api/abonnement/callback',
+                webMode: false      // Pas de Session::put en API (#5)
             );
-
-            $txId = (string) $transaction->id;
-
-            Cache::put(
-                "fedapay_pending:{$txId}",
-                [
-                    'user_id' => $user->id,
-                    'plan' => $request->plan,
-                ],
-                now()->addHours(48)
-            );
-
-            Session::put([
-                'fedapay_transaction_id' => $txId,
-                'fedapay_plan' => $request->plan,
-                'fedapay_user_id' => $user->id,
-            ]);
-
-            return response()->json([
-                'succes' => true,
-                'message' => "Transaction initiée. Redirigez l'utilisateur vers l'URL de paiement.",
-                'data' => [
-                    'transaction_id' => $transaction->id,
-                    'montant' => $montant,
-                    'plan' => $request->plan,
-                    'url_paiement' => $token->url,
-                ],
-            ]);
         } catch (\Throwable $e) {
-            Log::error('FedaPay initier: echec appel fournisseur', [
-                'error_class' => $e::class,
+            Log::error('FedaPay API initier: echec appel fournisseur', [
+                'error_class'   => $e::class,
                 'error_message' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'succes' => false,
+                'succes'  => false,
                 'message' => "Erreur lors de l'initiation du paiement.",
             ], 500);
         }
+
+        if ($result['mock'] ?? false) {
+            return response()->json([
+                'succes'  => true,
+                'message' => 'Mode simulation (FEDAPAY_MOCK) : aucun appel FedaPay. Appelez POST /api/abonnement/finaliser-mock pour activer l\'abonnement.',
+                'data'    => $result,
+            ]);
+        }
+
+        return response()->json([
+            'succes'  => true,
+            'message' => "Transaction initiee. Redirigez l'utilisateur vers l'URL de paiement.",
+            'data'    => [
+                'transaction_id' => $result['transaction_id'],
+                'montant'        => $result['montant'],
+                'plan'           => $result['plan'],
+                'url_paiement'   => $result['url_paiement'],
+            ],
+        ]);
     }
 
     /**
      * GET /api/abonnement/callback
-     * Appel public après redirection FedaPay (pas de Bearer).
+     * #3, #14 — Delegue a AbonnementService::traiterCallbackFedaPay() avec Cache::lock().
      */
     public function callback(Request $request)
     {
         if (empty(config('services.fedapay.secret_key'))) {
-            return response()->json(['succes' => false, 'message' => 'FedaPay non configuré.'], 503);
+            return response()->json(['succes' => false, 'message' => 'FedaPay non configure.'], 503);
+        }
+
+        $transactionId = $request->query('id')
+            ?? $request->input('id')
+            ?? session('fedapay_transaction_id');
+
+        if (! $transactionId) {
+            Log::warning('FedaPay API callback sans id transaction.');
+
+            return response()->json(['succes' => false, 'message' => 'Transaction inconnue.'], 422);
         }
 
         try {
-            FedaPay::setApiKey(config('services.fedapay.secret_key'));
-            FedaPay::setEnvironment(config('services.fedapay.environment', 'sandbox'));
-            FedaPayHttpConfig::appliquer();
-
-            $transactionId = $request->query('id')
-                ?? $request->input('id')
-                ?? session('fedapay_transaction_id');
-
-            if (! $transactionId) {
-                Log::warning('FedaPay callback sans id transaction.');
-
-                return response()->json(['succes' => false, 'message' => 'Transaction inconnue.'], 422);
-            }
-
-            $transaction = $this->appelerFedaPayAvecRetry(
-                function () use ($transactionId) {
-                    return Transaction::retrieve($transactionId);
-                },
-                'callback_retrieve',
-                3
-            );
-
-            $pending = Cache::pull("fedapay_pending:{$transactionId}");
-            if ($pending) {
-                $planChoisi = $pending['plan'];
-                $userId = $pending['user_id'];
-            } else {
-                $planChoisi = session('fedapay_plan', 'mensuel');
-                $userId = session('fedapay_user_id');
-            }
-
-            if (! $userId) {
-                Log::error("FedaPay callback : impossible de résoudre user pour TX {$transactionId}");
-
-                return response()->json(['succes' => false, 'message' => 'Contexte de paiement perdu.'], 422);
-            }
-
-            if (in_array($transaction->status, ['approved', 'transferred'], true)) {
-                $deja = Abonnement::where('ref_fedapay', (string) $transaction->id)->exists();
-
-                $this->abonnementService->activer(
-                    User::findOrFail($userId),
-                    $planChoisi,
-                    (string) $transaction->id,
-                    (float) ($transaction->amount ?? 0)
-                );
-
-                session()->forget([
-                    'fedapay_transaction_id',
-                    'fedapay_plan',
-                    'fedapay_user_id',
-                ]);
-
-                Log::info("Abonnement activé — user {$userId} — plan {$planChoisi}");
-
-                return response()->json([
-                    'succes' => true,
-                    'message' => $deja ? 'Déjà traité.' : 'Abonnement activé.',
-                ]);
-            }
-
-            return response()->json(['succes' => true]);
+            $result = $this->abonnementService->traiterCallbackFedaPay($transactionId);
         } catch (\Throwable $e) {
-            Log::error('FedaPay callback: echec traitement', [
-                'error_class' => $e::class,
+            Log::error('FedaPay API callback: echec traitement', [
+                'error_class'   => $e::class,
                 'error_message' => $e->getMessage(),
             ]);
 
             return response()->json(['succes' => false, 'message' => 'Erreur lors de la confirmation du paiement.'], 500);
         }
+
+        if ($result['statut'] === 'erreur_contexte') {
+            return response()->json(['succes' => false, 'message' => 'Contexte de paiement perdu.'], 422);
+        }
+
+        if (in_array($result['statut'], ['approved', 'transferred'], true)) {
+            return response()->json([
+                'succes'  => true,
+                'message' => $result['deja_traite'] ? 'Deja traite.' : 'Abonnement active.',
+            ]);
+        }
+
+        return response()->json(['succes' => true]);
     }
 
     /**
      * POST /api/abonnement/finaliser-mock
-     * Uniquement lorsque FEDAPAY_MOCK=true — simule un paiement réussi.
+     * Uniquement lorsque FEDAPAY_MOCK=true — simule un paiement reussi.
      */
     public function finaliserMock(Request $request)
     {
         if (! config('services.fedapay.mock')) {
             return response()->json([
-                'succes' => false,
+                'succes'  => false,
                 'message' => 'Non disponible : activez FEDAPAY_MOCK=true dans .env (dev uniquement).',
             ], 403);
         }
 
-        $userId = auth()->user()->id;
+        $userId  = auth()->user()->id;
         $pending = Cache::pull("fedapay_pending_mock:{$userId}");
 
         if (! $pending || (int) $pending['user_id'] !== (int) $userId) {
             return response()->json([
-                'succes' => false,
-                'message' => 'Aucune initiation mock en attente — appelez d’abord POST /api/abonnement/initier.',
+                'succes'  => false,
+                'message' => "Aucune initiation mock en attente — appelez d'abord POST /api/abonnement/initier.",
             ], 422);
         }
 
         $planChoisi = $pending['plan'];
-        $montant = $pending['montant'];
-        $ref = $pending['ref'] ?? 'mock_'.Str::uuid()->toString();
+        $montant    = $pending['montant'];
+        $ref        = $pending['ref'] ?? 'mock_'.Str::uuid()->toString();
 
         $user = User::findOrFail($userId);
         $this->abonnementService->activer($user, $planChoisi, $ref, (float) $montant);
 
-        Log::info("Abonnement mock activé — user {$userId} — plan {$planChoisi}");
+        Log::info("Abonnement mock active — user {$userId} — plan {$planChoisi}");
 
         return response()->json([
-            'succes' => true,
-            'message' => 'Abonnement activé (simulation).',
-            'data' => [
-                'plan' => $planChoisi,
-                'statut' => 'actif',
-            ],
+            'succes'  => true,
+            'message' => 'Abonnement active (simulation).',
+            'data'    => ['plan' => $planChoisi, 'statut' => 'actif'],
         ]);
-    }
-
-    private function appelerFedaPayAvecRetry(callable $operation, string $operationNom, int $maxTentatives = 3): mixed
-    {
-        $derniereErreur = null;
-
-        for ($tentative = 0; $tentative < $maxTentatives; $tentative++) {
-            try {
-                return $operation();
-            } catch (\Throwable $e) {
-                $derniereErreur = $e;
-                Log::warning("FedaPay {$operationNom}: echec externe", [
-                    'tentative' => $tentative + 1,
-                    'error_class' => $e::class,
-                    'error_message' => $e->getMessage(),
-                ]);
-
-                if ($tentative < $maxTentatives - 1) {
-                    $backoffSeconds = (int) pow(2, $tentative); // 1,2,4...
-                    usleep($backoffSeconds * 1000000);
-                }
-            }
-        }
-
-        throw $derniereErreur;
     }
 }

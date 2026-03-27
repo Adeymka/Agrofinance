@@ -75,9 +75,17 @@ class GenerateRapportPdfJob implements ShouldQueue
 
         Storage::disk('local')->makeDirectory('rapports');
 
-        $contenuBrut = $pdf->output();
+        $contenuBrut   = $pdf->output();
         $contenuChiffre = Crypt::encryptString($contenuBrut);
-        Storage::disk('local')->put($chemin, $contenuChiffre);
+
+        // #20 — try/catch : evite un rapport orphelin en BDD si l'ecriture disque echoue.
+        try {
+            Storage::disk('local')->put($chemin, $contenuChiffre);
+        } catch (\Throwable $e) {
+            // Supprime l'enregistrement pour ne pas laisser un Rapport avec chemin_pdf vide
+            $rapport->delete();
+            throw $e; // Re-throw pour que le Job soit requeue (tries = 3)
+        }
 
         $rapport->update(['chemin_pdf' => $chemin]);
     }

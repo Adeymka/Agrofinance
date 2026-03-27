@@ -35,7 +35,7 @@ class InscriptionController extends Controller
                     Rule::unique('users', 'telephone'),
                 ],
             ],
-            ['telephone.regex' => 'Le numéro doit être au format +229 suivi de 8 chiffres.']
+            ['telephone.regex' => 'Le numero doit etre au format +229 suivi de 8 chiffres.']
         );
 
         if ($v->fails()) {
@@ -53,10 +53,21 @@ class InscriptionController extends Controller
             ],
         ]);
 
-        return redirect()->route('verification.otp')
-            ->with('info', 'Code envoyé. En local, consultez storage/logs/laravel.log');
+        // #6 — Message conditionnel : ne pas exposer le chemin des logs en production.
+        $msg = app()->isLocal()
+            ? 'Code envoyé. En local, consultez storage/logs/laravel.log'
+            : 'Code envoyé par SMS. Veuillez vérifier votre téléphone.';
+
+        return redirect()->route('verification.otp')->with('info', $msg);
     }
 
+    /**
+     * Normalise un numero de telephone au format +229XXXXXXXX.
+     *
+     * - Si le numero commence par 229 et a au moins 11 chiffres : prefixe + en l'etat
+     * - Si le numero a exactement 8 chiffres : prefixe +229
+     * - Sinon : retourne +<digits> tel quel pour que la validation regex le rejette proprement
+     */
     private function normaliserTelephone(string $telephone): string
     {
         $digits = preg_replace('/\D/', '', $telephone);
@@ -69,6 +80,7 @@ class InscriptionController extends Controller
             return '+229'.$digits;
         }
 
-        return str_starts_with($telephone, '+') ? '+'.$digits : '+'.$digits;
+        // Cas ambigu : retourner +<digits> pour que le validateur regex rejette proprement.
+        return '+'.$digits;
     }
 }
