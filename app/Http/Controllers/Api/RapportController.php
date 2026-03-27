@@ -48,8 +48,8 @@ class RapportController extends Controller
         $request->validate([
             'activite_id' => 'required|integer|exists:activites,id',
             'type' => 'required|in:campagne,dossier_credit,mensuel,annuel',
-            'periode_debut' => 'required|date',
-            'periode_fin' => 'required|date|after_or_equal:periode_debut',
+            'periode_debut' => 'nullable|date',
+            'periode_fin' => 'nullable|date',
         ]);
 
         $typePermission = match ($request->type) {
@@ -68,18 +68,22 @@ class RapportController extends Controller
 
         $userId = auth()->user()->id;
 
-        $activite = Activite::whereHas('exploitation', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })->with('exploitation')->findOrFail($request->activite_id);
+        $activite = Activite::pourUtilisateur((int) $userId)
+            ->with('exploitation')->findOrFail($request->activite_id);
 
         $user = auth()->user();
+        $periode = $this->rapportService->resoudrePeriode(
+            $activite,
+            $request->input('periode_debut'),
+            $request->input('periode_fin')
+        );
 
         $generation = $this->rapportService->creerEtDispatcher(
             $user,
             $activite,
             (string) $request->type,
-            (string) $request->periode_debut,
-            (string) $request->periode_fin
+            $periode['debut'],
+            $periode['fin']
         );
         $rapport = $generation['rapport'];
         $indicateurs = $generation['indicateurs'];

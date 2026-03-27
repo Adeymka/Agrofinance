@@ -11,6 +11,21 @@ class OtpService
     private const MAX_TRIES = 5;
     private const LOCKOUT = 15;
 
+    public function normaliserTelephone(string $telephone): string
+    {
+        $digits = preg_replace('/\D/', '', $telephone);
+
+        if (str_starts_with($digits, '229') && strlen($digits) >= 11) {
+            return '+'.$digits;
+        }
+
+        if (strlen($digits) === 8) {
+            return '+229'.$digits;
+        }
+
+        return '+'.$digits;
+    }
+
     public function genererEtEnvoyer(string $telephone): bool
     {
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -59,8 +74,13 @@ class OtpService
 
     private function envoyerSMS(string $telephone, string $code): bool
     {
-        if (app()->environment(['local', 'testing'])) {
+        if (app()->isLocal()) {
             Log::info("[OTP LOCAL] Tel: {$telephone} | Code: {$code}");
+
+            return true;
+        }
+
+        if (app()->environment('testing')) {
             return true;
         }
 

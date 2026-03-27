@@ -70,9 +70,8 @@ class TransactionController extends Controller
         ]);
 
         foreach ($request->transactions as $data) {
-            $activite = Activite::whereHas('exploitation', function ($q) {
-                $q->where('user_id', auth()->user()->id);
-            })->findOrFail($data['activite_id']);
+            $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+                ->findOrFail($data['activite_id']);
 
             if ($activite->statut !== Activite::STATUT_EN_COURS) {
                 return response()->json([
@@ -86,9 +85,7 @@ class TransactionController extends Controller
         $userId = auth()->user()->id;
 
         foreach ($request->transactions as $data) {
-            $activite = Activite::whereHas('exploitation', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            })->findOrFail($data['activite_id']);
+            $activite = Activite::pourUtilisateur((int) $userId)->findOrFail($data['activite_id']);
 
             if (! empty($data['client_uuid'])) {
                 $existante = Transaction::query()

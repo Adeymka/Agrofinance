@@ -39,9 +39,7 @@ class TransactionController extends Controller
     {
         $uid = (int) auth()->user()->id;
 
-        $activites = Activite::whereHas('exploitation', function ($q) use ($uid) {
-            $q->where('user_id', $uid);
-        })
+        $activites = Activite::pourUtilisateur($uid)
             ->where('statut', Activite::STATUT_EN_COURS)
             ->with('exploitation:id,nom,type')
             ->get();
@@ -93,9 +91,8 @@ class TransactionController extends Controller
 
         $request->validate($rules);
 
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', (int) auth()->user()->id);
-        })->with('exploitation:id,type')->findOrFail($request->activite_id);
+        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+            ->with('exploitation:id,type')->findOrFail($request->activite_id);
 
         if ($activite->statut !== Activite::STATUT_EN_COURS) {
             throw ValidationException::withMessages([
@@ -200,9 +197,7 @@ class TransactionController extends Controller
             ? ''
             : old('categorie', $categorieSlugDefault);
 
-        $activites = Activite::whereHas('exploitation', function ($q) use ($uid) {
-            $q->where('user_id', $uid);
-        })
+        $activites = Activite::pourUtilisateur($uid)
             ->where('statut', Activite::STATUT_EN_COURS)
             ->with('exploitation:id,nom')
             ->get();
@@ -249,9 +244,8 @@ class TransactionController extends Controller
 
         $request->validate($rules);
 
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', (int) auth()->user()->id);
-        })->with('exploitation:id,type')->findOrFail($request->activite_id);
+        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+            ->with('exploitation:id,type')->findOrFail($request->activite_id);
 
         if ($activite->statut !== Activite::STATUT_EN_COURS) {
             throw ValidationException::withMessages([

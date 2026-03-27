@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Activite extends Model
@@ -34,6 +35,16 @@ class Activite extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Activités dont l’exploitation appartient à l’utilisateur donné.
+     *
+     * @param  Builder<Activite>  $query
+     */
+    public function scopePourUtilisateur(Builder $query, int $userId): Builder
+    {
+        return $query->whereHas('exploitation', fn ($q) => $q->where('user_id', $userId));
     }
 
     /**

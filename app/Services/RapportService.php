@@ -6,8 +6,10 @@ use App\Models\Activite;
 use App\Models\Rapport;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class RapportService
 {
@@ -29,17 +31,6 @@ class RapportService
     ): array {
         $exploitation = $activite->exploitation;
 
-        $indicateurs = $this->indicateurs->calculer(
-            $activite->id,
-            $periodeDebut,
-            $periodeFin
-        );
-
-        $transactions = $activite->transactions()
-            ->whereBetween('date_transaction', [$periodeDebut, $periodeFin])
-            ->orderBy('date_transaction')
-            ->get();
-
         $token = Str::random(40);
 
         $rapport = Rapport::create([
@@ -52,7 +43,43 @@ class RapportService
             'lien_expire_le' => now()->addHours(72),
         ]);
 
-        $template = $type === 'dossier_credit'
+        $prepared = $this->preparerPdfRapport($user, $activite, $rapport);
+
+        $this->stockerPdfLocal($prepared['chemin'], $prepared['binary']);
+
+        $rapport->update(['chemin_pdf' => $prepared['chemin']]);
+
+        return [
+            'rapport' => $rapport->fresh(),
+            'indicateurs' => $prepared['indicateurs'],
+            'token' => $token,
+        ];
+    }
+
+    /**
+     * Génère le binaire PDF et le chemin relatif (sans écriture disque).
+     *
+     * @return array{chemin: string, binary: string, indicateurs: array}
+     */
+    public function preparerPdfRapport(User $user, Activite $activite, Rapport $rapport): array
+    {
+        $exploitation = $activite->exploitation;
+
+        $periodeDebut = $rapport->periode_debut->toDateString();
+        $periodeFin = $rapport->periode_fin->toDateString();
+
+        $indicateurs = $this->indicateurs->calculer(
+            $activite->id,
+            $periodeDebut,
+            $periodeFin
+        );
+
+        $transactions = $activite->transactions()
+            ->whereBetween('date_transaction', [$periodeDebut, $periodeFin])
+            ->orderBy('date_transaction')
+            ->get();
+
+        $template = $rapport->type === 'dossier_credit'
             ? 'rapports.pdf.dossier-credit'
             : 'rapports.pdf.campagne';
 
@@ -65,18 +92,55 @@ class RapportService
             'transactions'
         ));
 
+        $token = $rapport->lien_token ?? Str::random(40);
         $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
         $chemin = 'rapports/'.$nomFichier;
 
-        Storage::disk('local')->makeDirectory('rapports');
-        Storage::disk('local')->put($chemin, $pdf->output());
+        return [
+            'chemin' => $chemin,
+            'binary' => $pdf->output(),
+            'indicateurs' => $indicateurs,
+        ];
+    }
 
-        $rapport->update(['chemin_pdf' => $chemin]);
+    /**
+     * Harmonise la période entre API/Web avec fallback activité.
+     *
+     * @return array{debut: string, fin: string}
+     *
+     * @throws ValidationException
+     */
+    public function resoudrePeriode(
+        Activite $activite,
+        ?string $periodeDebut,
+        ?string $periodeFin
+    ): array {
+        $debut = $periodeDebut
+            ? Carbon::parse($periodeDebut)->toDateString()
+            : ($activite->date_debut?->toDateString() ?? now()->startOfMonth()->toDateString());
+
+        $fin = $periodeFin
+            ? Carbon::parse($periodeFin)->toDateString()
+            : ($activite->date_fin?->toDateString() ?? now()->toDateString());
+
+        if ($fin < $debut) {
+            throw ValidationException::withMessages([
+                'periode_fin' => 'La période de fin doit être postérieure ou égale à la période de début.',
+            ]);
+        }
 
         return [
-            'rapport' => $rapport->fresh(),
-            'indicateurs' => $indicateurs,
-            'token' => $token,
+            'debut' => $debut,
+            'fin' => $fin,
         ];
+    }
+
+    /**
+     * Écrit le PDF sur le disque local (utilisé aussi par {@see GenerateRapportPdfJob} avec try/catch).
+     */
+    public function stockerPdfLocal(string $chemin, string $binary): void
+    {
+        Storage::disk('local')->makeDirectory('rapports');
+        Storage::disk('local')->put($chemin, $binary);
     }
 }

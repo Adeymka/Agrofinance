@@ -25,9 +25,7 @@ class IndicateurController extends Controller
     {
         $userId = auth()->user()->id;
 
-        $activite = Activite::whereHas('exploitation', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })->findOrFail($id);
+        $activite = Activite::pourUtilisateur((int) $userId)->findOrFail($id);
 
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 
@@ -77,9 +75,7 @@ class IndicateurController extends Controller
     {
         $userId = auth()->user()->id;
 
-        $activite = Activite::whereHas('exploitation', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })->findOrFail($id);
+        $activite = Activite::pourUtilisateur((int) $userId)->findOrFail($id);
 
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
         $evolution = $this->service->evolutionMensuelle($id, $floor);

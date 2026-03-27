@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Exploitation;
 use App\Services\AbonnementService;
+use App\Services\ActiviteStatutService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,8 @@ class ActiviteController extends Controller
 {
     public function __construct(
         private FinancialIndicatorsService $service,
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private ActiviteStatutService $activiteStatutService
     ) {}
 
     public function index()
@@ -108,7 +110,7 @@ class ActiviteController extends Controller
 
     public function show(int $id)
     {
-        $activite = Activite::whereHas('exploitation', fn ($q) => $q->where('user_id', (int) auth()->user()->id))
+        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
             ->with('transactions')
             ->findOrFail($id);
 
@@ -150,20 +152,18 @@ class ActiviteController extends Controller
 
     public function cloturer(int $id)
     {
-        $activite = Activite::whereHas('exploitation', fn ($q) => $q->where('user_id', (int) auth()->user()->id))
-            ->findOrFail($id);
+        $resultat = $this->activiteStatutService->cloturer($id, (int) auth()->user()->id);
 
-        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+        if (! $resultat['ok']) {
+            if ($resultat['reason'] === 'not_found') {
+                abort(404);
+            }
+
             return redirect()->route('activites.index')
-                ->with('error', 'Seules les campagnes en cours peuvent être clôturées.');
+                ->with('error', $resultat['message']);
         }
 
-        $nom = $activite->nom;
-
-        $activite->update([
-            'statut' => Activite::STATUT_TERMINE,
-            'date_fin' => now()->toDateString(),
-        ]);
+        $nom = $resultat['activite']->nom;
 
         return redirect()->route('activites.index')
             ->with('success', "Campagne « {$nom} » clôturée.");
@@ -171,20 +171,18 @@ class ActiviteController extends Controller
 
     public function abandonner(int $id)
     {
-        $activite = Activite::whereHas('exploitation', fn ($q) => $q->where('user_id', (int) auth()->user()->id))
-            ->findOrFail($id);
+        $resultat = $this->activiteStatutService->abandonner($id, (int) auth()->user()->id);
 
-        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+        if (! $resultat['ok']) {
+            if ($resultat['reason'] === 'not_found') {
+                abort(404);
+            }
+
             return redirect()->route('activites.index')
-                ->with('error', 'Seules les campagnes en cours peuvent être marquées comme abandonnées.');
+                ->with('error', $resultat['message']);
         }
 
-        $nom = $activite->nom;
-
-        $activite->update([
-            'statut' => Activite::STATUT_ABANDONNE,
-            'date_fin' => $activite->date_fin ?? now()->toDateString(),
-        ]);
+        $nom = $resultat['activite']->nom;
 
         return redirect()->route('activites.index')
             ->with('success', "Campagne « {$nom} » marquée comme abandonnée.");

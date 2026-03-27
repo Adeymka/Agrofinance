@@ -54,7 +54,7 @@ class RapportController extends Controller
             'activite_id' => 'required|integer|exists:activites,id',
             'type' => 'required|in:campagne,dossier_credit',
             'periode_debut' => 'nullable|date',
-            'periode_fin' => 'nullable|date|after_or_equal:periode_debut',
+            'periode_fin' => 'nullable|date',
         ]);
 
         $refus = $this->refuseSiPasGenerationRapport(
@@ -68,23 +68,23 @@ class RapportController extends Controller
 
         $uid = (int) auth()->user()->id;
 
-        $activite = Activite::whereHas('exploitation', function ($q) use ($uid) {
-            $q->where('user_id', $uid);
-        })->with('exploitation')->findOrFail($request->activite_id);
+        $activite = Activite::pourUtilisateur($uid)
+            ->with('exploitation')->findOrFail($request->activite_id);
 
         $user = auth()->user();
 
-        $debut = $request->periode_debut
-            ?? ($activite->date_debut?->toDateString() ?? now()->startOfMonth()->toDateString());
-        $fin = $request->periode_fin
-            ?? ($activite->date_fin?->toDateString() ?? now()->toDateString());
+        $periode = $this->rapportService->resoudrePeriode(
+            $activite,
+            $request->input('periode_debut'),
+            $request->input('periode_fin')
+        );
 
         $this->rapportService->creerEtDispatcher(
             $user,
             $activite,
             (string) $request->type,
-            $debut,
-            $fin
+            $periode['debut'],
+            $periode['fin']
         );
 
         return redirect()->route('rapports.index')

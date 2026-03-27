@@ -27,7 +27,7 @@
 </div>
 @endsection
 
-@if(app()->environment('local'))
+@if(app()->isLocal())
 @section('mobile-dev')
 <div class="auth-mobile-dev">
     <strong>Dev :</strong> code dans storage/logs/laravel.log
@@ -97,7 +97,7 @@
         <div style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.35);">5 tentatives maximum avant blocage</div>
     </div>
 </div>
-@if (app()->environment('local'))
+@if (app()->isLocal())
     <div style="margin-top:20px; padding:12px 16px; background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.25); border-radius:10px; max-width:320px;">
         <div style="font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:rgba(245,158,11,0.80); margin-bottom:4px;">Mode développement</div>
         <div style="font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,0.35);">Consultez : storage/logs/laravel.log</div>

@@ -6,19 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Exploitation;
 use App\Services\AbonnementService;
+use App\Services\ActiviteStatutService;
 use Illuminate\Http\Request;
 
 class ActiviteController extends Controller
 {
     public function __construct(
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private ActiviteStatutService $activiteStatutService
     ) {}
 
     public function index()
     {
-        $activites = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })->with('exploitation:id,nom')->latest()->get();
+        $activites = Activite::pourUtilisateur((int) auth()->user()->id)
+            ->with('exploitation:id,nom')->latest()->get();
 
         return response()->json([
             'succes' => true,
@@ -62,9 +63,8 @@ class ActiviteController extends Controller
 
     public function show(int $id)
     {
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })->with('transactions')->findOrFail($id);
+        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+            ->with('transactions')->findOrFail($id);
 
         $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 
@@ -86,9 +86,7 @@ class ActiviteController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })->findOrFail($id);
+        $activite = Activite::pourUtilisateur((int) auth()->user()->id)->findOrFail($id);
 
         $request->validate([
             'nom' => 'sometimes|string|max:255',
@@ -113,51 +111,45 @@ class ActiviteController extends Controller
 
     public function cloturer(int $id)
     {
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })->findOrFail($id);
+        $resultat = $this->activiteStatutService->cloturer($id, (int) auth()->user()->id);
 
-        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+        if (! $resultat['ok']) {
+            if ($resultat['reason'] === 'not_found') {
+                abort(404);
+            }
+
             return response()->json([
                 'succes' => false,
-                'message' => 'Seules les campagnes en cours peuvent être clôturées.',
+                'message' => $resultat['message'],
             ], 422);
         }
-
-        $activite->update([
-            'statut' => Activite::STATUT_TERMINE,
-            'date_fin' => now()->toDateString(),
-        ]);
 
         return response()->json([
             'succes' => true,
             'message' => 'Activité clôturée.',
-            'data' => $activite,
+            'data' => $resultat['activite'],
         ]);
     }
 
     public function abandonner(int $id)
     {
-        $activite = Activite::whereHas('exploitation', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })->findOrFail($id);
+        $resultat = $this->activiteStatutService->abandonner($id, (int) auth()->user()->id);
 
-        if ($activite->statut !== Activite::STATUT_EN_COURS) {
+        if (! $resultat['ok']) {
+            if ($resultat['reason'] === 'not_found') {
+                abort(404);
+            }
+
             return response()->json([
                 'succes' => false,
-                'message' => 'Seules les campagnes en cours peuvent être marquées comme abandonnées.',
+                'message' => $resultat['message'],
             ], 422);
         }
-
-        $activite->update([
-            'statut' => Activite::STATUT_ABANDONNE,
-            'date_fin' => $activite->date_fin ?? now()->toDateString(),
-        ]);
 
         return response()->json([
             'succes' => true,
             'message' => 'Campagne marquée comme abandonnée.',
-            'data' => $activite,
+            'data' => $resultat['activite'],
         ]);
     }
 }

@@ -24,7 +24,7 @@ class InscriptionController extends Controller
             'type_exploitation' => 'required|in:cultures_vivrieres,elevage,maraichage,transformation,mixte',
         ]);
 
-        $telephone = $this->normaliserTelephone($request->telephone);
+        $telephone = $otp->normaliserTelephone($request->telephone);
 
         $v = \Validator::make(
             ['telephone' => $telephone],
@@ -54,21 +54,11 @@ class InscriptionController extends Controller
         ]);
 
         return redirect()->route('verification.otp')
-            ->with('info', 'Code envoyé. En local, consultez storage/logs/laravel.log');
-    }
-
-    private function normaliserTelephone(string $telephone): string
-    {
-        $digits = preg_replace('/\D/', '', $telephone);
-
-        if (str_starts_with($digits, '229') && strlen($digits) >= 11) {
-            return '+'.$digits;
-        }
-
-        if (strlen($digits) === 8) {
-            return '+229'.$digits;
-        }
-
-        return str_starts_with($telephone, '+') ? '+'.$digits : '+'.$digits;
+            ->with(
+                'info',
+                app()->isLocal()
+                    ? 'Code envoyé. En local, consultez storage/logs/laravel.log'
+                    : 'Code envoyé par SMS sur votre numéro.'
+            );
     }
 }

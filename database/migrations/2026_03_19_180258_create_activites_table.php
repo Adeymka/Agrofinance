@@ -20,7 +20,7 @@ return new class extends Migration
             $table->enum('type', ['culture', 'elevage', 'transformation']);
             $table->date('date_debut');
             $table->date('date_fin')->nullable();
-            $table->enum('statut', ['actif', 'termine', 'archive'])->default('actif');
+            $table->enum('statut', ['en_cours', 'termine', 'abandonne'])->default('en_cours');
             $table->decimal('budget_previsionnel', 15, 2)->nullable();
             $table->timestamps();
         });

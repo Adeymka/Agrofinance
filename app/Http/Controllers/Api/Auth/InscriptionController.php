@@ -32,9 +32,11 @@ class InscriptionController extends Controller
         $otp->genererEtEnvoyer($request->telephone);
 
         return response()->json([
-            'succes'  => true,
-            'message' => 'Compte créé. Vérifiez votre code OTP dans les logs (environnement local).',
-            'data'    => ['user_id' => $user->id],
+            'succes' => true,
+            'message' => app()->isLocal()
+                ? 'Compte créé. Vérifiez votre code OTP dans les logs (environnement local).'
+                : 'Compte créé. Un code à 6 chiffres vous a été envoyé par SMS.',
+            'data' => ['user_id' => $user->id],
         ], 201);
     }
 }

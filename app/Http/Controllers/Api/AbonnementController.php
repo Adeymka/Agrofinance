@@ -33,7 +33,8 @@ class AbonnementController extends Controller
             $user,
             (string) $request->plan,
             (string) $request->telephone,
-            $callbackUrl
+            $callbackUrl,
+            false
         );
 
         return match ($resultat['type']) {
@@ -76,7 +77,7 @@ class AbonnementController extends Controller
      */
     public function callback(Request $request)
     {
-        $resultat = $this->abonnementService->traiterCallbackFedaPay($request);
+        $resultat = $this->abonnementService->traiterCallbackFedaPay($request, false);
 
         return response()->json([
             'succes' => $resultat['succes'],

@@ -7,6 +7,7 @@ use App\Models\Exploitation;
 use App\Models\User;
 use FedaPay\FedaPay;
 use FedaPay\Transaction;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -201,22 +202,7 @@ class AbonnementService
             ->update(['statut' => 'expire']);
 
         $planDb = $this->planPourBase($plan);
-        // Facturation mensuelle : mensuel / annuel (Pro) / coopérative = 30 j par période
-        if ($plan === 'annuel') {
-            $dureeJours = 30;
-        } elseif ($plan === 'cooperative') {
-            $dureeJours = 30;
-        } elseif ($plan === 'mensuel') {
-            $dureeJours = 30;
-        } elseif (in_array($plan, ['essai', 'gratuit'], true)) {
-            $dureeJours = 75;
-        } else {
-            $dureeJours = match ($planDb) {
-                'gratuit' => 75,
-                'pro', 'cooperative', 'essentielle' => 30,
-                default => 30,
-            };
-        }
+        $dureeJours = $this->dureeAbonnementEnJours($plan, $planDb);
 
         return Abonnement::create([
             'user_id' => $user->id,
@@ -230,7 +216,23 @@ class AbonnementService
     }
 
     /**
-     * Initie un paiement FedaPay (mock, clé absente ou transaction réelle + session/cache).
+     * Durée de validité (jours) selon le plan de facturation FedaPay / essai et, à défaut, le plan persisté en base.
+     */
+    private function dureeAbonnementEnJours(string $planFacturation, string $planDb): int
+    {
+        return match ($planFacturation) {
+            'mensuel', 'annuel', 'cooperative' => 30,
+            'essai', 'gratuit' => 75,
+            default => match ($planDb) {
+                'gratuit' => 75,
+                'essentielle', 'pro', 'cooperative' => 30,
+                default => 30,
+            },
+        };
+    }
+
+    /**
+     * Initie un paiement FedaPay (mock, clé absente ou transaction réelle + cache ; session optionnelle pour le Web).
      *
      * @return array{
      *   type: 'mock',
@@ -245,7 +247,13 @@ class AbonnementService
      *   url_paiement: string
      * }|array{type: 'erreur', message: string}
      */
-    public function initierPaiementFedaPay(User $user, string $plan, string $telephone, string $callbackUrl): array
+    public function initierPaiementFedaPay(
+        User $user,
+        string $plan,
+        string $telephone,
+        string $callbackUrl,
+        bool $persisterSession = false
+    ): array
     {
         $montant = $this->montantFacturation($plan);
 
@@ -310,11 +318,13 @@ class AbonnementService
                 now()->addHours(48)
             );
 
-            Session::put([
-                'fedapay_transaction_id' => $txId,
-                'fedapay_plan' => $plan,
-                'fedapay_user_id' => $user->id,
-            ]);
+            if ($persisterSession) {
+                Session::put([
+                    'fedapay_transaction_id' => $txId,
+                    'fedapay_plan' => $plan,
+                    'fedapay_user_id' => $user->id,
+                ]);
+            }
 
             $token = $transaction->generateToken();
 
@@ -344,8 +354,10 @@ class AbonnementService
      *   http_code: int,
      *   deja_traite?: bool
      * }
+     *
+     * @param  bool  $fallbackSession  true = flux Web (navigateur) ; false = API stateless (cache + paramètres uniquement).
      */
-    public function traiterCallbackFedaPay(Request $request): array
+    public function traiterCallbackFedaPay(Request $request, bool $fallbackSession = false): array
     {
         if (empty(config('services.fedapay.secret_key'))) {
             return [
@@ -361,7 +373,7 @@ class AbonnementService
 
             $transactionId = $request->query('id')
                 ?? $request->input('id')
-                ?? session('fedapay_transaction_id');
+                ?? ($fallbackSession ? session('fedapay_transaction_id') : null);
 
             if (! $transactionId) {
                 Log::warning('FedaPay callback sans id transaction.');
@@ -373,57 +385,85 @@ class AbonnementService
                 ];
             }
 
-            $transaction = Transaction::retrieve($transactionId);
+            $txKey = (string) $transactionId;
 
-            $pending = Cache::pull("fedapay_pending:{$transactionId}");
-            if ($pending) {
-                $planChoisi = $pending['plan'];
-                $userId = $pending['user_id'];
-            } else {
-                $planChoisi = session('fedapay_plan', 'mensuel');
-                $userId = session('fedapay_user_id');
-            }
+            return Cache::lock("fedapay:callback:{$txKey}", 120)->block(30, function () use ($request, $fallbackSession, $txKey) {
+                $transaction = Transaction::retrieve($txKey);
 
-            if (! $userId) {
-                Log::error("FedaPay callback : impossible de résoudre user pour TX {$transactionId}");
+                $pending = Cache::pull("fedapay_pending:{$txKey}");
+                if ($pending) {
+                    $planChoisi = $pending['plan'];
+                    $userId = $pending['user_id'];
+                } elseif ($fallbackSession) {
+                    $planChoisi = session('fedapay_plan', 'mensuel');
+                    $userId = session('fedapay_user_id');
+                } else {
+                    $planChoisi = null;
+                    $userId = null;
+                }
+
+                if (! $userId) {
+                    if (! $fallbackSession
+                        && in_array($transaction->status, ['approved', 'transferred'], true)
+                        && Abonnement::where('ref_fedapay', (string) $transaction->id)->exists()) {
+                        return [
+                            'succes' => true,
+                            'message' => 'Déjà traité.',
+                            'http_code' => 200,
+                            'deja_traite' => true,
+                        ];
+                    }
+
+                    Log::error("FedaPay callback : impossible de résoudre user pour TX {$txKey}");
+
+                    return [
+                        'succes' => false,
+                        'message' => 'Contexte de paiement perdu.',
+                        'http_code' => 422,
+                    ];
+                }
+
+                if (! in_array($transaction->status, ['approved', 'transferred'], true)) {
+                    return [
+                        'succes' => false,
+                        'message' => 'Paiement non confirmé.',
+                        'http_code' => 422,
+                    ];
+                }
+
+                $deja = Abonnement::where('ref_fedapay', (string) $transaction->id)->exists();
+
+                $this->activer(
+                    User::findOrFail((int) $userId),
+                    (string) $planChoisi,
+                    (string) $transaction->id,
+                    (float) ($transaction->amount ?? 0)
+                );
+
+                if ($fallbackSession) {
+                    session()->forget([
+                        'fedapay_transaction_id',
+                        'fedapay_plan',
+                        'fedapay_user_id',
+                    ]);
+                }
+
+                Log::info("Abonnement activé — user {$userId} — plan {$planChoisi}");
 
                 return [
-                    'succes' => false,
-                    'message' => 'Contexte de paiement perdu.',
-                    'http_code' => 422,
+                    'succes' => true,
+                    'message' => $deja ? 'Déjà traité.' : 'Abonnement activé.',
+                    'http_code' => 200,
+                    'deja_traite' => $deja,
                 ];
-            }
-
-            if (! in_array($transaction->status, ['approved', 'transferred'], true)) {
-                return [
-                    'succes' => false,
-                    'message' => 'Paiement non confirmé.',
-                    'http_code' => 422,
-                ];
-            }
-
-            $deja = Abonnement::where('ref_fedapay', (string) $transaction->id)->exists();
-
-            $this->activer(
-                User::findOrFail((int) $userId),
-                (string) $planChoisi,
-                (string) $transaction->id,
-                (float) ($transaction->amount ?? 0)
-            );
-
-            session()->forget([
-                'fedapay_transaction_id',
-                'fedapay_plan',
-                'fedapay_user_id',
-            ]);
-
-            Log::info("Abonnement activé — user {$userId} — plan {$planChoisi}");
+            });
+        } catch (LockTimeoutException $e) {
+            Log::warning('FedaPay callback : verrou non obtenu à temps', ['tx' => $transactionId ?? null]);
 
             return [
-                'succes' => true,
-                'message' => $deja ? 'Déjà traité.' : 'Abonnement activé.',
-                'http_code' => 200,
-                'deja_traite' => $deja,
+                'succes' => false,
+                'message' => 'Traitement en cours. Réessayez dans un instant.',
+                'http_code' => 429,
             ];
         } catch (\Throwable $e) {
             Log::error('FedaPay callback : '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
