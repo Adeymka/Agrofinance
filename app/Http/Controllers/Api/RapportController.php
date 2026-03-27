@@ -7,19 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Rapport;
 use App\Services\AbonnementService;
-use App\Services\FinancialIndicatorsService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\RapportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class RapportController extends Controller
 {
     use HandlesPdfAbonnement;
 
     public function __construct(
-        private FinancialIndicatorsService $indicateurs,
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private RapportService $rapportService
     ) {}
 
     /**
@@ -74,51 +72,18 @@ class RapportController extends Controller
             $q->where('user_id', $userId);
         })->with('exploitation')->findOrFail($request->activite_id);
 
-        $exploitation = $activite->exploitation;
         $user = auth()->user();
 
-        $indicateurs = $this->indicateurs->calculer(
-            $activite->id,
-            $request->periode_debut,
-            $request->periode_fin
+        $generation = $this->rapportService->creerEtDispatcher(
+            $user,
+            $activite,
+            (string) $request->type,
+            (string) $request->periode_debut,
+            (string) $request->periode_fin
         );
-
-        $transactions = $activite->transactions()
-            ->whereBetween('date_transaction', [
-                $request->periode_debut,
-                $request->periode_fin,
-            ])
-            ->orderBy('date_transaction')
-            ->get();
-
-        $token = Str::random(40);
-
-        $rapport = Rapport::create([
-            'exploitation_id' => $exploitation->id,
-            'type' => $request->type,
-            'periode_debut' => $request->periode_debut,
-            'periode_fin' => $request->periode_fin,
-            'chemin_pdf' => '',
-            'lien_token' => $token,
-            'lien_expire_le' => now()->addHours(72),
-        ]);
-
-        $template = $request->type === 'dossier_credit'
-            ? 'rapports.pdf.dossier-credit'
-            : 'rapports.pdf.campagne';
-
-        $pdf = Pdf::loadView($template, compact(
-            'user', 'exploitation', 'activite',
-            'rapport', 'indicateurs', 'transactions'
-        ));
-
-        $nomFichier = "rapport_{$rapport->id}_{$token}.pdf";
-        $chemin = 'rapports/'.$nomFichier;
-
-        Storage::disk('local')->makeDirectory('rapports');
-        Storage::disk('local')->put($chemin, $pdf->output());
-
-        $rapport->update(['chemin_pdf' => $chemin]);
+        $rapport = $generation['rapport'];
+        $indicateurs = $generation['indicateurs'];
+        $token = $generation['token'];
 
         return response()->json([
             'succes' => true,

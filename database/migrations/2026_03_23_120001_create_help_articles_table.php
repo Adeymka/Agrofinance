@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,14 +32,23 @@ return new class extends Migration
 
             $table->unique(['help_category_id', 'ordre'], 'help_articles_category_ordre_unique');
 
-            $table->fullText(['titre', 'contenu_texte', 'mots_cles'], 'help_articles_search');
+            if (DB::getDriverName() === 'sqlite') {
+                // SQLite ne supporte pas FULLTEXT via Schema Builder.
+                $table->index(['titre'], 'help_articles_search');
+            } else {
+                $table->fullText(['titre', 'contenu_texte', 'mots_cles'], 'help_articles_search');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('help_articles', function (Blueprint $table) {
-            $table->dropFullText('help_articles_search');
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropIndex('help_articles_search');
+            } else {
+                $table->dropFullText('help_articles_search');
+            }
         });
 
         Schema::dropIfExists('help_articles');

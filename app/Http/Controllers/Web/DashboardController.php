@@ -23,9 +23,18 @@ class DashboardController extends Controller
         $user = auth()->user();
         $uid = (int) $user->id;
 
-        $exploitation = Exploitation::where('user_id', $uid)
-            ->with(['activitesActives' => fn ($q) => $q->with('transactions')])
-            ->first();
+        $exploitationId = (int) $request->query('exploitation_id', 0);
+
+        $exploitationsQuery = Exploitation::where('user_id', $uid)
+            ->with(['activitesActives' => fn ($q) => $q->with('transactions')]);
+
+        $exploitation = $exploitationId > 0
+            ? (clone $exploitationsQuery)->where('id', $exploitationId)->first()
+            : null;
+
+        if (! $exploitation) {
+            $exploitation = $exploitationsQuery->first();
+        }
 
         if (! $exploitation) {
             return redirect()->route('exploitations.create')
