@@ -21,6 +21,20 @@ class TransactionController extends Controller
         private ExploitationCategorieSuggestionService $categorieSuggestionService
     ) {}
 
+    public function index()
+    {
+        $uid = (int) auth()->user()->id;
+
+        $transactions = Transaction::query()
+            ->whereHas('activite.exploitation', fn ($q) => $q->where('user_id', $uid))
+            ->with(['activite:id,nom'])
+            ->orderByDesc('date_transaction')
+            ->orderByDesc('id')
+            ->paginate(20);
+
+        return view('transactions.index', compact('transactions') + ['nav' => 'saisie']);
+    }
+
     public function create(Request $request)
     {
         $uid = (int) auth()->user()->id;

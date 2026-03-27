@@ -13,6 +13,8 @@
         @php
             $links = [
                 ['key' => 'dashboard', 'label' => 'Tableau de bord', 'href' => route('dashboard'), 'icon' => 'chart-bar'],
+                ['key' => 'exploitations', 'label' => 'Exploitations', 'href' => route('exploitations.index'), 'icon' => 'building-office-2'],
+                ['key' => 'transactions-index', 'label' => 'Historique transactions', 'href' => route('transactions.index'), 'icon' => 'document-text'],
                 ['key' => 'nouvelle-exploitation', 'label' => 'Nouvelle exploitation', 'href' => route('exploitations.create'), 'icon' => 'plus-circle'],
                 ['key' => 'campagnes', 'label' => 'Campagnes', 'href' => route('activites.index'), 'icon' => 'leaf'],
                 ['key' => 'nouvelle-campagne', 'label' => 'Nouvelle campagne', 'href' => route('activites.create'), 'icon' => 'plus-circle'],

@@ -14,7 +14,7 @@
 
 @push('styles')
 <style>
-/* ── Filter chips ── */
+/* Tokens globaux : --af-* (app.css) */
 .act-filters {
     display: flex;
     gap: 8px;
@@ -27,30 +27,29 @@
 .act-filters::-webkit-scrollbar { display: none; }
 .act-filter-chip {
     flex-shrink: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
     font-weight: 600;
     padding: 8px 16px;
     border-radius: 999px;
     border: none;
     cursor: pointer;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.45);
+    background: var(--af-glass-06);
+    border: 1px solid var(--af-border-glass-soft);
+    color: var(--af-text-dim);
     transition: all 0.15s;
     white-space: nowrap;
 }
 .act-filter-chip.active {
-    background: rgba(74,222,128,0.14);
-    border-color: rgba(74,222,128,0.28);
-    color: #4ade80;
+    background: var(--af-filter-active-bg);
+    border-color: var(--af-filter-active-border);
+    color: var(--af-color-accent);
 }
 
-/* ── Campaign card ── */
 .act-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 20px;
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--af-radius-lg);
     padding: 16px;
     margin-bottom: 10px;
     text-decoration: none;
@@ -59,7 +58,7 @@
     -webkit-backdrop-filter: blur(12px);
     transition: background 0.15s;
 }
-.act-card:active { background: rgba(255,255,255,0.09); }
+.act-card:active { background: var(--af-glass-09); }
 .act-card-header {
     display: flex;
     align-items: flex-start;
@@ -70,20 +69,21 @@
     width: 42px;
     height: 42px;
     border-radius: 14px;
-    background: rgba(74,222,128,0.10);
-    border: 1px solid rgba(74,222,128,0.18);
+    background: var(--af-green-tint-bg);
+    border: 1px solid var(--af-green-tint-border);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     margin-right: 12px;
+    color: var(--af-color-accent);
 }
 .act-card-title-wrap { flex: 1; min-width: 0; }
 .act-card-nom {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 15px;
     font-weight: 700;
-    color: rgba(255,255,255,0.92);
+    color: var(--af-text-primary);
     letter-spacing: -0.02em;
     white-space: nowrap;
     overflow: hidden;
@@ -91,12 +91,12 @@
     margin-bottom: 2px;
 }
 .act-card-meta {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
 }
 .act-badge {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -106,49 +106,45 @@
     flex-shrink: 0;
     white-space: nowrap;
 }
-/* ── Metrics row ── */
 .act-metrics {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid var(--af-glass-06);
     padding-top: 12px;
 }
 .act-metric-cell { text-align: center; }
-.act-metric-cell + .act-metric-cell { border-left: 1px solid rgba(255,255,255,0.06); }
+.act-metric-cell + .act-metric-cell { border-left: 1px solid var(--af-glass-06); }
 .act-metric-lbl {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
-    color: rgba(255,255,255,0.28);
+    color: var(--af-text-faint);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 3px;
 }
 .act-metric-val {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 13px;
     font-weight: 700;
     letter-spacing: -0.02em;
 }
-/* ── Budget bar ── */
 .act-budget { margin-bottom: 12px; }
 .act-budget-labels {
     display: flex;
     justify-content: space-between;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
-    color: rgba(255,255,255,0.30);
+    color: var(--af-text-caption);
     margin-bottom: 4px;
 }
 .act-budget-track {
     height: 4px;
-    background: rgba(255,255,255,0.08);
+    background: var(--af-glass-08);
     border-radius: 2px;
     overflow: hidden;
 }
 .act-budget-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
-/* ── Carte "terminée/abandonnée" (opacité réduite) ── */
 .act-card-muted { opacity: 0.65; }
-/* ── FAB ── */
 .act-fab {
     position: fixed;
     bottom: 84px;
@@ -156,8 +152,8 @@
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    box-shadow: 0 4px 20px rgba(34,197,94,0.45);
+    background: linear-gradient(135deg, var(--af-color-accent-mid) 0%, var(--af-color-accent-dark) 100%);
+    box-shadow: var(--af-fab-glow);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,27 +162,26 @@
     transition: transform 0.15s, box-shadow 0.15s;
 }
 .act-fab:active { transform: scale(0.95); }
-/* ── Empty state ── */
 .act-empty {
     text-align: center;
     padding: 40px 20px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 20px;
+    background: var(--af-glass-06);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--af-radius-lg);
     margin-bottom: 10px;
 }
 .act-empty-icon { font-size: 40px; margin-bottom: 12px; }
 .act-empty-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 15px;
     font-weight: 600;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255, 255, 255, 0.75);
     margin-bottom: 6px;
 }
 .act-empty-sub {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
 }
 </style>
 @endpush
@@ -197,8 +192,8 @@ $activeTab = request('tab', 'en_cours');
 
 {{-- ── Titre ── --}}
 <div style="padding: 20px 0 4px;">
-    <h1 style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:rgba(255,255,255,0.94); letter-spacing:-0.03em;">Mes campagnes</h1>
-    <p style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.30); margin-top:3px;">{{ $actives->count() }} en cours · {{ $terminees->count() }} terminée(s)</p>
+    <h1 style="font-family:var(--font-display),sans-serif; font-size:22px; font-weight:700; color:var(--af-text-high); letter-spacing:-0.03em;">Mes campagnes</h1>
+    <p style="font-family:var(--font-ui),sans-serif; font-size:12px; color:var(--af-text-caption); margin-top:3px;">{{ $actives->count() }} en cours · {{ $terminees->count() }} terminée(s)</p>
 </div>
 
 {{-- ── Filtres chips ── --}}
@@ -241,9 +236,9 @@ $activeTab = request('tab', 'en_cours');
         $rne    = $ind['RNE'] ?? 0;
         $statut = $ind['statut'] ?? 'rouge';
         $badge  = match($statut) {
-            'vert'   => ['label' => 'RENTABLE',   'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)',  'border' => 'rgba(74,222,128,0.22)'],
-            'orange' => ['label' => 'SURVEILLER', 'color' => '#fbbf24', 'bg' => 'rgba(251,191,36,0.12)',  'border' => 'rgba(251,191,36,0.22)'],
-            default  => ['label' => 'DÉFICIT',    'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'border' => 'rgba(248,113,113,0.22)'],
+            'vert'   => ['label' => 'RENTABLE',   'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-vert-bg)',  'border' => 'var(--af-stat-vert-border-tight)'],
+            'orange' => ['label' => 'SURVEILLER', 'color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-orange-bg)',  'border' => 'var(--af-stat-orange-border)'],
+            default  => ['label' => 'DÉFICIT',    'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-rouge-bg)', 'border' => 'var(--af-stat-rouge-border)'],
         };
         $dateFmt = $isMuted
             ? ($a->date_fin?->format('d/m/Y') ?? '—')
@@ -256,7 +251,7 @@ $activeTab = request('tab', 'en_cours');
         <div class="act-card-header">
             <div style="display:flex; align-items:center; flex:1; min-width:0;">
                 <div class="act-card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:rgba(74,222,128,0.75);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--af-color-accent);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                 </div>
@@ -275,15 +270,15 @@ $activeTab = request('tab', 'en_cours');
         <div class="act-metrics">
             <div class="act-metric-cell">
                 <div class="act-metric-lbl">Recettes</div>
-                <div class="act-metric-val" style="color:#4ade80;">{{ number_format($pb / 1000, 1, ',', ' ') }}K</div>
+                <div class="act-metric-val" style="color:var(--af-color-accent);">{{ number_format($pb / 1000, 1, ',', ' ') }}K</div>
             </div>
             <div class="act-metric-cell">
                 <div class="act-metric-lbl">Dépenses</div>
-                <div class="act-metric-val" style="color:#f87171;">{{ number_format($ct / 1000, 1, ',', ' ') }}K</div>
+                <div class="act-metric-val" style="color:var(--af-color-danger);">{{ number_format($ct / 1000, 1, ',', ' ') }}K</div>
             </div>
             <div class="act-metric-cell">
                 <div class="act-metric-lbl">Marge</div>
-                <div class="act-metric-val" style="color:{{ $mb >= 0 ? '#4ade80' : '#f87171' }};">
+                <div class="act-metric-val" style="color:{{ $mb >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                     {{ $mb >= 0 ? '+' : '' }}{{ number_format($mb / 1000, 1, ',', ' ') }}K
                 </div>
             </div>

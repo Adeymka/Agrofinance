@@ -18,6 +18,114 @@
 :root {
     --font-display: "Space Grotesk", system-ui, sans-serif;
     --font-ui: "Inter", system-ui, -apple-system, sans-serif;
+
+    /* ── Design tokens AgroFinance+ (homogénéité app connectée, hors icônes) ── */
+    --af-color-bg-deep: #0d1f0d;
+    --af-color-accent: #4ade80;
+    --af-color-accent-mid: #22c55e;
+    --af-color-accent-dark: #16a34a;
+    --af-text-primary: rgba(255, 255, 255, 0.92);
+    --af-text-high: rgba(255, 255, 255, 0.95);
+    --af-text-secondary: rgba(255, 255, 255, 0.72);
+    --af-text-muted: rgba(255, 255, 255, 0.55);
+    --af-text-dim: rgba(255, 255, 255, 0.45);
+    --af-text-label: rgba(255, 255, 255, 0.42);
+    --af-text-nav-inactive: rgba(255, 255, 255, 0.28);
+    --af-text-dock-meta: rgba(255, 255, 255, 0.38);
+    --af-border-glass: rgba(255, 255, 255, 0.18);
+    --af-border-glass-mid: rgba(255, 255, 255, 0.16);
+    --af-border-glass-soft: rgba(255, 255, 255, 0.1);
+    --af-glass-05: rgba(255, 255, 255, 0.05);
+    --af-glass-06: rgba(255, 255, 255, 0.06);
+    --af-glass-08: rgba(255, 255, 255, 0.08);
+    --af-glass-09: rgba(255, 255, 255, 0.09);
+    --af-glass-10: rgba(255, 255, 255, 0.1);
+    --af-glass-12: rgba(255, 255, 255, 0.12);
+    --af-glass-14: rgba(255, 255, 255, 0.14);
+    --af-accent-glow-line: rgba(74, 222, 128, 0.08);
+    --af-photo-overlay-gradient: linear-gradient(
+        180deg,
+        rgba(13, 31, 13, 0.72) 0%,
+        rgba(10, 22, 12, 0.68) 45%,
+        rgba(13, 31, 13, 0.78) 100%
+    );
+    --af-blur-header: 28px;
+    --af-blur-dock: 32px;
+    --af-blur-flash: 20px;
+    --af-radius-sm: 12px;
+    --af-radius-md: 16px;
+    --af-radius-lg: 20px;
+    --af-touch-min: 44px;
+
+    /* Texte secondaire (légendes, sous-titres) */
+    --af-text-caption: rgba(255, 255, 255, 0.3);
+    --af-text-faint: rgba(255, 255, 255, 0.28);
+    --af-text-subtle: rgba(255, 255, 255, 0.35);
+    --af-text-body-strong: rgba(255, 255, 255, 0.82);
+    --af-text-body: rgba(255, 255, 255, 0.88);
+    --af-text-heading-soft: rgba(255, 255, 255, 0.9);
+
+    /* Statuts métier (badges KPI / campagnes) */
+    --af-color-warning: #fbbf24;
+    --af-color-danger: #f87171;
+    --af-color-info: #93c5fd;
+    --af-stat-vert-bg: rgba(74, 222, 128, 0.12);
+    --af-stat-vert-border: rgba(74, 222, 128, 0.25);
+    --af-stat-vert-border-tight: rgba(74, 222, 128, 0.22);
+    --af-stat-orange-bg: rgba(251, 191, 36, 0.12);
+    --af-stat-orange-border: rgba(251, 191, 36, 0.25);
+    --af-stat-rouge-bg: rgba(248, 113, 113, 0.12);
+    --af-stat-rouge-border: rgba(248, 113, 113, 0.25);
+    --af-stat-mobile-vert-bg: rgba(74, 222, 128, 0.15);
+    --af-stat-mobile-vert-border: rgba(74, 222, 128, 0.25);
+    --af-stat-mobile-orange-bg: rgba(251, 191, 36, 0.15);
+    --af-stat-mobile-orange-border: rgba(251, 191, 36, 0.25);
+    --af-stat-mobile-rouge-bg: rgba(248, 113, 113, 0.15);
+    --af-stat-mobile-rouge-border: rgba(248, 113, 113, 0.25);
+
+    /* Surfaces mobile (cartes glass) */
+    --af-mobile-surface-hero: rgba(255, 255, 255, 0.14);
+    --af-mobile-surface-card: rgba(255, 255, 255, 0.13);
+    --af-mobile-surface-muted: rgba(255, 255, 255, 0.12);
+    --af-mobile-surface-press: rgba(255, 255, 255, 0.18);
+    --af-mobile-border-strong: rgba(255, 255, 255, 0.22);
+    --af-mobile-border-mid: rgba(255, 255, 255, 0.14);
+    --af-mobile-divider: rgba(255, 255, 255, 0.12);
+    --af-mobile-divider-soft: rgba(255, 255, 255, 0.1);
+    --af-green-tint-bg: rgba(74, 222, 128, 0.1);
+    --af-green-tint-border: rgba(74, 222, 128, 0.18);
+    --af-green-icon-bg: rgba(74, 222, 128, 0.15);
+    --af-green-icon-border: rgba(74, 222, 128, 0.22);
+    --af-chip-active-bg: rgba(74, 222, 128, 0.15);
+    --af-chip-active-border: rgba(74, 222, 128, 0.3);
+    --af-filter-active-bg: rgba(74, 222, 128, 0.14);
+    --af-filter-active-border: rgba(74, 222, 128, 0.28);
+    --af-amber-tint-bg: rgba(251, 191, 36, 0.12);
+    --af-amber-tint-border: rgba(251, 191, 36, 0.2);
+    --af-amber-alert-bg: rgba(251, 191, 36, 0.14);
+    --af-amber-alert-border: rgba(251, 191, 36, 0.32);
+    --af-blue-tint-bg: rgba(96, 165, 250, 0.12);
+    --af-blue-tint-border: rgba(96, 165, 250, 0.2);
+    --af-red-tint-bg: rgba(248, 113, 113, 0.12);
+    --af-red-tint-border: rgba(248, 113, 113, 0.2);
+    --af-red-alert-bg: rgba(239, 68, 68, 0.16);
+    --af-red-alert-border: rgba(239, 68, 68, 0.35);
+    --af-blur-hero-mobile: 26px;
+    --af-blur-card-mobile: 22px;
+    --af-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.12);
+    --af-shadow-card-lg: 0 6px 24px rgba(0, 0, 0, 0.14);
+    --af-shadow-hero-mobile: 0 8px 32px rgba(0, 0, 0, 0.18);
+    --af-fab-glow: 0 4px 20px rgba(34, 197, 94, 0.45);
+
+    /* Wizard transaction mobile (footer + CTA type) */
+    --af-tx-footer-scrim: rgba(13, 31, 13, 0.95);
+    --af-tx-btn-dep: rgba(248, 113, 113, 0.85);
+    --af-tx-btn-rec: rgba(34, 197, 94, 0.85);
+    --af-tx-type-dep-bg: rgba(248, 113, 113, 0.14);
+    --af-tx-type-dep-border: rgba(248, 113, 113, 0.3);
+    --af-tx-type-rec-bg: rgba(74, 222, 128, 0.14);
+    --af-tx-type-rec-border: rgba(74, 222, 128, 0.3);
+    --af-avatar-gradient-end: rgba(27, 94, 32, 0.5);
 }
 
 /* ── Base body ── */
@@ -484,11 +592,11 @@ body {
 
 /* ── Glassmorphisme ── */
 .glass {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--af-glass-05);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 16px;
+    border: 1px solid var(--af-border-glass-soft);
+    border-radius: var(--af-radius-md);
 }
 
 .glass-dark {
@@ -650,11 +758,11 @@ body {
 }
 
 .glass-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--af-glass-05);
     backdrop-filter: blur(17px);
     -webkit-backdrop-filter: blur(17px);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 20px;
+    border: 1px solid var(--af-border-glass-soft);
+    border-radius: var(--af-radius-lg);
     transition: all 0.3s ease;
 }
 
@@ -1047,11 +1155,11 @@ select.input-glass {
 
 /* Alias : vues existantes (Blade) — mêmes styles que glass */
 .card {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--af-glass-05);
     backdrop-filter: blur(17px);
     -webkit-backdrop-filter: blur(17px);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 20px;
+    border: 1px solid var(--af-border-glass-soft);
+    border-radius: var(--af-radius-lg);
     transition: all 0.3s ease;
     padding: 1.5rem;
 }
@@ -1539,7 +1647,7 @@ select.input-field option {
 ════════════════════════════════════════════════════════════════════ */
 
 .public-page-body {
-    background-color: #0d1f0d;
+    background-color: var(--af-color-bg-deep);
 }
 
 .public-hero-grid,
@@ -1833,4 +1941,41 @@ select.input-field option {
 
 .aide-content tr:hover td {
     background: rgba(255, 255, 255, 0.03);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ACCESSIBILITÉ — focus visible (app connectée) + mouvement réduit
+════════════════════════════════════════════════════════════════════ */
+
+.mobile-shell :is(a, button, [role="button"]):focus {
+    outline: none;
+}
+
+.mobile-shell :is(a, button, [role="button"]):focus-visible {
+    outline: 2px solid var(--af-color-accent);
+    outline-offset: 3px;
+}
+
+#mainContent :is(a, button):focus-visible {
+    outline: 2px solid var(--af-color-accent);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-shell *,
+    .mobile-shell *::before,
+    .mobile-shell *::after,
+    #mainContent *,
+    #mainContent *::before,
+    #mainContent *::after,
+    #sidebar *,
+    .glass-card,
+    .glass,
+    .card,
+    .nav-link {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

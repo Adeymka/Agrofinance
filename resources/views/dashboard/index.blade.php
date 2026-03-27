@@ -22,9 +22,9 @@
 @php
     $statutHero = $heroInd['statut'] ?? ($statut ?? 'rouge');
     $statutHeroConfig = match ($statutHero) {
-        'vert'   => ['label' => 'RENTABLE',    'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)',  'border' => 'rgba(74,222,128,0.25)'],
-        'orange' => ['label' => 'À SURVEILLER','color' => '#fbbf24', 'bg' => 'rgba(251,191,36,0.12)',  'border' => 'rgba(251,191,36,0.25)'],
-        default  => ['label' => 'DÉFICITAIRE', 'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'border' => 'rgba(248,113,113,0.25)'],
+        'vert'   => ['label' => 'RENTABLE',    'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-vert-bg)',  'border' => 'var(--af-stat-vert-border)'],
+        'orange' => ['label' => 'À SURVEILLER','color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-orange-bg)',  'border' => 'var(--af-stat-orange-border)'],
+        default  => ['label' => 'DÉFICITAIRE', 'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-rouge-bg)', 'border' => 'var(--af-stat-rouge-border)'],
     };
     $rneHero = $heroInd['RNE'] ?? ($consolide['RNE'] ?? 0);
     $pbHero  = $heroInd['PB']  ?? ($consolide['PB']  ?? 0);
@@ -38,6 +38,15 @@
     $transactionsRecentes = $dernieresTransactions->take(5);
 
     $typeEmojis = [];
+    $pbCons = $resultats['consolide']['PB'] ?? 0;
+    $ctCons = $resultats['consolide']['CT'] ?? 0;
+    $mbCons = $resultats['consolide']['MB'] ?? 0;
+    $statutCons = $resultats['consolide']['statut'] ?? 'rouge';
+    $statutConfigMobile = match ($statutCons) {
+        'vert'   => ['emoji' => '🟢', 'label' => 'Rentable',     'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-mobile-vert-bg)',  'border' => 'var(--af-stat-mobile-vert-border)'],
+        'orange' => ['emoji' => '🟠', 'label' => 'À surveiller', 'color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-mobile-orange-bg)',  'border' => 'var(--af-stat-mobile-orange-border)'],
+        default  => ['emoji' => '🔴', 'label' => 'Déficitaire',  'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-mobile-rouge-bg)', 'border' => 'var(--af-stat-mobile-rouge-border)'],
+    };
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════
@@ -49,53 +58,54 @@
 <style>
 /* ── Greeting ── */
 .dash-greeting {
-    padding: 20px 0 8px;
+    padding: 16px 0 6px;
 }
 .dash-greeting-hello {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    color: rgba(255,255,255,0.45);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 12px;
+    color: var(--af-text-dim);
     font-weight: 400;
     letter-spacing: 0.01em;
     margin-bottom: 2px;
 }
 .dash-greeting-name {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 22px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 19px;
     font-weight: 700;
-    color: rgba(255,255,255,0.94);
+    color: var(--af-text-high);
     letter-spacing: -0.03em;
     line-height: 1.15;
 }
 .dash-greeting-exploit {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: rgba(255,255,255,0.30);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: var(--af-text-caption);
     margin-top: 3px;
 }
 
 /* ── Hero Card ── */
 .dash-hero {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 24px;
-    padding: 20px;
-    margin-bottom: 16px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: var(--af-mobile-surface-hero);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: var(--af-radius-lg);
+    padding: 16px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(var(--af-blur-hero-mobile)) saturate(165%);
+    -webkit-backdrop-filter: blur(var(--af-blur-hero-mobile)) saturate(165%);
+    box-shadow: var(--af-shadow-hero-mobile);
 }
 .dash-hero-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     border-radius: 999px;
-    padding: 4px 12px;
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    padding: 3px 10px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 .dash-hero-badge-dot {
     width: 6px;
@@ -105,34 +115,34 @@
     opacity: 0.85;
 }
 .dash-hero-label {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
     font-weight: 500;
-    color: rgba(255,255,255,0.35);
+    color: var(--af-text-subtle);
     text-transform: uppercase;
     letter-spacing: 0.09em;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 .dash-hero-rne {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 40px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 34px;
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1;
     margin-bottom: 4px;
 }
 .dash-hero-rne-unit {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 400;
-    font-family: 'Inter', sans-serif;
-    color: rgba(255,255,255,0.35);
-    margin-left: 6px;
+    font-family: var(--font-ui), sans-serif;
+    color: var(--af-text-subtle);
+    margin-left: 5px;
 }
 .dash-hero-campagne-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: rgba(255,255,255,0.35);
-    margin-bottom: 18px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: var(--af-text-subtle);
+    margin-bottom: 14px;
 }
 
 /* ── Mini métriques ── */
@@ -140,28 +150,28 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    padding-top: 14px;
-    margin-top: 6px;
+    border-top: 1px solid var(--af-mobile-border-mid);
+    padding-top: 12px;
+    margin-top: 5px;
 }
 .dash-mini-cell {
     text-align: center;
     padding: 0 4px;
-    border-right: 1px solid rgba(255,255,255,0.07);
+    border-right: 1px solid var(--af-mobile-border-mid);
 }
 .dash-mini-cell:last-child { border-right: none; }
 .dash-mini-lbl {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 9px;
     font-weight: 600;
-    color: rgba(255,255,255,0.30);
+    color: var(--af-text-caption);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 .dash-mini-val {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -170,64 +180,64 @@
 /* ── Hero actions ── */
 .dash-hero-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.07);
+    gap: 7px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--af-mobile-border-mid);
 }
 .dash-hero-btn {
     flex: 1;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
     font-weight: 600;
     text-align: center;
-    padding: 9px 10px;
-    border-radius: 12px;
+    padding: 7px 8px;
+    border-radius: 10px;
     text-decoration: none;
     transition: all 0.15s;
     cursor: pointer;
     border: none;
 }
 .dash-hero-btn-primary {
-    background: #16a34a;
+    background: var(--af-color-accent-dark);
     color: white;
-    border: 1px solid rgba(74,222,128,0.30);
+    border: 1px solid var(--af-chip-active-border);
 }
 .dash-hero-btn-ghost {
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.65);
-    border: 1px solid rgba(255,255,255,0.10);
+    background: var(--af-glass-12);
+    color: var(--af-text-body);
+    border: 1px solid var(--af-mobile-border-strong);
 }
 
 /* ── Campaign selector chips ── */
 .dash-chips {
     display: flex;
-    gap: 8px;
+    gap: 7px;
     overflow-x: auto;
     padding-bottom: 2px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
 .dash-chips::-webkit-scrollbar { display: none; }
 .dash-chip {
     flex-shrink: 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
     font-weight: 500;
-    padding: 6px 14px;
+    padding: 5px 11px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.50);
+    background: var(--af-glass-12);
+    border: 1px solid var(--af-glass-14);
+    color: rgba(255, 255, 255, 0.62);
     text-decoration: none;
     white-space: nowrap;
     transition: all 0.15s;
 }
 .dash-chip.active {
-    background: rgba(74,222,128,0.15);
-    border-color: rgba(74,222,128,0.30);
-    color: #4ade80;
+    background: var(--af-chip-active-bg);
+    border-color: var(--af-chip-active-border);
+    color: var(--af-color-accent);
     font-weight: 600;
 }
 
@@ -235,120 +245,122 @@
 .dash-quick {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 24px;
+    gap: 8px;
+    margin-bottom: 20px;
 }
 .dash-quick-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 14px 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 18px;
+    gap: 6px;
+    padding: 10px 6px;
+    background: var(--af-mobile-surface-card);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: var(--af-radius-md);
     text-decoration: none;
-    color: rgba(255,255,255,0.70);
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    color: var(--af-text-body-strong);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
     font-weight: 500;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(180%);
     transition: background 0.15s;
+    box-shadow: var(--af-shadow-card);
 }
-.dash-quick-btn:active { background: rgba(255,255,255,0.10); }
+.dash-quick-btn:active { background: var(--af-mobile-surface-press); }
 .dash-quick-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 17px;
 }
-.dash-quick-icon-green  { background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.22); }
-.dash-quick-icon-amber  { background: rgba(251,191,36,0.12);  border: 1px solid rgba(251,191,36,0.20); }
-.dash-quick-icon-blue   { background: rgba(96,165,250,0.12);  border: 1px solid rgba(96,165,250,0.20); }
+.dash-quick-icon-green  { background: var(--af-green-icon-bg); border: 1px solid var(--af-green-icon-border); }
+.dash-quick-icon-amber  { background: var(--af-amber-tint-bg);  border: 1px solid var(--af-amber-tint-border); }
+.dash-quick-icon-blue   { background: var(--af-blue-tint-bg);  border: 1px solid var(--af-blue-tint-border); }
 
 /* ── Section header ── */
 .dash-section-hd {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 .dash-section-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 16px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 14px;
     font-weight: 600;
-    color: rgba(255,255,255,0.90);
+    color: var(--af-text-heading-soft);
     letter-spacing: -0.02em;
 }
 .dash-section-link {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #4ade80;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: var(--af-color-accent);
     font-weight: 500;
     text-decoration: none;
 }
 
 /* ── Campagne card ── */
 .dash-camp-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 20px;
-    padding: 16px;
-    margin-bottom: 10px;
+    background: var(--af-mobile-surface-card);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: 18px;
+    padding: 13px;
+    margin-bottom: 8px;
     text-decoration: none;
     display: block;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(160%);
     transition: background 0.15s;
+    box-shadow: var(--af-shadow-card-lg);
 }
-.dash-camp-card:active { background: rgba(255,255,255,0.08); }
+.dash-camp-card:active { background: var(--af-mobile-surface-press); }
 .dash-camp-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .dash-camp-card-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 .dash-camp-emoji {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: rgba(74,222,128,0.10);
-    border: 1px solid rgba(74,222,128,0.18);
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--af-green-tint-bg);
+    border: 1px solid var(--af-green-tint-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 15px;
     flex-shrink: 0;
 }
 .dash-camp-nom {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 15px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 14px;
     font-weight: 600;
-    color: rgba(255,255,255,0.90);
+    color: var(--af-text-heading-soft);
     letter-spacing: -0.02em;
 }
 .dash-camp-type {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    color: var(--af-text-subtle);
     margin-top: 1px;
 }
 .dash-camp-badge {
     font-family: 'Inter', sans-serif;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: 999px;
 }
 .dash-camp-metrics {
@@ -356,25 +368,25 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 0;
     padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid var(--af-mobile-divider);
 }
 .dash-camp-metric-cell {
     text-align: center;
     padding: 0 4px;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid var(--af-mobile-divider);
 }
 .dash-camp-metric-cell:last-child { border-right: none; }
 .dash-camp-metric-lbl {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
-    color: rgba(255,255,255,0.28);
+    color: var(--af-text-faint);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 3px;
 }
 .dash-camp-metric-val {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: -0.02em;
 }
@@ -383,7 +395,7 @@
 }
 .dash-camp-budget-track {
     height: 4px;
-    background: rgba(255,255,255,0.08);
+    background: var(--af-glass-08);
     border-radius: 2px;
     overflow: hidden;
     margin-top: 4px;
@@ -396,32 +408,33 @@
 .dash-camp-budget-labels {
     display: flex;
     justify-content: space-between;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
-    color: rgba(255,255,255,0.28);
+    color: var(--af-text-faint);
 }
 
 /* ── Alert budget strip ── */
 .dash-alert {
-    border-radius: 16px;
-    padding: 12px 14px;
-    margin-bottom: 16px;
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--af-blur-flash)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--af-blur-flash)) saturate(150%);
 }
 .dash-alert-critique {
-    background: rgba(239,68,68,0.09);
-    border: 1px solid rgba(239,68,68,0.22);
+    background: var(--af-red-alert-bg);
+    border: 1px solid var(--af-red-alert-border);
 }
 .dash-alert-warning {
-    background: rgba(251,191,36,0.09);
-    border: 1px solid rgba(251,191,36,0.22);
+    background: var(--af-amber-alert-bg);
+    border: 1px solid var(--af-amber-alert-border);
 }
 .dash-alert-text {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1.4;
 }
@@ -430,15 +443,15 @@
 .dash-tx-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--af-mobile-divider-soft);
 }
 .dash-tx-item:last-child { border-bottom: none; }
 .dash-tx-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 33px;
+    height: 33px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -446,39 +459,168 @@
     font-size: 16px;
 }
 .dash-tx-icon-recette {
-    background: rgba(74,222,128,0.12);
-    border: 1px solid rgba(74,222,128,0.20);
+    background: var(--af-green-soft-bg);
+    border: 1px solid var(--af-green-soft-border);
 }
 .dash-tx-icon-depense {
-    background: rgba(248,113,113,0.12);
-    border: 1px solid rgba(248,113,113,0.20);
+    background: var(--af-red-tint-bg);
+    border: 1px solid var(--af-red-tint-border);
 }
 .dash-tx-body { flex: 1; min-width: 0; }
 .dash-tx-categorie {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 13px;
     font-weight: 500;
-    color: rgba(255,255,255,0.88);
+    color: var(--af-text-body);
     text-transform: capitalize;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .dash-tx-meta {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: rgba(255,255,255,0.32);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.32);
     margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .dash-tx-montant {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 14px;
+    font-family: var(--font-display), sans-serif;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: -0.02em;
     flex-shrink: 0;
+}
+
+/* ── Indicateurs consolidés (parité web) ── */
+.dash-consol-intro {
+    margin-bottom: 12px;
+}
+.dash-consol-sub {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.38);
+    margin-top: 4px;
+}
+.dash-consol-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.dash-consol-card {
+    background: var(--af-mobile-surface-card);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: var(--af-radius-md);
+    padding: 12px;
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    box-shadow: var(--af-shadow-card);
+}
+.dash-consol-card-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.dash-consol-lbl {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.dash-consol-val {
+    font-family: var(--font-display), sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+.dash-consol-unit {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--af-text-subtle);
+}
+/* Même pictos que le dashboard web (.kpi-glass .kpi-icon-wrap), taille mobile */
+.dash-consol-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.dash-consol-kpi-icon svg {
+    width: 18px;
+    height: 18px;
+}
+.dash-consol-emoji {
+    font-size: 17px;
+    line-height: 1;
+}
+
+/* ── Graphique + alertes (parité web) ── */
+.dash-chart-card {
+    background: var(--af-mobile-surface-card);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: 18px;
+    padding: 12px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    min-height: 175px;
+    box-shadow: var(--af-shadow-card-lg);
+}
+.dash-chart-card canvas {
+    max-height: 210px;
+}
+.dash-alert-list-card {
+    background: var(--af-mobile-surface-muted);
+    border: 1px solid var(--af-glass-14);
+    border-radius: var(--af-radius-md);
+    padding: 12px 12px 8px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(165%);
+    box-shadow: var(--af-shadow-card);
+}
+.dash-alert-list-title {
+    font-family: var(--font-display), sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--af-text-heading-soft);
+    margin-bottom: 8px;
+}
+.dash-alert-mini-row {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--af-mobile-divider);
+}
+.dash-alert-mini-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+.dash-tx-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.dash-tx-actions a {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--af-color-accent);
+    text-decoration: none;
 }
 </style>
 @endpush
@@ -505,7 +647,7 @@
 {{-- ── Alerte budget ── --}}
 @if(count($alertesBudget) > 0)
     <div class="dash-alert {{ $bannerBudgetCritique ? 'dash-alert-critique' : 'dash-alert-warning' }}">
-        <span style="font-size:18px; flex-shrink:0; margin-top:1px;">⚠️</span>
+        <span style="font-size:16px; flex-shrink:0; margin-top:1px;">⚠️</span>
         <div>
             <p class="dash-alert-text" style="color:{{ $bannerBudgetCritique ? '#fca5a5' : '#fcd34d' }};">
                 @if($bannerBudgetCritique)
@@ -530,7 +672,7 @@
 
     {{-- Label + grand chiffre RNE --}}
     <p class="dash-hero-label">Résultat net d'exploitation</p>
-    <div class="dash-hero-rne" style="color:{{ $rneHero >= 0 ? '#4ade80' : '#f87171' }};">
+    <div class="dash-hero-rne" style="color:{{ $rneHero >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
         {{ $rneHero >= 0 ? '+' : '−' }}{{ number_format(abs($rneHero), 0, ',', ' ') }}
         <span class="dash-hero-rne-unit">FCFA</span>
     </div>
@@ -540,21 +682,21 @@
     <div class="dash-mini-metrics">
         <div class="dash-mini-cell">
             <div class="dash-mini-lbl">PB</div>
-            <div class="dash-mini-val" style="color:#4ade80;">{{ number_format($pbHero / 1000, 1, ',', ' ') }}K</div>
+            <div class="dash-mini-val" style="color:var(--af-color-accent);">{{ number_format($pbHero / 1000, 1, ',', ' ') }}K</div>
         </div>
         <div class="dash-mini-cell">
             <div class="dash-mini-lbl">MB</div>
-            <div class="dash-mini-val" style="color:{{ $mbHero >= 0 ? '#4ade80' : '#f87171' }};">
+            <div class="dash-mini-val" style="color:{{ $mbHero >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                 {{ $mbHero >= 0 ? '+' : '' }}{{ number_format($mbHero / 1000, 1, ',', ' ') }}K
             </div>
         </div>
         <div class="dash-mini-cell">
             <div class="dash-mini-lbl">CT</div>
-            <div class="dash-mini-val" style="color:#f87171;">{{ number_format($ctHero / 1000, 1, ',', ' ') }}K</div>
+            <div class="dash-mini-val" style="color:var(--af-color-danger);">{{ number_format($ctHero / 1000, 1, ',', ' ') }}K</div>
         </div>
         <div class="dash-mini-cell">
             <div class="dash-mini-lbl">RF</div>
-            <div class="dash-mini-val" style="color:rgba(255,255,255,0.88);">{{ number_format($rfHero, 1, ',', ' ') }}%</div>
+            <div class="dash-mini-val" style="color:var(--af-text-body);">{{ number_format($rfHero, 1, ',', ' ') }}%</div>
         </div>
     </div>
 
@@ -577,33 +719,118 @@
     @endif
 </div>
 
-{{-- ── Quick actions ── --}}
+{{-- ── Quick actions (mêmes pictos que la barre web : plus, document-text + building pour campagnes) ── --}}
 <div class="dash-quick">
     <a href="{{ route('transactions.create') }}" class="dash-quick-btn">
         <div class="dash-quick-icon dash-quick-icon-green">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#4ade80;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
+            <x-icon name="plus" class="w-[19px] h-[19px] text-[var(--af-color-accent)]" />
         </div>
         Saisir
     </a>
     <a href="{{ route('activites.index') }}" class="dash-quick-btn">
         <div class="dash-quick-icon dash-quick-icon-amber">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#fbbf24;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
+            <x-icon name="building-office-2" class="w-[19px] h-[19px] text-[var(--af-color-warning)]" />
         </div>
         Campagnes
     </a>
     <a href="{{ route('rapports.index') }}" class="dash-quick-btn">
         <div class="dash-quick-icon dash-quick-icon-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#93c5fd;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+            <x-icon name="document-text" class="w-[17px] h-[17px] text-[var(--af-color-info)]" />
         </div>
         Rapports
     </a>
 </div>
+
+{{-- ── Indicateurs consolidés (parité web) ── --}}
+<div class="dash-consol-intro">
+    <div class="dash-section-hd" style="margin-bottom:4px;">
+        <span class="dash-section-title">Indicateurs consolidés</span>
+    </div>
+    <p class="dash-consol-sub">Synthèse exploitation sur la période affichée</p>
+</div>
+<div class="dash-consol-grid">
+    {{-- Pictos identiques au bloc web « Indicateurs consolidés » (mêmes path SVG, stroke-width 2) --}}
+    <div class="dash-consol-card">
+        <div class="dash-consol-card-hd">
+            <span class="dash-consol-lbl">Recettes totales</span>
+            <div class="dash-consol-kpi-icon" style="background:var(--af-stat-mobile-vert-bg);border:1px solid var(--af-stat-mobile-vert-border);" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-accent)" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="dash-consol-val" style="color:var(--af-color-accent);">{{ number_format($pbCons / 1000, 0, ',', ' ') }}<span class="dash-consol-unit"> K FCFA</span></div>
+    </div>
+    <div class="dash-consol-card">
+        <div class="dash-consol-card-hd">
+            <span class="dash-consol-lbl">Coût total</span>
+            <div class="dash-consol-kpi-icon" style="background:var(--af-stat-mobile-rouge-bg);border:1px solid var(--af-stat-mobile-rouge-border);" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-danger)" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 17H5m0 0V9m0 8l8-8 4 4 6-6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="dash-consol-val" style="color:var(--af-color-danger);">{{ number_format($ctCons / 1000, 0, ',', ' ') }}<span class="dash-consol-unit"> K FCFA</span></div>
+    </div>
+    <div class="dash-consol-card">
+        <div class="dash-consol-card-hd">
+            <span class="dash-consol-lbl">Marge brute</span>
+            <div class="dash-consol-kpi-icon"
+                 style="background:{{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-bg)' : 'var(--af-stat-mobile-rouge-bg)' }};border:1px solid {{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-border)' : 'var(--af-stat-mobile-rouge-border)' }};"
+                 aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $mbCons >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }}" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+        </div>
+        <div class="dash-consol-val" style="color:{{ $mbCons >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
+            {{ $mbCons >= 0 ? '+' : '' }}{{ number_format($mbCons / 1000, 0, ',', ' ') }}<span class="dash-consol-unit"> K FCFA</span>
+        </div>
+    </div>
+    <div class="dash-consol-card">
+        <div class="dash-consol-card-hd">
+            <span class="dash-consol-lbl">Statut global</span>
+            <div class="dash-consol-kpi-icon" style="background:{{ $statutConfigMobile['bg'] }};border:1px solid {{ $statutConfigMobile['border'] }};font-size:18px;line-height:1;">{{ $statutConfigMobile['emoji'] }}</div>
+        </div>
+        <div class="dash-consol-val" style="color:{{ $statutConfigMobile['color'] }}; font-size:13px;">{{ $statutConfigMobile['label'] }}</div>
+        <div class="dash-consol-sub" style="margin-top:6px;">Rendement : {{ number_format($resultats['consolide']['RF'] ?? 0, 1, ',', ' ') }}%</div>
+    </div>
+</div>
+
+{{-- ── Évolution marge brute + alertes budget (parité web) ── --}}
+<div class="dash-section-hd" style="margin-top:8px;">
+    <div>
+        <span class="dash-section-title">Évolution — Marge brute</span>
+        <p class="dash-consol-sub" style="margin-top:4px;">
+            @if($chartActiviteId && $heroInd) Campagne : {{ $heroInd['nom'] ?? '—' }} · 12 derniers mois
+            @else 12 derniers mois @endif
+        </p>
+    </div>
+</div>
+<div class="dash-chart-card">
+    @if($chartActiviteId && session('api_token'))
+        <canvas id="chartMB" height="200"></canvas>
+    @else
+        <p class="dash-consol-sub" style="padding:24px 8px; text-align:center;">Aucune campagne active ou reconnectez-vous pour afficher le graphique.</p>
+    @endif
+</div>
+
+@if(count($alertesBudget) > 0)
+<div class="dash-alert-list-card">
+    <div class="dash-alert-list-title">Alertes budget</div>
+    @foreach($alertesBudget as $a)
+        <div class="dash-alert-mini-row">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <span style="font-family:var(--font-ui),sans-serif; font-size:13px; color:var(--af-text-body);">{{ $a['nom'] }}</span>
+                <span style="font-family:var(--font-ui),sans-serif; font-size:11px; font-weight:700; color:{{ ($a['budget_pct'] ?? 0) >= 100 ? 'var(--af-color-danger)' : 'var(--af-color-warning)' }};">{{ number_format($a['budget_pct'] ?? 0, 0, ',', ' ') }} %</span>
+            </div>
+            <div style="margin-top:6px; height:4px; border-radius:999px; background:var(--af-glass-08); overflow:hidden;">
+                <div style="height:100%; border-radius:999px; width:{{ min(100, $a['budget_pct'] ?? 0) }}%; background:{{ ($a['budget_pct'] ?? 0) >= 100 ? 'var(--af-color-danger)' : 'var(--af-color-warning)' }};"></div>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
 
 {{-- ── Mes campagnes ── --}}
 @if(count($activitesCards) > 0)
@@ -618,11 +845,11 @@
             $mbC     = $c['marge'] ?? 0;
             $pctC    = $c['budget_pct'] ?? null;
             $prevC   = $c['budget_prev'] ?? 0;
-            $couleurC = ($pctC !== null && $pctC >= 100) ? '#f87171' : (($pctC !== null && $pctC >= 85) ? '#fbbf24' : '#4ade80');
+            $couleurC = ($pctC !== null && $pctC >= 100) ? 'var(--af-color-danger)' : (($pctC !== null && $pctC >= 85) ? 'var(--af-color-warning)' : 'var(--af-color-accent)');
             $badgeC = match($c['statut_indicateurs'] ?? 'rouge') {
-                'vert'   => ['label' => 'RENTABLE',    'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)',  'border' => 'rgba(74,222,128,0.22)'],
-                'orange' => ['label' => 'SURVEILLER',  'color' => '#fbbf24', 'bg' => 'rgba(251,191,36,0.12)',  'border' => 'rgba(251,191,36,0.22)'],
-                default  => ['label' => 'DÉFICIT',     'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'border' => 'rgba(248,113,113,0.22)'],
+                'vert'   => ['label' => 'RENTABLE',    'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-vert-bg)',  'border' => 'var(--af-stat-vert-border-tight)'],
+                'orange' => ['label' => 'SURVEILLER',  'color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-orange-bg)',  'border' => 'var(--af-amber-tint-border)'],
+                default  => ['label' => 'DÉFICIT',     'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-rouge-bg)', 'border' => 'var(--af-stat-rouge-border)'],
             };
         @endphp
         <a href="{{ route('activites.show', $c['id']) }}" class="dash-camp-card">
@@ -631,9 +858,7 @@
             <div class="dash-camp-card-top">
                 <div class="dash-camp-card-left">
                     <div class="dash-camp-emoji">
-                        <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:rgba(74,222,128,0.75);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
+                        <x-icon name="building-office-2" class="w-[17px] h-[17px] text-[var(--af-color-accent)] opacity-80" />
                     </div>
                     <div>
                         <div class="dash-camp-nom">{{ $c['nom'] }}</div>
@@ -663,15 +888,15 @@
             <div class="dash-camp-metrics" style="margin-top:12px;">
                 <div class="dash-camp-metric-cell">
                     <div class="dash-camp-metric-lbl">Recettes</div>
-                    <div class="dash-camp-metric-val" style="color:#4ade80;">{{ number_format(($c['recettes'] ?? 0) / 1000, 1, ',', ' ') }}K</div>
+                    <div class="dash-camp-metric-val" style="color:var(--af-color-accent);">{{ number_format(($c['recettes'] ?? 0) / 1000, 1, ',', ' ') }}K</div>
                 </div>
                 <div class="dash-camp-metric-cell">
                     <div class="dash-camp-metric-lbl">Dépenses</div>
-                    <div class="dash-camp-metric-val" style="color:#f87171;">{{ number_format(($c['depenses'] ?? 0) / 1000, 1, ',', ' ') }}K</div>
+                    <div class="dash-camp-metric-val" style="color:var(--af-color-danger);">{{ number_format(($c['depenses'] ?? 0) / 1000, 1, ',', ' ') }}K</div>
                 </div>
                 <div class="dash-camp-metric-cell">
                     <div class="dash-camp-metric-lbl">Marge</div>
-                    <div class="dash-camp-metric-val" style="color:{{ $mbC >= 0 ? '#4ade80' : '#f87171' }};">
+                    <div class="dash-camp-metric-val" style="color:{{ $mbC >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                         {{ $mbC >= 0 ? '+' : '' }}{{ number_format($mbC / 1000, 1, ',', ' ') }}K
                     </div>
                 </div>
@@ -681,27 +906,30 @@
 </div>
 @else
 {{-- Aucune campagne --}}
-<div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:28px 20px; text-align:center; margin-bottom:24px;">
-    <div style="font-size:36px; margin-bottom:12px;">🌱</div>
-    <p style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; color:rgba(255,255,255,0.80); margin-bottom:6px;">Aucune campagne active</p>
-    <p style="font-family:'Inter',sans-serif; font-size:13px; color:rgba(255,255,255,0.35); margin-bottom:16px;">Créez votre première campagne pour commencer à suivre vos résultats.</p>
+<div style="background:var(--af-mobile-surface-card); border:1px solid var(--af-mobile-border-strong); border-radius:var(--af-radius-lg); padding:28px 20px; text-align:center; margin-bottom:24px; backdrop-filter:blur(var(--af-blur-card-mobile)); -webkit-backdrop-filter:blur(var(--af-blur-card-mobile)); box-shadow:var(--af-shadow-card-lg);">
+    <div style="font-size:30px; margin-bottom:10px;">🌱</div>
+    <p style="font-family:var(--font-display),sans-serif; font-size:14px; font-weight:600; color:rgba(255, 255, 255, 0.8); margin-bottom:6px;">Aucune campagne active</p>
+    <p style="font-family:var(--font-ui),sans-serif; font-size:12px; color:var(--af-text-subtle); margin-bottom:14px;">Créez votre première campagne pour commencer à suivre vos résultats.</p>
     <a href="{{ route('activites.create') }}"
-       style="display:inline-flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:white; background:#16a34a; padding:10px 20px; border-radius:12px; text-decoration:none;">
+       style="display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui),sans-serif; font-size:12px; font-weight:600; color:white; background:var(--af-color-accent-dark); padding:8px 16px; border-radius:10px; text-decoration:none;">
         + Créer une campagne
     </a>
 </div>
 @endif
 
-{{-- ── Dernières transactions ── --}}
-@if($transactionsRecentes->isNotEmpty())
+{{-- ── Dernières transactions (parité web : jusqu'à 20) ── --}}
+@if($dernieresTransactions->isNotEmpty())
 <div style="margin-bottom: 16px;">
     <div class="dash-section-hd">
-        <span class="dash-section-title">Transactions récentes</span>
+        <div>
+            <span class="dash-section-title">Dernières transactions</span>
+            <p class="dash-consol-sub" style="margin-top:4px;">Jusqu'à 20 opérations les plus récentes</p>
+        </div>
         <a href="{{ route('activites.index') }}" class="dash-section-link">Voir tout</a>
     </div>
 
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:4px 16px;">
-        @foreach($transactionsRecentes as $t)
+    <div style="background:var(--af-mobile-surface-muted); border:1px solid var(--af-glass-14); border-radius:var(--af-radius-lg); padding:4px 16px; backdrop-filter:blur(var(--af-blur-flash)); -webkit-backdrop-filter:blur(var(--af-blur-flash)); box-shadow:var(--af-shadow-card-lg);">
+        @foreach($dernieresTransactions as $t)
             @php
                 $catLabel = ucfirst(str_replace('_', ' ', $t->categorie));
                 $isRecette = $t->type === 'recette';
@@ -709,24 +937,23 @@
             <div class="dash-tx-item">
                 <div class="dash-tx-icon {{ $isRecette ? 'dash-tx-icon-recette' : 'dash-tx-icon-depense' }}">
                     @if($isRecette)
-                        <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:#4ade80;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-                        </svg>
+                        <x-icon name="trending-up" class="w-4 h-4 text-[var(--af-color-accent)]" />
                     @else
-                        <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:#f87171;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                        </svg>
+                        <x-icon name="trending-down" class="w-4 h-4 text-[var(--af-color-danger)]" />
                     @endif
                 </div>
                 <div class="dash-tx-body">
                     <div class="dash-tx-categorie">{{ $catLabel }}</div>
                     <div class="dash-tx-meta">
-                        {{ $t->date_transaction->format('d/m') }}
+                        {{ $t->date_transaction->format('d/m/Y') }}
                         @if($t->activite) · {{ $t->activite->nom }} @endif
                     </div>
                 </div>
-                <div class="dash-tx-montant" style="color:{{ $isRecette ? '#4ade80' : '#f87171' }};">
-                    {{ $isRecette ? '+' : '−' }}{{ number_format($t->montant, 0, ',', ' ') }}
+                <div class="dash-tx-actions">
+                    <div class="dash-tx-montant" style="color:{{ $isRecette ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
+                        {{ $isRecette ? '+' : '−' }}{{ number_format($t->montant, 0, ',', ' ') }}
+                    </div>
+                    <a href="{{ route('transactions.edit', $t->id) }}">Modifier</a>
                 </div>
             </div>
         @endforeach
@@ -855,8 +1082,8 @@
         <div class="kpi-glass">
             <div class="flex items-center justify-between">
                 <span class="kpi-label">Recettes totales</span>
-                <div class="kpi-icon-wrap" style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.25);">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2">
+                <div class="kpi-icon-wrap" style="background:var(--af-stat-mobile-vert-bg);border:1px solid var(--af-stat-mobile-vert-border);">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-accent)" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                     </svg>
                 </div>
@@ -866,8 +1093,8 @@
         <div class="kpi-glass">
             <div class="flex items-center justify-between">
                 <span class="kpi-label">Coût total</span>
-                <div class="kpi-icon-wrap" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.25);">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#f87171" stroke-width="2">
+                <div class="kpi-icon-wrap" style="background:var(--af-stat-mobile-rouge-bg);border:1px solid var(--af-stat-mobile-rouge-border);">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-danger)" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 17H5m0 0V9m0 8l8-8 4 4 6-6"/>
                     </svg>
                 </div>
@@ -878,19 +1105,19 @@
             <div class="flex items-center justify-between">
                 <span class="kpi-label">Marge brute</span>
                 <div class="kpi-icon-wrap"
-                     style="background:{{ $mbCons >= 0 ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)' }};border:1px solid {{ $mbCons >= 0 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)' }};">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="{{ $mbCons >= 0 ? '#4ade80' : '#f87171' }}" stroke-width="2">
+                     style="background:{{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-bg)' : 'var(--af-stat-mobile-rouge-bg)' }};border:1px solid {{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-border)' : 'var(--af-stat-mobile-rouge-border)' }};">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="{{ $mbCons >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }}" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
             </div>
-            <div><div class="kpi-value" style="color:{{ $mbCons >= 0 ? '#4ade80' : '#f87171' }};">{{ $mbCons >= 0 ? '+' : '' }}{{ number_format($mbCons / 1000, 0, ',', ' ') }}<span class="kpi-unit">K FCFA</span></div></div>
+            <div><div class="kpi-value" style="color:{{ $mbCons >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">{{ $mbCons >= 0 ? '+' : '' }}{{ number_format($mbCons / 1000, 0, ',', ' ') }}<span class="kpi-unit">K FCFA</span></div></div>
         </div>
         @php
             $statutConfig = match ($statutCons) {
-                'vert'   => ['emoji' => '🟢', 'label' => 'Rentable',     'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.15)',  'border' => 'rgba(74,222,128,0.25)'],
-                'orange' => ['emoji' => '🟠', 'label' => 'À surveiller', 'color' => '#fbbf24', 'bg' => 'rgba(251,191,36,0.15)',  'border' => 'rgba(251,191,36,0.25)'],
-                default  => ['emoji' => '🔴', 'label' => 'Déficitaire',  'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.15)', 'border' => 'rgba(248,113,113,0.25)'],
+                'vert'   => ['emoji' => '🟢', 'label' => 'Rentable',     'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-mobile-vert-bg)',  'border' => 'var(--af-stat-mobile-vert-border)'],
+                'orange' => ['emoji' => '🟠', 'label' => 'À surveiller', 'color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-mobile-orange-bg)',  'border' => 'var(--af-stat-mobile-orange-border)'],
+                default  => ['emoji' => '🔴', 'label' => 'Déficitaire',  'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-mobile-rouge-bg)', 'border' => 'var(--af-stat-mobile-rouge-border)'],
             };
         @endphp
         <div class="kpi-glass">
@@ -1019,8 +1246,8 @@
                     $data = $parActivite[$c['id']] ?? [];
                     $budgetPrev = $c['budget_prev'] ?? 0;
                     $pbA = $data['PB'] ?? 0; $ctA = $data['CT'] ?? 0; $mbA = $data['MB'] ?? 0;
-                    if ($budgetPrev > 0) { $pourcent = min(100, round(($ctA / $budgetPrev) * 100)); $couleurBarre = $pourcent >= 100 ? '#f87171' : ($pourcent >= 90 ? '#fbbf24' : '#4ade80'); }
-                    else { $pourcent = 0; $couleurBarre = '#4ade80'; }
+                    if ($budgetPrev > 0) { $pourcent = min(100, round(($ctA / $budgetPrev) * 100)); $couleurBarre = $pourcent >= 100 ? 'var(--af-color-danger)' : ($pourcent >= 90 ? 'var(--af-color-warning)' : 'var(--af-color-accent)'); }
+                    else { $pourcent = 0; $couleurBarre = 'var(--af-color-accent)'; }
                 @endphp
                 <a href="{{ route('activites.show', $c['id']) }}" class="card hover:shadow-lg transition-shadow cursor-pointer block no-underline">
                     <div class="flex justify-between items-start mb-2">
@@ -1056,7 +1283,6 @@
 @push('scripts')
 <script>
 (function () {
-    if (typeof window !== 'undefined' && document.documentElement.dataset.platform === 'mobile') return;
     var id = {{ (int) $chartActiviteId }};
     var token = @json(session('api_token'));
     var ctx = document.getElementById('chartMB');
@@ -1071,9 +1297,12 @@
         var values = ev.map(function (e) { return (e.MB || 0) / 1000; });
         var fontInter = "'Inter', system-ui, -apple-system, sans-serif";
         var fontSpace = "'Space Grotesk', system-ui, sans-serif";
+        var rootStyle = getComputedStyle(document.documentElement);
+        var lineColor = (rootStyle.getPropertyValue('--af-color-accent') || '').trim() || '#4ade80';
+        var fillColor = (rootStyle.getPropertyValue('--af-stat-vert-bg') || '').trim() || 'rgba(74,222,128,0.12)';
         new Chart(ctx, {
             type: 'line',
-            data: { labels: labels, datasets: [{ data: values, borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.12)', fill: true, tension: 0.3, pointRadius: 2 }] },
+            data: { labels: labels, datasets: [{ data: values, borderColor: lineColor, backgroundColor: fillColor, fill: true, tension: 0.3, pointRadius: 2 }] },
             options: {
                 responsive: true, font: { family: fontInter },
                 plugins: { legend: { display: false }, tooltip: { titleFont: { family: fontSpace, size: 13, weight: '600' }, bodyFont: { family: fontInter, size: 12 }, padding: 10 } },

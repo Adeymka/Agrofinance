@@ -76,8 +76,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/exploitations', [ExploitationController::class, 'index'])->name('exploitations.index');
     Route::get('/exploitations/creer', [ExploitationController::class, 'create'])->name('exploitations.create');
     Route::post('/exploitations', [ExploitationController::class, 'store'])->name('exploitations.store');
+    Route::get('/exploitations/{id}/modifier', [ExploitationController::class, 'edit'])->whereNumber('id')->name('exploitations.edit');
+    Route::put('/exploitations/{id}', [ExploitationController::class, 'update'])->whereNumber('id')->name('exploitations.update');
+    Route::get('/exploitations/{id}', [ExploitationController::class, 'show'])->whereNumber('id')->name('exploitations.show');
 
     Route::get('/activites', [ActiviteController::class, 'index'])->name('activites.index');
     Route::get('/activites/creer', [ActiviteController::class, 'create'])->name('activites.create');
@@ -86,6 +90,7 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/activites/{id}/cloturer', [ActiviteController::class, 'cloturer'])->whereNumber('id')->name('activites.cloturer');
     Route::post('/activites/{id}/abandonner', [ActiviteController::class, 'abandonner'])->whereNumber('id')->name('activites.abandonner');
 
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/nouvelle', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::get('/transactions/{id}/modifier', [TransactionController::class, 'edit'])->whereNumber('id')->name('transactions.edit');

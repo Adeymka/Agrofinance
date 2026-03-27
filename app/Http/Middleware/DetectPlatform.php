@@ -13,13 +13,15 @@ use Symfony\Component\HttpFoundation\Response;
  * Mobile  → layouts.app-mobile
  * Desktop → layouts.app-desktop
  *
- * L'utilisateur peut forcer la plateforme via ?platform=mobile|desktop
- * (utile pour les tests).
+ * Forçage ponctuel (tests) : ?platform=mobile|desktop — effet limité à la
+ * requête courante (pas de mémorisation en session).
  */
 class DetectPlatform
 {
     public function handle(Request $request, Closure $next): Response
     {
+        session()->forget('platform_forced');
+
         $platform = $this->resolve($request);
 
         session(['platform' => $platform]);
@@ -29,28 +31,41 @@ class DetectPlatform
         view()->share('layout', $layout);
         view()->share('platform', $platform);
 
-        return $next($request);
+        $response = $next($request);
+
+        // Invite le navigateur à envoyer Sec-CH-UA-Mobile (Chrome / Edge notamment)
+        $response->headers->set('Accept-CH', 'Sec-CH-UA-Mobile');
+
+        return $response;
     }
 
     private function resolve(Request $request): string
     {
-        // Forçage manuel (tests, debug) : ?platform=mobile ou ?platform=desktop
         $forced = $request->query('platform');
         if (in_array($forced, ['mobile', 'desktop'], true)) {
-            session(['platform_forced' => $forced]);
             return $forced;
         }
 
-        if (session()->has('platform_forced')) {
-            return session('platform_forced');
+        // Client Hint (Chrome, Edge, etc.) : plus fiable que le User-Agent seul
+        // (?1 = téléphone / mode mobile, ?0 = bureau / tablette « desktop »)
+        $chMobile = $request->header('Sec-CH-UA-Mobile');
+        if ($chMobile !== null && $chMobile !== '') {
+            $chMobile = trim($chMobile);
+            if ($chMobile === '?1') {
+                return 'mobile';
+            }
+            if ($chMobile === '?0') {
+                return 'desktop';
+            }
         }
 
-        // Détection via User-Agent
+        // Fallback User-Agent (navigateurs sans Client Hints, outils, proxies)
         $ua = strtolower($request->userAgent() ?? '');
 
+        // Pas de mot-clé seul « mobile » : sous-chaîne trop courante / faux positifs
         $mobileKeywords = [
             'android', 'iphone', 'ipod', 'blackberry', 'windows phone',
-            'mobile', 'opera mini', 'opera mobi', 'iemobile',
+            'opera mini', 'opera mobi', 'iemobile',
             'silk', 'kindle', 'webos', 'symbian', 'nokia',
         ];
 

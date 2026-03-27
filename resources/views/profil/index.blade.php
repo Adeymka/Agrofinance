@@ -8,7 +8,7 @@
 
 @push('styles')
 <style>
-/* ── Avatar header ── */
+/* Tokens : --af-* (app.css) */
 .prf-header {
     display: flex;
     flex-direction: column;
@@ -19,32 +19,31 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(74,222,128,0.25), rgba(27,94,32,0.50));
-    border: 2px solid rgba(74,222,128,0.35);
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.25), var(--af-avatar-gradient-end));
+    border: 2px solid var(--af-green-icon-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 26px;
     font-weight: 800;
-    color: #4ade80;
+    color: var(--af-color-accent);
     letter-spacing: -0.04em;
     margin-bottom: 12px;
 }
 .prf-name {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 18px;
     font-weight: 700;
-    color: rgba(255,255,255,0.92);
+    color: var(--af-text-primary);
     letter-spacing: -0.02em;
     margin-bottom: 3px;
 }
 .prf-phone {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
 }
-/* ── Subscription badge ── */
 .prf-plan-badge {
     display: inline-flex;
     align-items: center;
@@ -52,65 +51,63 @@
     margin-top: 8px;
     padding: 5px 14px;
     border-radius: 999px;
-    background: rgba(74,222,128,0.10);
-    border: 1px solid rgba(74,222,128,0.22);
-    font-family: 'Inter', sans-serif;
+    background: var(--af-green-tint-bg);
+    border: 1px solid var(--af-green-icon-border);
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 700;
-    color: #4ade80;
+    color: var(--af-color-accent);
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
-/* ── Section block ── */
 .prf-block {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 20px;
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--af-radius-lg);
     padding: 18px;
     margin-bottom: 14px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
 .prf-block-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 13px;
     font-weight: 700;
-    color: rgba(255,255,255,0.55);
+    color: var(--af-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 14px;
 }
-/* ── Field ── */
 .prf-field { margin-bottom: 12px; }
 .prf-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.28);
+    color: rgba(255, 255, 255, 0.28);
     margin-bottom: 6px;
 }
 .prf-input {
     width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.82);
+    color: var(--af-text-body-strong);
     outline: none;
     box-sizing: border-box;
     appearance: none;
     -webkit-appearance: none;
 }
-.prf-input:focus { border-color: rgba(74,222,128,0.35); }
-.prf-input::placeholder { color: rgba(255,255,255,0.22); }
+.prf-input:focus { border-color: var(--af-chip-active-border); }
+.prf-input::placeholder { color: rgba(255, 255, 255, 0.22); }
 .prf-input:disabled {
-    background: rgba(255,255,255,0.02);
-    color: rgba(255,255,255,0.25);
-    border-color: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.07);
     cursor: not-allowed;
 }
 .prf-input-grid {
@@ -120,13 +117,13 @@
 }
 .prf-select {
     width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.82);
+    color: var(--af-text-body-strong);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
@@ -136,102 +133,130 @@
     background-position: right 14px center;
     padding-right: 40px;
 }
-.prf-select:focus { border-color: rgba(74,222,128,0.35); }
-/* ── PIN input row ── */
+.prf-select:focus { border-color: var(--af-chip-active-border); }
 .prf-pin-row { display: flex; gap: 8px; }
 .prf-pin-input {
     flex: 1;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 10px;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 22px;
     font-weight: 700;
-    color: #4ade80;
+    color: var(--af-color-accent);
     text-align: center;
     letter-spacing: 0.3em;
     outline: none;
     box-sizing: border-box;
     -webkit-text-security: disc;
 }
-.prf-pin-input:focus { border-color: rgba(74,222,128,0.35); }
-/* ── Submit ── */
+.prf-pin-input:focus { border-color: var(--af-chip-active-border); }
 .prf-submit {
     width: 100%;
-    background: #16a34a;
-    color: white;
-    font-family: 'Inter', sans-serif;
+    background: var(--af-color-accent-dark);
+    color: #fff;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
     font-weight: 700;
     padding: 15px;
     border-radius: 14px;
-    border: 1px solid rgba(74,222,128,0.30);
+    border: 1px solid var(--af-tx-type-rec-border);
     cursor: pointer;
     margin-top: 6px;
     transition: opacity 0.15s;
 }
-.prf-submit:active { opacity: 0.80; }
-/* ── Abonnement card ── */
+.prf-submit:active { opacity: 0.8; }
+.prf-submit--secondary {
+    background: var(--af-glass-06);
+    border-color: var(--af-border-glass-soft);
+    color: var(--af-text-muted);
+}
 .prf-abo-card {
-    background: rgba(74,222,128,0.06);
-    border: 1px solid rgba(74,222,128,0.16);
+    background: rgba(74, 222, 128, 0.06);
+    border: 1px solid rgba(74, 222, 128, 0.16);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
 }
 .prf-abo-plan-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(74,222,128,0.65);
+    color: var(--af-color-accent);
+    opacity: 0.72;
     margin-bottom: 4px;
 }
 .prf-abo-plan-name {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 20px;
     font-weight: 800;
-    color: rgba(255,255,255,0.92);
+    color: var(--af-text-primary);
     letter-spacing: -0.03em;
     margin-bottom: 4px;
 }
 .prf-abo-expiry {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255,255,255,0.35);
+    color: var(--af-text-subtle);
+}
+.prf-abo-empty {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.32);
+    margin-bottom: 12px;
 }
 .prf-manage-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--af-glass-06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     text-decoration: none;
     transition: background 0.15s;
 }
-.prf-manage-link:active { background: rgba(255,255,255,0.08); }
+.prf-manage-link:active { background: rgba(255, 255, 255, 0.08); }
 .prf-manage-link-text {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255,255,255,0.70);
+    color: rgba(255, 255, 255, 0.7);
 }
 .prf-manage-link-arrow {
-    color: rgba(255,255,255,0.30);
+    color: rgba(255, 255, 255, 0.3);
     font-size: 18px;
 }
-/* ── Error msg ── */
 .prf-error {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: #f87171;
+    color: var(--af-color-danger);
     margin-top: 5px;
 }
-/* Padding bottom for fixed layout */
+.prf-pin-hint {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.28);
+    margin-bottom: 14px;
+}
+.prf-logout-form { margin-bottom: 16px; }
+.prf-logout-btn {
+    width: 100%;
+    background: var(--af-red-tint-bg);
+    border: 1px solid var(--af-red-tint-border);
+    color: var(--af-color-danger);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 15px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.prf-logout-btn:active { opacity: 0.85; }
 .prf-pad { padding-bottom: 32px; }
 </style>
 @endpush
@@ -304,9 +329,7 @@
         <div class="prf-block-title">Changer le PIN</div>
         <form method="POST" action="{{ route('profil.update') }}">
             @csrf @method('PUT')
-            <p style="font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.28); margin-bottom:14px;">
-                Laissez vide pour ne pas modifier. 4 chiffres uniquement.
-            </p>
+            <p class="prf-pin-hint">Laissez vide pour ne pas modifier. 4 chiffres uniquement.</p>
 
             <div class="prf-field">
                 <div class="prf-label">PIN actuel</div>
@@ -329,7 +352,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="prf-submit" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.14); color:rgba(255,255,255,0.65);">
+            <button type="submit" class="prf-submit prf-submit--secondary">
                 Changer le PIN
             </button>
         </form>
@@ -345,7 +368,7 @@
                 <div class="prf-abo-expiry">Jusqu'au {{ $abonnement->date_fin?->format('d/m/Y') ?? '—' }}</div>
             </div>
         @else
-            <p style="font-family:'Inter',sans-serif; font-size:13px; color:rgba(255,255,255,0.32); margin-bottom:12px;">Aucun abonnement actif.</p>
+            <p class="prf-abo-empty">Aucun abonnement actif.</p>
         @endif
         <a href="{{ route('abonnement') }}" class="prf-manage-link">
             <span class="prf-manage-link-text">Gérer mon abonnement</span>
@@ -354,11 +377,9 @@
     </div>
 
     {{-- ── Déconnexion ── --}}
-    <form method="POST" action="{{ route('deconnexion') }}" style="margin-bottom:16px;">
+    <form method="POST" action="{{ route('deconnexion') }}" class="prf-logout-form">
         @csrf
-        <button type="submit"
-                style="width:100%; background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.18); color:#f87171; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; padding:15px; border-radius:14px; cursor:pointer; transition:opacity 0.15s;"
-                onclick="return confirm('Se déconnecter ?')">
+        <button type="submit" class="prf-logout-btn" onclick="return confirm('Se déconnecter ?')">
             Se déconnecter
         </button>
     </form>

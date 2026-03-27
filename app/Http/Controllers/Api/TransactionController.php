@@ -66,6 +66,7 @@ class TransactionController extends Controller
             'transactions.*.date_transaction' => 'required|date',
             'transactions.*.note' => 'nullable|string|max:500',
             'transactions.*.est_imprevue' => 'boolean',
+            'transactions.*.client_uuid' => 'nullable|uuid',
         ]);
 
         foreach ($request->transactions as $data) {
@@ -82,13 +83,30 @@ class TransactionController extends Controller
         }
 
         $creees = [];
+        $userId = auth()->user()->id;
 
         foreach ($request->transactions as $data) {
-            $activite = Activite::whereHas('exploitation', function ($q) {
-                $q->where('user_id', auth()->user()->id);
+            $activite = Activite::whereHas('exploitation', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
             })->findOrFail($data['activite_id']);
 
+            if (! empty($data['client_uuid'])) {
+                $existante = Transaction::query()
+                    ->where('client_uuid', $data['client_uuid'])
+                    ->whereHas('activite.exploitation', function ($q) use ($userId) {
+                        $q->where('user_id', $userId);
+                    })
+                    ->first();
+
+                if ($existante) {
+                    $creees[] = $existante;
+
+                    continue;
+                }
+            }
+
             $creees[] = Transaction::create([
+                'client_uuid' => $data['client_uuid'] ?? null,
                 'activite_id' => $activite->id,
                 'type' => $data['type'],
                 // Les recettes n'ont pas de nature

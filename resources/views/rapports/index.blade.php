@@ -8,58 +8,57 @@
 
 @push('styles')
 <style>
-/* ── Page header ── */
+/* Tokens : --af-* (app.css) */
+.rpt-page-head { padding: 20px 0 4px; }
 .rpt-page-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 22px;
     font-weight: 700;
-    color: rgba(255,255,255,0.94);
+    color: var(--af-text-high);
     letter-spacing: -0.03em;
     margin-bottom: 4px;
 }
 .rpt-page-sub {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255,255,255,0.30);
+    color: rgba(255, 255, 255, 0.3);
     margin-bottom: 20px;
 }
-/* ── Block card ── */
 .rpt-block {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 20px;
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--af-radius-lg);
     padding: 18px;
     margin-bottom: 16px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
 .rpt-block-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 14px;
     font-weight: 700;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255, 255, 255, 0.75);
     letter-spacing: -0.02em;
     margin-bottom: 14px;
 }
-/* ── Form fields ── */
 .rpt-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
     margin-bottom: 6px;
 }
 .rpt-select, .rpt-input {
     width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.82);
+    color: var(--af-text-body-strong);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
@@ -71,79 +70,86 @@
     background-position: right 14px center;
     padding-right: 40px;
 }
-.rpt-select:focus, .rpt-input:focus { border-color: rgba(74,222,128,0.35); }
+.rpt-select:focus, .rpt-input:focus { border-color: var(--af-chip-active-border); }
 .rpt-field { margin-bottom: 12px; }
-/* ── Upsell card ── */
+.rpt-hint {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    margin-top: 6px;
+}
+.rpt-date-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
 .rpt-upsell {
-    background: rgba(74,222,128,0.05);
-    border: 1px solid rgba(74,222,128,0.15);
-    border-radius: 20px;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    border-radius: var(--af-radius-lg);
     padding: 24px;
     text-align: center;
     margin-bottom: 16px;
 }
-.rpt-upsell-icon {
-    font-size: 36px;
-    margin-bottom: 12px;
-}
+.rpt-upsell-icon { font-size: 36px; margin-bottom: 12px; }
 .rpt-upsell-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: rgba(255,255,255,0.88);
+    color: rgba(255, 255, 255, 0.88);
     letter-spacing: -0.02em;
     margin-bottom: 8px;
 }
 .rpt-upsell-sub {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255,255,255,0.38);
+    color: rgba(255, 255, 255, 0.38);
     line-height: 1.55;
     margin-bottom: 16px;
 }
+.rpt-upsell-sub strong { color: rgba(255, 255, 255, 0.75); font-weight: 600; }
 .rpt-upsell-btn {
     display: inline-block;
-    background: #16a34a;
-    color: white;
-    font-family: 'Inter', sans-serif;
+    background: var(--af-color-accent-dark);
+    color: #fff;
+    font-family: var(--font-ui), sans-serif;
     font-size: 13px;
     font-weight: 600;
     padding: 12px 24px;
     border-radius: 12px;
     text-decoration: none;
-    border: 1px solid rgba(74,222,128,0.30);
+    border: 1px solid var(--af-tx-type-rec-border);
 }
-/* ── Submit button ── */
 .rpt-submit {
     width: 100%;
-    background: #16a34a;
-    color: white;
-    font-family: 'Inter', sans-serif;
+    background: var(--af-color-accent-dark);
+    color: #fff;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
     font-weight: 700;
     padding: 15px;
     border-radius: 14px;
-    border: 1px solid rgba(74,222,128,0.30);
+    border: 1px solid var(--af-tx-type-rec-border);
     cursor: pointer;
     margin-top: 4px;
     transition: opacity 0.15s;
 }
-.rpt-submit:active { opacity: 0.80; }
-/* ── Reports list ── */
+.rpt-submit:active { opacity: 0.8; }
 .rpt-item {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 14px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .rpt-item:last-child { border-bottom: none; }
 .rpt-item-icon {
     width: 42px;
     height: 42px;
     border-radius: 12px;
-    background: rgba(74,222,128,0.10);
-    border: 1px solid rgba(74,222,128,0.18);
+    background: var(--af-green-tint-bg);
+    border: 1px solid var(--af-green-tint-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -152,26 +158,26 @@
 }
 .rpt-item-body { flex: 1; min-width: 0; }
 .rpt-item-type {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 13px;
     font-weight: 700;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: -0.01em;
 }
 .rpt-item-meta {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255,255,255,0.30);
+    color: rgba(255, 255, 255, 0.3);
     margin-top: 1px;
 }
 .rpt-download-btn {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: #4ade80;
+    color: var(--af-color-accent);
     text-decoration: none;
-    background: rgba(74,222,128,0.10);
-    border: 1px solid rgba(74,222,128,0.20);
+    background: var(--af-green-tint-bg);
+    border: 1px solid var(--af-green-icon-border);
     border-radius: 10px;
     padding: 7px 12px;
     white-space: nowrap;
@@ -179,44 +185,59 @@
 }
 .rpt-copy-btn {
     font-size: 11px;
-    color: rgba(74,222,128,0.65);
+    color: var(--af-color-accent);
+    opacity: 0.72;
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
+    margin-left: 4px;
     text-decoration: underline;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
 }
 .rpt-badge-vert {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 999px;
-    background: rgba(74,222,128,0.12);
-    border: 1px solid rgba(74,222,128,0.22);
-    color: #4ade80;
+    background: var(--af-filter-active-bg);
+    border: 1px solid var(--af-filter-active-border);
+    color: var(--af-color-accent);
     white-space: nowrap;
 }
 .rpt-badge-rouge {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 999px;
-    background: rgba(248,113,113,0.12);
-    border: 1px solid rgba(248,113,113,0.22);
-    color: #f87171;
+    background: var(--af-red-tint-bg);
+    border: 1px solid var(--af-red-tint-border);
+    color: var(--af-color-danger);
     white-space: nowrap;
+}
+.rpt-empty {
+    text-align: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--af-radius-lg);
+}
+.rpt-empty p {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.28);
+    margin: 0;
 }
 </style>
 @endpush
 
-<div style="padding: 20px 0 4px;">
+<div class="rpt-page-head">
     <h1 class="rpt-page-title">Rapports PDF</h1>
     <p class="rpt-page-sub">Génération et téléchargement de rapports</p>
 </div>
@@ -233,7 +254,7 @@
     <div class="rpt-upsell">
         <div class="rpt-upsell-icon">🔒</div>
         <div class="rpt-upsell-title">Fonctionnalité Premium</div>
-        <p class="rpt-upsell-sub">La génération de rapports PDF nécessite le plan <strong style="color:rgba(255,255,255,0.75);">Essentielle</strong> ou supérieur.</p>
+        <p class="rpt-upsell-sub">La génération de rapports PDF nécessite le plan <strong>Essentielle</strong> ou supérieur.</p>
         <a href="{{ route('abonnement') }}" class="rpt-upsell-btn">Voir les plans →</a>
     </div>
 @else
@@ -258,10 +279,10 @@
                     @endif
                 </select>
                 @if (! ($infoAbonnement['peut_dossier'] ?? false))
-                    <p style="font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,0.25); margin-top:6px;">Le dossier crédit est réservé aux plans Pro / Coopérative.</p>
+                    <p class="rpt-hint">Le dossier crédit est réservé aux plans Pro / Coopérative.</p>
                 @endif
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div class="rpt-date-grid">
                 <div>
                     <div class="rpt-label">Période début</div>
                     <input type="date" name="periode_debut" value="{{ old('periode_debut', now()->startOfMonth()->toDateString()) }}" class="rpt-input">
@@ -297,7 +318,7 @@
                         {{ $r->created_at->format('d/m/Y H:i') }}
                         @if($valide && $r->lien_token)
                             · <span class="rpt-badge-vert">Valide ~{{ $heures }}h</span>
-                            <button type="button" class="rpt-copy-btn js-copy" data-url="{{ route('rapports.partager', $r->lien_token) }}" style="margin-left:4px;">Copier lien</button>
+                            <button type="button" class="rpt-copy-btn js-copy" data-url="{{ route('rapports.partager', $r->lien_token) }}">Copier lien</button>
                         @elseif($expire && !$valide)
                             · <span class="rpt-badge-rouge">Expiré</span>
                         @endif
@@ -308,8 +329,8 @@
         @endforeach
     </div>
 @else
-    <div style="text-align:center; padding:24px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:20px;">
-        <p style="font-family:'Inter',sans-serif; font-size:13px; color:rgba(255,255,255,0.28);">Aucun rapport généré pour le moment.</p>
+    <div class="rpt-empty">
+        <p>Aucun rapport généré pour le moment.</p>
     </div>
 @endif
 

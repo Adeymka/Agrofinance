@@ -8,11 +8,10 @@
 
 @push('styles')
 <style>
-/* ── Wizard steps ── */
+/* Tokens : --af-* (app.css) */
 .txm-step { display: none; }
 .txm-step.active { display: block; }
 
-/* ── Progress dots ── */
 .txm-progress {
     display: flex;
     justify-content: center;
@@ -22,36 +21,34 @@
 .txm-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.12);
+    background: var(--af-glass-12);
     transition: background 0.2s, width 0.2s;
 }
 .txm-dot.active {
     width: 24px;
     border-radius: 4px;
-    background: #4ade80;
+    background: var(--af-color-accent);
 }
 
-/* ── Section block ── */
 .txm-block {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 20px;
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--af-radius-lg);
     padding: 18px;
     margin-bottom: 14px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
 .txm-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
     margin-bottom: 10px;
 }
 
-/* ── Toggle Dépense / Recette ── */
 .txm-type-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -61,29 +58,28 @@
 .txm-type-btn {
     padding: 14px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.10);
-    background: rgba(255,255,255,0.04);
-    font-family: 'Space Grotesk', sans-serif;
+    border: 1px solid var(--af-border-glass-soft);
+    background: var(--af-glass-06);
+    font-family: var(--font-display), sans-serif;
     font-size: 14px;
     font-weight: 700;
-    color: rgba(255,255,255,0.40);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
     text-align: center;
     transition: all 0.15s;
     letter-spacing: -0.01em;
 }
 .txm-type-btn.dep-on {
-    background: rgba(248,113,113,0.14);
-    border-color: rgba(248,113,113,0.30);
-    color: #f87171;
+    background: var(--af-tx-type-dep-bg);
+    border-color: var(--af-tx-type-dep-border);
+    color: var(--af-color-danger);
 }
 .txm-type-btn.rec-on {
-    background: rgba(74,222,128,0.14);
-    border-color: rgba(74,222,128,0.30);
-    color: #4ade80;
+    background: var(--af-tx-type-rec-bg);
+    border-color: var(--af-tx-type-rec-border);
+    color: var(--af-color-accent);
 }
 
-/* ── Nature pills ── */
 .txm-nature-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -93,32 +89,31 @@
 .txm-nature-pill {
     padding: 12px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.10);
-    background: rgba(255,255,255,0.04);
-    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--af-border-glass-soft);
+    background: var(--af-glass-06);
+    font-family: var(--font-ui), sans-serif;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255,255,255,0.40);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
     text-align: center;
     transition: all 0.15s;
 }
 .txm-nature-pill.selected {
-    background: rgba(74,222,128,0.10);
-    border-color: rgba(74,222,128,0.22);
-    color: #4ade80;
+    background: var(--af-green-tint-bg);
+    border-color: var(--af-green-icon-border);
+    color: var(--af-color-accent);
 }
 
-/* ── Campaign select ── */
 .txm-select {
     width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.82);
+    color: var(--af-text-body-strong);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
@@ -127,66 +122,63 @@
     background-position: right 14px center;
     padding-right: 40px;
 }
-.txm-select:focus { border-color: rgba(74,222,128,0.35); }
+.txm-select:focus { border-color: var(--af-chip-active-border); }
 
-/* ── Amount big input ── */
 .txm-amount-input {
     width: 100%;
     text-align: center;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display), sans-serif;
     font-size: 48px;
     font-weight: 800;
     letter-spacing: -0.04em;
-    color: #4ade80;
+    color: var(--af-color-accent);
     background: transparent;
     border: none;
     outline: none;
     padding: 16px 0 8px;
-    caret-color: #4ade80;
+    caret-color: var(--af-color-accent);
 }
-.txm-amount-input::placeholder { color: rgba(255,255,255,0.15); }
-.txm-amount-input.dep { color: #f87171; caret-color: #f87171; }
+.txm-amount-input::placeholder { color: rgba(255, 255, 255, 0.15); }
+.txm-amount-input.dep { color: var(--af-color-danger); caret-color: var(--af-color-danger); }
 .txm-amount-unit {
     text-align: center;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255, 255, 255, 0.25);
     letter-spacing: 0.08em;
     margin-bottom: 12px;
 }
 .txm-amount-divider {
     height: 1px;
-    background: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.07);
     margin-bottom: 14px;
 }
 
-/* ── Input field ── */
 .txm-input {
     width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.82);
+    color: var(--af-text-body-strong);
     outline: none;
     box-sizing: border-box;
 }
-.txm-input:focus { border-color: rgba(74,222,128,0.35); }
-.txm-input::placeholder { color: rgba(255,255,255,0.22); }
+.txm-input:focus { border-color: var(--af-chip-active-border); }
+.txm-input::placeholder { color: rgba(255, 255, 255, 0.22); }
 .txm-input-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.32);
+    color: rgba(255, 255, 255, 0.32);
     margin-bottom: 6px;
 }
 .txm-field { margin-bottom: 12px; }
 
-/* ── Category list grouped ── */
 .txm-cat-list {
     max-height: 40vh;
     overflow-y: auto;
@@ -194,15 +186,15 @@
     padding-right: 2px;
 }
 .txm-cat-group-label {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.22);
+    color: rgba(255, 255, 255, 0.22);
     padding: 10px 0 6px;
     display: block;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     margin-top: 4px;
 }
 .txm-cat-group-label:first-child {
@@ -219,28 +211,27 @@
 .txm-cat-pill input[type="radio"] { display: none; }
 .txm-cat-pill label {
     display: inline-block;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
     font-weight: 500;
     padding: 7px 13px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.10);
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.50);
+    border: 1px solid var(--af-border-glass-soft);
+    background: var(--af-glass-06);
+    color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
 }
 .txm-cat-pill input[type="radio"]:checked + label {
-    background: rgba(74,222,128,0.12);
-    border-color: rgba(74,222,128,0.28);
-    color: #4ade80;
+    background: var(--af-filter-active-bg);
+    border-color: var(--af-filter-active-border);
+    color: var(--af-color-accent);
 }
-/* ── Mode toggle ── */
 .txm-mode-row {
     display: flex;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--af-glass-06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 3px;
     margin-bottom: 14px;
@@ -248,7 +239,7 @@
 }
 .txm-mode-btn {
     flex: 1;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 12px;
     font-weight: 600;
     padding: 9px;
@@ -257,24 +248,23 @@
     cursor: pointer;
     text-align: center;
     background: transparent;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     transition: all 0.15s;
 }
 .txm-mode-btn.active {
-    background: rgba(74,222,128,0.12);
-    color: #4ade80;
+    background: var(--af-filter-active-bg);
+    color: var(--af-color-accent);
 }
-/* ── Bottom fixed button ── */
 .txm-footer {
     position: fixed;
     bottom: 70px;
     left: 0;
     right: 0;
     padding: 12px 16px;
-    background: rgba(13,31,13,0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,0.07);
+    background: var(--af-tx-footer-scrim);
+    backdrop-filter: blur(var(--af-blur-flash));
+    -webkit-backdrop-filter: blur(var(--af-blur-flash));
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
     display: flex;
     gap: 10px;
     z-index: 30;
@@ -283,9 +273,9 @@
     flex: 0 0 48px;
     padding: 14px;
     border-radius: 14px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.55);
+    background: var(--af-glass-06);
+    border: 1px solid var(--af-border-glass-soft);
+    color: var(--af-text-muted);
     cursor: pointer;
     font-size: 18px;
     line-height: 1;
@@ -296,7 +286,7 @@
     flex: 1;
     padding: 14px;
     border-radius: 14px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 14px;
     font-weight: 700;
     border: none;
@@ -304,7 +294,6 @@
     transition: opacity 0.15s;
 }
 .txm-btn-next:active, .txm-btn-back:active { opacity: 0.75; }
-/* Mes catégories suggestions */
 .txm-suggestions {
     display: flex;
     flex-wrap: wrap;
@@ -312,28 +301,74 @@
     margin-bottom: 10px;
 }
 .txm-suggestion-pill {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 500;
     padding: 5px 12px;
     border-radius: 999px;
-    border: 1px solid rgba(74,222,128,0.25);
-    background: rgba(74,222,128,0.07);
-    color: rgba(74,222,128,0.80);
+    border: 1px solid var(--af-green-tint-border);
+    background: rgba(74, 222, 128, 0.07);
+    color: rgba(74, 222, 128, 0.85);
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.12s;
 }
-.txm-suggestion-pill:active { background: rgba(74,222,128,0.15); }
-/* Padding bottom for fixed bar */
+.txm-suggestion-pill:active { background: rgba(74, 222, 128, 0.15); }
 .txm-content-pad { padding-bottom: 100px; }
+
+.txm-empty-wrap { text-align: center; padding: 48px 20px; }
+.txm-empty-msg {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 15px;
+    color: var(--af-text-dim);
+    margin-bottom: 20px;
+}
+.txm-empty-cta {
+    display: inline-block;
+    background: var(--af-color-accent-dark);
+    color: #fff;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 14px 28px;
+    border-radius: 14px;
+    text-decoration: none;
+}
+.txm-step-title {
+    font-family: var(--font-display), sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--af-text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+}
+.txm-error { font-size: 12px; color: var(--af-color-danger); }
+.txm-error--center { text-align: center; margin-bottom: 6px; }
+.txm-error--block { margin-bottom: 8px; }
+.txm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.txm-checkbox-accent { width: 18px; height: 18px; border-radius: 6px; accent-color: var(--af-color-accent); }
+.txm-checkbox-label { font-family: var(--font-ui), sans-serif; font-size: 13px; color: var(--af-text-muted); }
+.txm-suggestions-label {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    color: var(--af-color-accent);
+    opacity: 0.72;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+}
+.txm-btn-next.dep { background: var(--af-tx-btn-dep); color: #fff; }
+.txm-btn-next.rec { background: var(--af-tx-btn-rec); color: #fff; }
+.txm-label--nature { margin-top: 14px; margin-bottom: 6px; }
+.txm-textarea-noresize { resize: none; }
+.txm-wrap-suggestions { margin-bottom: 10px; }
 </style>
 @endpush
 
 @if ($activites->isEmpty())
-    <div style="text-align:center; padding:48px 20px;">
-        <p style="font-family:'Inter',sans-serif; font-size:15px; color:rgba(255,255,255,0.45); margin-bottom:20px;">Aucune campagne en cours.</p>
-        <a href="{{ route('activites.create') }}" style="display:inline-block; background:#16a34a; color:white; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; padding:14px 28px; border-radius:14px; text-decoration:none;">Créer une campagne</a>
+    <div class="txm-empty-wrap">
+        <p class="txm-empty-msg">Aucune campagne en cours.</p>
+        <a href="{{ route('activites.create') }}" class="txm-empty-cta">Créer une campagne</a>
     </div>
 @else
 
@@ -363,7 +398,7 @@
                 <div class="txm-dot" id="dot2"></div>
             </div>
 
-            <p style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:rgba(255,255,255,0.92); letter-spacing:-0.02em; margin-bottom:18px;">Nouvelle transaction</p>
+            <p class="txm-step-title">Nouvelle transaction</p>
 
             {{-- Type --}}
             <div class="txm-block">
@@ -373,13 +408,13 @@
                     <button type="button" id="btnRec" class="txm-type-btn">Recette</button>
                 </div>
                 <div id="blocNature">
-                    <div class="txm-label" style="margin-top:14px; margin-bottom:6px;">Nature de la dépense</div>
+                    <div class="txm-label txm-label--nature">Nature de la dépense</div>
                     <div class="txm-nature-row">
                         <div class="txm-nature-pill selected" id="pillVar" onclick="selectNature('variable')">Variable</div>
                         <div class="txm-nature-pill" id="pillFix" onclick="selectNature('fixe')">Fixe</div>
                     </div>
-                    <input type="radio" name="nature" value="variable" id="natVar" checked style="display:none;">
-                    <input type="radio" name="nature" value="fixe" id="natFix" style="display:none;">
+                    <input type="radio" name="nature" value="variable" id="natVar" checked class="hidden">
+                    <input type="radio" name="nature" value="fixe" id="natFix" class="hidden">
                 </div>
             </div>
 
@@ -416,7 +451,7 @@
                 <div class="txm-amount-unit">FCFA</div>
                 <div class="txm-amount-divider"></div>
                 @error('montant')
-                    <p style="font-size:12px; color:#f87171; text-align:center; margin-bottom:6px;">{{ $message }}</p>
+                    <p class="txm-error txm-error--center">{{ $message }}</p>
                 @enderror
                 <div class="txm-field">
                     <div class="txm-input-label">Date</div>
@@ -426,13 +461,11 @@
                 </div>
                 <div class="txm-field">
                     <div class="txm-input-label">Note (optionnel)</div>
-                    <textarea name="note" rows="2" maxlength="500" class="txm-input" placeholder="Commentaire…" style="resize:none;">{{ old('note') }}</textarea>
+                    <textarea name="note" rows="2" maxlength="500" class="txm-input txm-textarea-noresize" placeholder="Commentaire…">{{ old('note') }}</textarea>
                 </div>
-                <label style="display:flex; align-items:center; gap:10px; padding:8px 0;">
-                    <input type="checkbox" name="est_imprevue" value="1"
-                           style="width:18px; height:18px; border-radius:6px; accent-color:#4ade80;"
-                           @checked(old('est_imprevue'))>
-                    <span style="font-family:'Inter',sans-serif; font-size:13px; color:rgba(255,255,255,0.55);">Dépense imprévue</span>
+                <label class="txm-checkbox-row">
+                    <input type="checkbox" name="est_imprevue" value="1" class="txm-checkbox-accent" @checked(old('est_imprevue'))>
+                    <span class="txm-checkbox-label">Dépense imprévue</span>
                 </label>
             </div>
 
@@ -447,15 +480,15 @@
                 </div>
 
                 {{-- Mes suggestions --}}
-                <div id="wrapSuggestions" class="hidden" style="margin-bottom:10px;">
-                    <p style="font-family:'Inter',sans-serif; font-size:10px; color:rgba(74,222,128,0.65); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px;">Mes libellés</p>
+                <div id="wrapSuggestions" class="hidden txm-wrap-suggestions">
+                    <p class="txm-suggestions-label">Mes libellés</p>
                     <div id="pillsSuggestions" class="txm-suggestions"></div>
                 </div>
 
                 {{-- Mode liste : pills groupées par rubrique --}}
                 <div id="zoneListe">
                     @error('categorie')
-                        <p style="font-size:12px; color:#f87171; margin-bottom:8px;">{{ $message }}</p>
+                        <p class="txm-error txm-error--block">{{ $message }}</p>
                     @enderror
                     <div id="catDepenses" class="txm-cat-list">
                         @foreach ($categories['depenses'] as $groupe => $cats)
@@ -506,10 +539,8 @@
 
 {{-- ── Footer fixe ── --}}
 <div class="txm-footer">
-    <button type="button" class="txm-btn-back" id="btnBack" style="display:none;" onclick="goStep(1)">←</button>
-    <button type="button" class="txm-btn-next dep" id="btnNext"
-            style="background:rgba(248,113,113,0.85); color:white;"
-            onclick="handleNext()">
+    <button type="button" class="txm-btn-back hidden" id="btnBack" onclick="goStep(1)">←</button>
+    <button type="button" class="txm-btn-next dep" id="btnNext" onclick="handleNext()">
         Suivant →
     </button>
 </div>
@@ -603,9 +634,8 @@
         document.getElementById('blocNature').style.display = dep ? '' : 'none';
         document.querySelectorAll('input[name="nature"]').forEach(function (i) { i.disabled = !dep; });
 
-        var colorDep = 'rgba(248,113,113,0.85)';
-        var colorRec = 'rgba(34,197,94,0.85)';
-        btnNext.style.background = dep ? colorDep : colorRec;
+        btnNext.classList.remove('dep', 'rec');
+        btnNext.classList.add(dep ? 'dep' : 'rec');
         inputMontant.className = 'txm-amount-input' + (dep ? ' dep' : '');
 
         document.getElementById('btnDep').className = 'txm-type-btn' + (dep ? ' dep-on' : '');
@@ -634,7 +664,7 @@
             document.getElementById('dot1b').classList.toggle('active', step === 1);
             document.getElementById('dot2b').classList.toggle('active', step === 2);
         }
-        btnBack.style.display = step === 2 ? '' : 'none';
+        btnBack.classList.toggle('hidden', step !== 2);
         if (step === 2) {
             btnNext.textContent = 'Enregistrer';
             renderSuggestions();
@@ -644,10 +674,78 @@
         }
     };
 
+    window.__AF_buildMobileTxPayload = function () {
+        var type = document.getElementById('inputType').value;
+        var activite_id = parseInt(document.getElementById('selectActivite').value, 10);
+        var montant = parseFloat(String(document.getElementById('inputMontant').value), 10);
+        var dateEl = document.querySelector('#formTransaction input[name="date_transaction"]');
+        var date_transaction = dateEl ? dateEl.value : '';
+        var noteEl = document.querySelector('#formTransaction textarea[name="note"]');
+        var note = noteEl ? noteEl.value.trim() : '';
+        var cb = document.querySelector('#formTransaction input[name="est_imprevue"]');
+        var est_imprevue = cb ? cb.checked : false;
+
+        var nature = null;
+        if (type === 'depense') {
+            var nr = document.querySelector('#formTransaction input[name="nature"]:checked');
+            nature = nr ? nr.value : 'variable';
+        }
+
+        var categorie = '';
+        var mode = document.getElementById('inputCategorieMode').value;
+        if (mode === 'libre') {
+            categorie = (document.getElementById('inputCategorieLibre') && document.getElementById('inputCategorieLibre').value || '').trim();
+        } else {
+            var cr = document.querySelector('#formTransaction input[name="categorie"]:checked');
+            categorie = cr ? cr.value : '';
+        }
+
+        if (!activite_id || !date_transaction) {
+            alert('Vérifiez la campagne et la date.');
+            return null;
+        }
+        if (!montant || montant < 1 || isNaN(montant)) {
+            alert('Indiquez un montant valide (minimum 1 FCFA).');
+            return null;
+        }
+        if (!categorie) {
+            alert('Choisissez une catégorie ou saisissez-la en libre.');
+            return null;
+        }
+
+        return {
+            activite_id: activite_id,
+            type: type,
+            nature: nature,
+            categorie: categorie,
+            montant: montant,
+            date_transaction: date_transaction,
+            note: note || null,
+            est_imprevue: !!est_imprevue,
+        };
+    };
+
     window.handleNext = function () {
         if (currentStep === 1) {
             goStep(2);
         } else {
+            if (!navigator.onLine && typeof window.__AF_enqueueOfflineTransaction === 'function') {
+                var payload = window.__AF_buildMobileTxPayload();
+                if (!payload) {
+                    return;
+                }
+                window.__AF_enqueueOfflineTransaction(payload).then(function () {
+                    alert('Enregistré hors ligne. Synchronisation à la reconnexion.');
+                    window.location.href = @json(route('dashboard'));
+                }).catch(function (err) {
+                    var msg = (err && err.message) ? err.message : 'Erreur inconnue';
+                    alert('Impossible d\'enregistrer hors ligne : ' + msg);
+                    if (window.console && console.error) {
+                        console.error(err);
+                    }
+                });
+                return;
+            }
             document.getElementById('formTransaction').submit();
         }
     };
