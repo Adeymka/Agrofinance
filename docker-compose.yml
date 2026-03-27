@@ -1,21 +1,40 @@
 services:
 
-  # ── Application PHP-FPM ────────────────────────────────────────────────────
+  # ── Init : copie les assets publics dans le volume partagé ──────────────────
+  # Ce service s'exécute une seule fois au démarrage et s'arrête.
+  init:
+    build:
+      context: .
+      target: app
+    image: agrofinance-app:latest
+    container_name: agrofinance_init
+    command: sh -c "cp -r /var/www/public/. /public-shared/"
+    volumes:
+      - public_assets:/public-shared
+    restart: "no"
+
+  # ── Application PHP-FPM ─────────────────────────────────────────────────────
+  # Le code est DANS l'image. L'entrypoint attend MySQL, migre, démarre php-fpm.
+  # Commande de build et démarrage :
+  #   docker compose build
+  #   docker compose up -d
   app:
     build:
       context: .
       target: app
+    image: agrofinance-app:latest
     container_name: agrofinance_app
     restart: unless-stopped
-    working_dir: /var/www
     volumes:
-      - .:/var/www
       - pdf_storage:/var/www/storage/app/rapports
+      - app_logs:/var/www/storage/logs
     networks:
       - agrofinance
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
 
@@ -24,18 +43,22 @@ services:
     build:
       context: .
       target: worker
+    image: agrofinance-worker:latest
     container_name: agrofinance_worker
     restart: unless-stopped
-    working_dir: /var/www
+    volumes:
+      - pdf_storage:/var/www/storage/app/rapports
     networks:
       - agrofinance
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
 
-  # ── Nginx ─────────────────────────────────────────────────────────────────
+  # ── Nginx (reverse proxy) ─────────────────────────────────────────────────
   nginx:
     image: nginx:alpine
     container_name: agrofinance_nginx
@@ -43,11 +66,13 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Assets statiques copiés depuis l'image app via le service init
+      - public_assets:/var/www/public:ro
     networks:
       - agrofinance
     depends_on:
+      - init
       - app
 
   # ── MySQL 8 ───────────────────────────────────────────────────────────────
@@ -65,15 +90,22 @@ services:
     networks:
       - agrofinance
     ports:
-      - "3307:3306"     # 3307 pour eviter conflit XAMPP local
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # ── Redis ─────────────────────────────────────────────────────────────────
+  # ── Redis 7 ───────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: agrofinance_redis
     restart: unless-stopped
     networks:
       - agrofinance
+    volumes:
+      - redis_data:/data
 
 networks:
   agrofinance:
@@ -82,3 +114,6 @@ networks:
 volumes:
   mysql_data:
   pdf_storage:
+  app_logs:
+  redis_data:
+  public_assets:      # Partagé entre init (écriture) et nginx (lecture)
