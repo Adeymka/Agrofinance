@@ -9,6 +9,17 @@ use App\Services\AbonnementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * ActiviteController — API CRUD des campagnes agricoles.
+ *
+ * Routes : GET/POST /api/v1/activites, GET/PUT /api/v1/activites/{id}
+ *          POST /api/v1/activites/{id}/cloturer | abandonner
+ *
+ * Middlewares requis : auth:sanctum + subscribed (#5).
+ * Propriete des donnees : toutes les activites sont filtrees par user_id
+ * via le scope Activite::pourUtilisateur() (#17).
+ * Concurrence : cloturer() et abandonner() utilisent lockForUpdate() (#13).
+ */
 class ActiviteController extends Controller
 {
     public function __construct(

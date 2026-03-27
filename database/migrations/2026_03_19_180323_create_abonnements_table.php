@@ -16,10 +16,16 @@ return new class extends Migration
             $table->foreignId('user_id')
                 ->constrained('users')
                 ->onDelete('cascade');
+            // Valeurs canoniques de plan : gratuit | essentielle | pro | cooperative
+            // NE PAS utiliser 'mensuel' ou 'annuel' ici — ce sont des plans de facturation FedaPay
+            // La normalisation est faite par AbonnementService::planPourBase()
             $table->enum('plan', ['gratuit', 'essentielle', 'pro', 'cooperative']);
             $table->date('date_debut');
             $table->date('date_fin');
+            // actif | expire | suspendu | essai
             $table->enum('statut', ['actif', 'expire', 'suspendu', 'essai'])->default('essai');
+            // Identifiant de transaction FedaPay — UNIQUE (contrainte ajoutee en migration ulterieure)
+            // Sert de cle d'idempotence pour eviter les doubles activations (#14)
             $table->string('ref_fedapay')->nullable();
             $table->timestamps();
         });

@@ -13,6 +13,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * RapportController (API) — Generation et telechargement des rapports PDF.
+ *
+ * Routes : GET /api/v1/rapports
+ *          POST /api/v1/rapports/generer (throttle:5,15)
+ *          GET /api/v1/rapports/{id}/telecharger
+ *
+ * La generation est deleguee a RapportService::creerEtDispatcher() (#2 — DRY).
+ * Les PDFs sont chiffres AES-256-CBC et servis a la volee (dechiffrement dans telecharger()).
+ * Acces PDF controle via Gate::allows('genererPdf') / AbonnementPolicy (#16).
+ */
 class RapportController extends Controller
 {
     use HandlesPdfAbonnement;

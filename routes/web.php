@@ -96,6 +96,9 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');
     Route::get('/rapports/{id}/telecharger', [RapportController::class, 'telecharger'])->whereNumber('id')->name('rapports.telecharger');
+
+    // #30 — Vue alertes/index.blade.php desormais routee
+    Route::get('/alertes', fn () => view('alertes.index'))->name('alertes.index');
 });
 
 // Healthcheck minimal (DB/cache/storage). Utile pour observabilité sous charge.

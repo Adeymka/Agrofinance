@@ -73,6 +73,9 @@ class AbonnementService
         };
     }
 
+    /**
+     * Verifie si l'abonnement de l'utilisateur est actif (statut actif ou essai, date non depassee).
+     */
     public function estActif(User $user): bool
     {
         return $this->abonnementEnVigueur($user) !== null;
@@ -88,6 +91,10 @@ class AbonnementService
         return $this->normaliserPlan($abonnement?->plan);
     }
 
+    /**
+     * L'utilisateur peut-il generer un rapport PDF (campagne, mensuel, annuel) ?
+     * Plan minimum requis : Essentielle.
+     */
     public function peutGenererPDF(User $user): bool
     {
         return in_array($this->planActuel($user), ['essentielle', 'pro', 'cooperative'], true);
@@ -101,6 +108,10 @@ class AbonnementService
         return in_array($this->planActuel($user), ['pro', 'cooperative'], true);
     }
 
+    /**
+     * L'utilisateur peut-il gerer plusieurs exploitations ?
+     * Plan minimum requis : Pro (5) ou Cooperative (illimite).
+     */
     public function peutAvoirMultiExploitations(User $user): bool
     {
         return in_array($this->planActuel($user), ['pro', 'cooperative'], true);
@@ -136,6 +147,10 @@ class AbonnementService
         };
     }
 
+    /**
+     * L'utilisateur peut-il creer une exploitation supplementaire ?
+     * Verifie le compteur actuel vs le quota du plan.
+     */
     public function peutCreerExploitation(User $user): bool
     {
         $n = Exploitation::where('user_id', $user->id)->count();
@@ -158,6 +173,13 @@ class AbonnementService
         };
     }
 
+    /**
+     * Retourne le resume complet de l'abonnement (plan, statut, jours restants, droits).
+     * Utilise dans les vues dashboard et les reponses API /abonnement/statut.
+     *
+     * @return array{plan:string,plan_metier:string,statut:string,date_fin:mixed,jours_restants:int,
+     *               est_essai:bool,peut_pdf:bool,peut_dossier:bool,peut_multi:bool,max_exploitations:int}
+     */
     public function infos(User $user): array
     {
         $abonnement = $this->abonnementEnVigueur($user);

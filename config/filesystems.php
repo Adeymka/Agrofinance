@@ -56,6 +56,25 @@ return [
             'throw' => false,
         ],
 
+        /*
+        | Disque dedie aux rapports PDF chiffres (#12).
+        | En local : stockage sous storage/app/rapports/.
+        | En production : passer RAPPORT_DISK=s3 + AWS_BUCKET_RAPPORTS pour migrer vers S3
+        | sans changer aucune ligne de code applicatif.
+        */
+        'rapports' => [
+            'driver' => env('RAPPORT_DISK_DRIVER', 'local'),
+            'root'   => env('RAPPORT_DISK_DRIVER', 'local') === 'local'
+                ? storage_path('app/rapports')
+                : '',
+            // Config S3 (ignoree si driver=local)
+            'key'    => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET_RAPPORTS', env('AWS_BUCKET')),
+            'throw'  => true,  // Exception si l'ecriture echoue (capturee dans GenerateRapportPdfJob)
+        ],
+
     ],
 
     /*
