@@ -82,6 +82,8 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 **Livrable de fin de sprint.** Liste des routes / API revues pour l’**ownership** ; pas de secret en clair dans les logs ; checklist **D5** pour la prod.
 
+*Compte rendu du sprint S1 réalisé :* `docs/SPRINT-S1-SECURITE-DONNEES.md`.
+
 ---
 
 ### Sprint S2 — Architecture & infra (`SYNTHESE-SOUTENANCE-ARCHITECTURE-INFRA.md`)

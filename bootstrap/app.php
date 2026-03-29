@@ -45,4 +45,13 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($isApiRequest($request))
                 return response()->json(['succes' => false, 'errors' => $e->errors()], 422);
         });
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) use ($isApiRequest) {
+            if ($isApiRequest($request)) {
+                return response()->json([
+                    'succes' => false,
+                    'message' => 'Trop de tentatives. Réessayez dans une minute.',
+                    'code' => 'TOO_MANY_ATTEMPTS',
+                ], 429);
+            }
+        });
     })->create();

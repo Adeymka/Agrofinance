@@ -74,6 +74,7 @@ class OtpService
 
     private function envoyerSMS(string $telephone, string $code): bool
     {
+        // D2 : en production, jamais de code OTP dans les logs (local uniquement — voir AGENTS.md).
         if (app()->isLocal()) {
             Log::info("[OTP LOCAL] Tel: {$telephone} | Code: {$code}");
 

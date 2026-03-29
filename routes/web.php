@@ -43,7 +43,7 @@ Route::prefix('aide')->name('aide.')->group(function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/connexion', [ConnexionController::class, 'showForm'])->name('connexion');
-    Route::post('/connexion', [ConnexionController::class, 'store'])->name('connexion.store');
+    Route::post('/connexion', [ConnexionController::class, 'store'])->middleware('throttle:auth-connexion')->name('connexion.store');
 
     Route::get('/inscription', [InscriptionController::class, 'showForm'])->name('inscription');
     Route::post('/inscription', [InscriptionController::class, 'store'])->name('inscription.store');

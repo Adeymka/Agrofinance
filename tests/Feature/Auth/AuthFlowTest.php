@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Abonnement;
+use App\Models\Exploitation;
 use App\Models\User;
-use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AuthFlowTest extends TestCase
@@ -109,6 +112,72 @@ class AuthFlowTest extends TestCase
             'succes' => false,
             'message' => 'Numéro ou PIN incorrect.',
         ]);
+    }
+
+    public function test_connexion_api_rate_limits_after_ten_failed_attempts(): void
+    {
+        $user = User::create([
+            'nom' => 'Rate',
+            'prenom' => 'Limit',
+            'telephone' => '+22967000003',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/v1/auth/connexion', [
+                'telephone' => $user->telephone,
+                'pin' => '9999',
+            ])->assertStatus(401);
+        }
+
+        $this->postJson('/api/v1/auth/connexion', [
+            'telephone' => $user->telephone,
+            'pin' => '9999',
+        ])
+            ->assertStatus(429)
+            ->assertJsonPath('code', 'TOO_MANY_ATTEMPTS');
+    }
+
+    public function test_api_exploitation_of_another_user_returns_404(): void
+    {
+        $userA = User::create([
+            'nom' => 'A',
+            'prenom' => 'A',
+            'telephone' => '+22967000004',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+        $userB = User::create([
+            'nom' => 'B',
+            'prenom' => 'B',
+            'telephone' => '+22967000005',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        foreach ([$userA, $userB] as $u) {
+            Abonnement::create([
+                'user_id' => $u->id,
+                'plan' => 'essentielle',
+                'statut' => 'actif',
+                'date_debut' => now()->subDay()->toDateString(),
+                'date_fin' => now()->addMonth()->toDateString(),
+                'montant' => 0,
+            ]);
+        }
+
+        $exploitationB = Exploitation::create([
+            'user_id' => $userB->id,
+            'nom' => 'Ferme B',
+            'type' => 'mixte',
+            'localisation' => 'Test',
+        ]);
+
+        Sanctum::actingAs($userA);
+
+        $this->getJson('/api/v1/exploitations/'.$exploitationB->id)
+            ->assertStatus(404);
     }
 }
 

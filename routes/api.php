@@ -21,7 +21,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/verification-otp', VerificationOtpController::class);
         Route::post('/renvoyer-otp', [VerificationOtpController::class, 'renvoyer']);
         Route::post('/creer-pin', PinController::class);
-        Route::post('/connexion', ConnexionController::class);
+        Route::post('/connexion', ConnexionController::class)->middleware('throttle:auth-connexion');
     });
 
     // Auth Sanctum — renouvellement / méta (sans abonnement actif requis)

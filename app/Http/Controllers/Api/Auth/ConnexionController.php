@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ConnexionController extends Controller
 {
@@ -17,7 +18,12 @@ class ConnexionController extends Controller
 
         $user = User::where('telephone', $request->telephone)->first();
 
-        if (!$user || !$user->verifierPin($request->pin)) {
+        if (! $user || ! $user->verifierPin($request->pin)) {
+            // D2 : journaliser l’échec sans jamais logger le PIN ni le jeton.
+            Log::warning('Connexion API : identifiants invalides', [
+                'ip' => $request->ip(),
+            ]);
+
             return response()->json([
                 'succes'  => false,
                 'message' => 'Numéro ou PIN incorrect.',

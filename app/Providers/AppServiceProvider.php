@@ -11,8 +11,11 @@ use App\Services\AbonnementService;
 use App\Services\DashboardService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\OtpService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +37,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useTailwind();
+
+        /*
+         * Sprint S1 — D1 : limiter les tentatives de connexion (PIN court) sans bloquer toute une IP partagée :
+         * clé = téléphone normalisé + IP.
+         */
+        RateLimiter::for('auth-connexion', function (Request $request) {
+            $phone = strtolower((string) $request->input('telephone', ''));
+
+            return Limit::perMinute(10)->by(sha1($phone.'|'.$request->ip()));
+        });
 
         Gate::define('gerer-exploitation', function (User $user, Exploitation $exploitation): bool {
             return (int) $exploitation->user_id === (int) $user->id;

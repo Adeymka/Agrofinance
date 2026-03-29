@@ -4,6 +4,19 @@ Document de synthèse : modifications apportées au code et intérêt métier / 
 
 ---
 
+## Sprint S1 — Sécurité & données
+
+| Modification | Avantage |
+|--------------|----------|
+| **Rate limiting** `auth-connexion` (10/min par téléphone + IP) sur **POST** connexion **API** et **web** | Réduit le bruteforce sur le PIN à 4 chiffres (synthèse sécurité D1). |
+| Réponse **JSON 429** pour l’API (`TOO_MANY_ATTEMPTS`) via handler `ThrottleRequestsException` | Comportement prévisible pour les clients mobiles / Postman. |
+| **Log** d’échec de connexion API (**IP** uniquement, jamais le PIN) | Traçabilité légère sans fuite de secret (D2). |
+| Tests **Feature** : rate limit après 10 échecs, **404** si accès à l’exploitation d’un autre utilisateur | Documentation exécutable du cloisonnement (D3). |
+
+Détail et cartographie des routes : `docs/SPRINT-S1-SECURITE-DONNEES.md`.
+
+---
+
 ## 1. PDF et rapports
 
 | Modification | Avantage |
