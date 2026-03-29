@@ -7,13 +7,15 @@ use App\Models\Activite;
 use App\Models\Transaction;
 use App\Services\AbonnementService;
 use App\Services\FinancialIndicatorsService;
+use App\Services\TransactionJustificatifService;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
     public function __construct(
         private FinancialIndicatorsService $indicateurs,
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private TransactionJustificatifService $justificatifService
     ) {}
 
     public function index(Request $request)
@@ -196,6 +198,7 @@ class TransactionController extends Controller
         }
 
         $activiteId = $transaction->activite_id;
+        $this->justificatifService->deleteStoredIfAny($transaction);
         $transaction->delete();
 
         $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();

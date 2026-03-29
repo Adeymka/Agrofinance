@@ -61,6 +61,7 @@ Les erreurs Laravel classiques s’appliquent (ex. **404** si ressource inexista
 | GET/POST | `/exploitations`, `/exploitations/{id}` |
 | GET/POST/PUT | `/activites`, `/activites/{id}`, `POST /activites/{id}/cloturer` |
 | GET/POST/PUT/DELETE | `/transactions`, `/transactions/{id}` |
+| POST/GET/DELETE | `/transactions/{id}/justificatif` — pièce jointe (voir section dédiée) |
 | GET | `/indicateurs/activite/{id}/evolution` |
 | GET | `/indicateurs/activite/{id}` |
 | GET | `/indicateurs/exploitation/{id}` |
@@ -137,6 +138,20 @@ Vue d’ensemble pour l’utilisateur connecté.
 | `abonnement` | Si abonnement actif : `plan`, `statut` ; sinon `{ "plan": "aucun", "statut": "inactif" }` |
 
 **Statut global du dashboard** (`consolide_global.statut`) : vert si `RNE > 0`, sinon orange si `MB > 0`, sinon rouge.
+
+---
+
+# Justificatifs de transaction (fichier)
+
+Les transactions peuvent avoir une pièce jointe (photo ou PDF). Le chemin interne n’est **pas** exposé dans les JSON : chaque transaction inclut un booléen **`has_justificatif`**.
+
+| Méthode | Route | Description |
+|---------|--------|-------------|
+| POST | `/transactions/{id}/justificatif` | Corps **multipart** : champ fichier **`justificatif`** (obligatoire). Types : JPEG, PNG, WEBP, PDF ; max. **5120 Ko**. Campagne doit être **en cours**. |
+| GET | `/transactions/{id}/justificatif` | Téléchargement du fichier (propriétaire uniquement). **404** si aucun fichier ou campagne non autorisée. |
+| DELETE | `/transactions/{id}/justificatif` | Supprime le fichier et remet `has_justificatif` à faux. |
+
+La saisie **hors ligne** (mobile) ne gère pas l’envoi de justificatif : ajouter le fichier **en ligne** après synchronisation des transactions, via cet endpoint ou via le formulaire web.
 
 ---
 

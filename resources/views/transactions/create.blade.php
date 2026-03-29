@@ -384,7 +384,7 @@
 @endphp
 
 <div class="txm-content-pad">
-    <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}">
+    <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="type" id="inputType" value="depense">
         <input type="hidden" name="categorie_mode" id="inputCategorieMode" value="{{ $categorieModeInitial }}">
@@ -467,6 +467,12 @@
                     <input type="checkbox" name="est_imprevue" value="1" class="txm-checkbox-accent" @checked(old('est_imprevue'))>
                     <span class="txm-checkbox-label">Dépense imprévue</span>
                 </label>
+                <div class="txm-field" style="margin-top:14px;">
+                    <div class="txm-input-label">Photo ou PDF justificatif (optionnel)</div>
+                    <input type="file" name="justificatif" accept="image/jpeg,image/png,image/webp,application/pdf" class="txm-input" style="font-size:13px;">
+                    <p class="text-[11px] text-white/35 mt-1">Max. 5 Mo — uniquement en ligne. Formats : JPG, PNG, WEBP, PDF.</p>
+                    @error('justificatif')<p class="txm-error">{{ $message }}</p>@enderror
+                </div>
             </div>
 
             {{-- Catégorie --}}
@@ -779,7 +785,7 @@
             $categorieModeInitial = old('categorie_mode', 'liste');
         @endphp
 
-        <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" class="max-w-2xl mx-auto space-y-6">
+        <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" enctype="multipart/form-data" class="max-w-2xl mx-auto space-y-6">
             @csrf
             <input type="hidden" name="type" id="inputType" value="depense">
             <input type="hidden" name="categorie_mode" id="inputCategorieMode" value="{{ $categorieModeInitial }}">
@@ -870,6 +876,12 @@
                 <div><label class="block text-xs font-medium text-gray-600 mb-1">Date</label><input type="date" name="date_transaction" value="{{ old('date_transaction', now()->toDateString()) }}" required class="input-field"></div>
                 <div><label class="block text-xs font-medium text-gray-600 mb-1">Note (optionnel)</label><textarea name="note" rows="2" maxlength="500" class="input-field" placeholder="Commentaire…">{{ old('note') }}</textarea></div>
                 <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="est_imprevue" value="1" class="rounded border-white/30 bg-white/[0.06] text-emerald-500 focus:ring-emerald-500/40" @checked(old('est_imprevue'))>Dépense imprévue</label>
+            </div>
+            <div class="card space-y-3">
+                <h2 class="text-sm font-semibold text-gray-800 font-display">Justificatif (optionnel)</h2>
+                <p class="text-xs text-gray-500">Photo ou PDF, max. 5 Mo (JPG, PNG, WEBP, PDF). Envoyé uniquement avec une connexion internet.</p>
+                <input type="file" name="justificatif" accept="image/jpeg,image/png,image/webp,application/pdf" class="input-field text-sm">
+                @error('justificatif')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
             </div>
             <div class="flex justify-end">
                 <button type="submit" id="btnValider" class="btn-primary px-8 py-3 w-full sm:w-auto">Enregistrer la transaction</button>

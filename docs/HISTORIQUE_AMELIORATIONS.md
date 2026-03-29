@@ -17,6 +17,18 @@ Détail et cartographie des routes : `docs/SPRINT-S1-SECURITE-DONNEES.md`.
 
 ---
 
+## Justificatifs de transaction & pages légales
+
+| Modification | Avantage |
+|--------------|----------|
+| **`TransactionJustificatifService`** + stockage sous `storage/app/justificatifs/` (disque **local**, noms UUID) | Fichiers non exposés par URL publique directe ; validation MIME / taille. |
+| API **POST/GET/DELETE** `/transactions/{id}/justificatif` ; modèle **Transaction** : `has_justificatif` en JSON, chemin masqué | Clients mobiles / Postman ; pas de fuite du chemin disque. |
+| Web : champs fichier sur **création** / **édition** de transaction + téléchargement **`GET …/transactions/{id}/justificatif`** | Parcours exploitant cohérent avec le web. |
+| Pages **`/confidentialite`** et **`/conditions-utilisation`** (texte RGPD/CGU minimal) + liens **footer** `app-public` et **inscription** | Transparence utilisateur sans jargon inutile. |
+| Doc **`API_CLIENT.md`** section justificatifs | Alignement documentation / code. |
+
+---
+
 ## 1. PDF et rapports
 
 | Modification | Avantage |

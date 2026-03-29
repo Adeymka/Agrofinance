@@ -39,4 +39,14 @@ class PublicController extends Controller
         // TODO Sprint suivant : envoyer email ou WhatsApp
         return back()->with('success', 'Votre message a été envoyé. Nous vous répondons sous 24h.');
     }
+
+    public function confidentialite()
+    {
+        return view('public.confidentialite');
+    }
+
+    public function conditionsUtilisation()
+    {
+        return view('public.conditions-utilisation');
+    }
 }

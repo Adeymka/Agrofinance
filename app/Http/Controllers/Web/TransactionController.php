@@ -10,7 +10,9 @@ use App\Models\Transaction;
 use App\Services\AbonnementService;
 use App\Services\ExploitationCategorieSuggestionService;
 use App\Services\FinancialIndicatorsService;
+use App\Services\TransactionJustificatifService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
@@ -18,7 +20,8 @@ class TransactionController extends Controller
     public function __construct(
         private FinancialIndicatorsService $fsa,
         private AbonnementService $abonnementService,
-        private ExploitationCategorieSuggestionService $categorieSuggestionService
+        private ExploitationCategorieSuggestionService $categorieSuggestionService,
+        private TransactionJustificatifService $justificatifService
     ) {}
 
     public function index()
@@ -89,7 +92,7 @@ class TransactionController extends Controller
             $rules['nature'] = 'required|in:fixe,variable';
         }
 
-        $request->validate($rules);
+        $request->validate(array_merge($rules, TransactionJustificatifService::validationRules()));
 
         $activite = Activite::pourUtilisateur((int) auth()->user()->id)
             ->with('exploitation:id,type')->findOrFail($request->activite_id);
@@ -120,7 +123,7 @@ class TransactionController extends Controller
             }
         }
 
-        Transaction::create([
+        $transaction = Transaction::create([
             'activite_id' => $request->activite_id,
             'type' => $request->type,
             'nature' => $request->type === 'recette' ? null : $request->nature,
@@ -131,6 +134,11 @@ class TransactionController extends Controller
             'est_imprevue' => $request->boolean('est_imprevue'),
             'synced' => true,
         ]);
+
+        if ($request->hasFile('justificatif')) {
+            $path = $this->justificatifService->storeUploadedFile($transaction, $request->file('justificatif'));
+            $transaction->update(['photo_justificatif' => $path]);
+        }
 
         $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
@@ -236,13 +244,14 @@ class TransactionController extends Controller
             'date_transaction' => 'required|date',
             'note' => 'nullable|string|max:500',
             'est_imprevue' => 'boolean',
+            'supprimer_justificatif' => 'boolean',
         ];
 
         if ($request->type === 'depense') {
             $rules['nature'] = 'required|in:fixe,variable';
         }
 
-        $request->validate($rules);
+        $request->validate(array_merge($rules, TransactionJustificatifService::validationRules()));
 
         $activite = Activite::pourUtilisateur((int) auth()->user()->id)
             ->with('exploitation:id,type')->findOrFail($request->activite_id);
@@ -290,6 +299,14 @@ class TransactionController extends Controller
             'est_imprevue' => $request->boolean('est_imprevue'),
         ]);
 
+        if ($request->boolean('supprimer_justificatif')) {
+            $this->justificatifService->deleteStoredIfAny($transaction);
+            $transaction->update(['photo_justificatif' => null]);
+        } elseif ($request->hasFile('justificatif')) {
+            $path = $this->justificatifService->storeUploadedFile($transaction, $request->file('justificatif'));
+            $transaction->update(['photo_justificatif' => $path]);
+        }
+
         $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
             (int) $activite->exploitation_id,
@@ -300,6 +317,29 @@ class TransactionController extends Controller
 
         return redirect()->route('activites.show', $transaction->activite_id)
             ->with('success', 'Transaction modifiée.');
+    }
+
+    /**
+     * Téléchargement du justificatif (session web authentifiée).
+     */
+    public function telechargerJustificatif(int $id)
+    {
+        $uid = (int) auth()->user()->id;
+
+        $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
+            $q->where('user_id', $uid);
+        })->findOrFail($id);
+
+        if (empty($transaction->photo_justificatif)) {
+            abort(404);
+        }
+
+        $path = $transaction->photo_justificatif;
+        if (! Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download($path, 'justificatif_'.$transaction->id);
     }
 
     public function destroy(int $id)
@@ -316,6 +356,7 @@ class TransactionController extends Controller
         }
 
         $activiteId = $transaction->activite_id;
+        $this->justificatifService->deleteStoredIfAny($transaction);
         $transaction->delete();
 
         return redirect()->route('activites.show', $activiteId)

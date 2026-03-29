@@ -214,12 +214,12 @@
                   color:rgba(255,255,255,0.25); margin:0;">
           © 2025 AgroFinance+ — Tous droits réservés
         </p>
-        <div style="display:flex; gap:20px;">
-          <a href="#" style="font-family:'Inter',sans-serif; font-size:12px;
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <a href="{{ route('conditions-utilisation') }}" style="font-family:'Inter',sans-serif; font-size:12px;
                               color:rgba(255,255,255,0.25); text-decoration:none;">
-            CGU
+            Conditions d’utilisation
           </a>
-          <a href="#" style="font-family:'Inter',sans-serif; font-size:12px;
+          <a href="{{ route('confidentialite') }}" style="font-family:'Inter',sans-serif; font-size:12px;
                               color:rgba(255,255,255,0.25); text-decoration:none;">
             Confidentialité
           </a>

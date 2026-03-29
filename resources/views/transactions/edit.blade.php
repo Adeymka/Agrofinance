@@ -1,4 +1,4 @@
-﻿@extends($layout)
+@extends($layout)
 @section('title', 'Modifier transaction — AgroFinance+')
 @section('page-title', 'Modifier la transaction')
 
@@ -14,7 +14,7 @@
         $categorieModeInitial = old('categorie_mode', trim((string) $categorieLibre) !== '' ? 'libre' : 'liste');
     @endphp
 
-    <form id="formTransaction" method="POST" action="{{ route('transactions.update', $transaction->id) }}" class="max-w-2xl mx-auto space-y-6">
+    <form id="formTransaction" method="POST" action="{{ route('transactions.update', $transaction->id) }}" enctype="multipart/form-data" class="max-w-2xl mx-auto space-y-6">
         @csrf
         @method('PUT')
         <input type="hidden" name="type" id="inputType" value="{{ old('type', $transaction->type) }}">
@@ -162,6 +162,21 @@
                 <input type="checkbox" name="est_imprevue" value="1" class="rounded border-gray-300" @checked(old('est_imprevue', $transaction->est_imprevue))>
                 Dépense imprévue
             </label>
+        </div>
+
+        <div class="card space-y-3">
+            <h2 class="text-sm font-semibold text-gray-800 font-display">Justificatif</h2>
+            @if($transaction->has_justificatif)
+                <p class="text-xs text-gray-600">Un fichier est déjà enregistré.</p>
+                <a href="{{ route('transactions.justificatif', $transaction->id) }}" class="text-sm text-agro-vert font-medium underline">Télécharger le justificatif</a>
+                <label class="flex items-center gap-2 text-sm text-gray-700 mt-2">
+                    <input type="checkbox" name="supprimer_justificatif" value="1" class="rounded border-gray-300" @checked(old('supprimer_justificatif'))>
+                    Supprimer le justificatif
+                </label>
+            @endif
+            <p class="text-xs text-gray-500">Remplacer ou ajouter : photo ou PDF, max. 5 Mo.</p>
+            <input type="file" name="justificatif" accept="image/jpeg,image/png,image/webp,application/pdf" class="input-field text-sm">
+            @error('justificatif')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
         </div>
 
         <div class="flex flex-wrap gap-3 justify-end">

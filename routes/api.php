@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ExploitationController;
 use App\Http\Controllers\Api\IndicateurController;
 use App\Http\Controllers\Api\RapportController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\TransactionJustificatifController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -62,6 +63,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/transactions/{id}', [TransactionController::class, 'show']);
         Route::put('/transactions/{id}', [TransactionController::class, 'update']);
         Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
+
+        Route::post('/transactions/{id}/justificatif', [TransactionJustificatifController::class, 'store']);
+        Route::get('/transactions/{id}/justificatif', [TransactionJustificatifController::class, 'show']);
+        Route::delete('/transactions/{id}/justificatif', [TransactionJustificatifController::class, 'destroy']);
 
         // Module indicateurs financiers agricoles (route la plus spécifique en premier)
         Route::get('/indicateurs/activite/{id}/evolution', [IndicateurController::class, 'evolution']);

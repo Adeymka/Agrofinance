@@ -11,6 +11,7 @@ use App\Services\AbonnementService;
 use App\Services\DashboardService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\OtpService;
+use App\Services\TransactionJustificatifService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DashboardService::class);
         $this->app->singleton(FinancialIndicatorsService::class);
         $this->app->singleton(OtpService::class);
+        $this->app->singleton(TransactionJustificatifService::class);
     }
 
     /**

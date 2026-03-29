@@ -9,7 +9,15 @@ class Transaction extends Model
     protected $fillable = [
         'client_uuid', 'activite_id', 'type', 'nature', 'categorie',
         'montant', 'date_transaction', 'note',
-        'est_imprevue', 'synced',
+        'est_imprevue', 'synced', 'photo_justificatif',
+    ];
+
+    protected $hidden = [
+        'photo_justificatif',
+    ];
+
+    protected $appends = [
+        'has_justificatif',
     ];
 
     protected $casts = [
@@ -18,6 +26,11 @@ class Transaction extends Model
         'est_imprevue'     => 'boolean',
         'synced'           => 'boolean',
     ];
+
+    public function getHasJustificatifAttribute(): bool
+    {
+        return ! empty($this->attributes['photo_justificatif'] ?? null);
+    }
 
     public function activite()
     {

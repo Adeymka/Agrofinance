@@ -81,6 +81,11 @@
     Déjà un compte ?
     <a href="{{ route('connexion') }}" class="auth-mobile-link">Se connecter</a>
 </div>
+<p style="text-align:center; margin-top:18px; font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,0.28); line-height:1.5;">
+    <a href="{{ route('confidentialite') }}" style="color:rgba(255,255,255,0.45); text-decoration:underline;">Confidentialité</a>
+    <span style="margin:0 6px;">·</span>
+    <a href="{{ route('conditions-utilisation') }}" style="color:rgba(255,255,255,0.45); text-decoration:underline;">Conditions d’utilisation</a>
+</p>
 @endsection
 
 {{-- ════ DESKTOP (inchangé) ════ --}}
@@ -190,5 +195,10 @@
     <div style="text-align:center; margin-top:20px; font-family:'Inter',sans-serif; font-size:13px; color:rgba(255,255,255,0.38);">
         Déjà un compte ? <a href="{{ route('connexion') }}" class="auth-link">Se connecter</a>
     </div>
+    <p style="text-align:center; margin-top:16px; font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,0.28);">
+        <a href="{{ route('confidentialite') }}" style="color:rgba(255,255,255,0.42); text-decoration:underline;">Confidentialité</a>
+        <span style="margin:0 8px;">·</span>
+        <a href="{{ route('conditions-utilisation') }}" style="color:rgba(255,255,255,0.42); text-decoration:underline;">Conditions d’utilisation</a>
+    </p>
 </form>
 @endsection

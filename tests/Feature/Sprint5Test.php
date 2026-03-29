@@ -138,7 +138,7 @@ class Sprint5Test extends TestCase
             'type' => 'culture',
             'date_debut' => '2025-01-01',
             'date_fin' => '2025-12-31',
-            'statut' => 'actif',
+            'statut' => 'en_cours',
             'budget_previsionnel' => null,
         ]);
 

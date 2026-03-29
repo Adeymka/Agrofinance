@@ -33,6 +33,8 @@ Route::get('/comment-ca-marche', [PublicController::class, 'commentCaMarche'])->
 Route::get('/a-propos', [PublicController::class, 'aPropos'])->name('a-propos');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::post('/contact', [PublicController::class, 'envoyerContact'])->name('contact.envoyer');
+Route::get('/confidentialite', [PublicController::class, 'confidentialite'])->name('confidentialite');
+Route::get('/conditions-utilisation', [PublicController::class, 'conditionsUtilisation'])->name('conditions-utilisation');
 
 Route::prefix('aide')->name('aide.')->group(function () {
     Route::get('/', [HelpController::class, 'index'])->name('index');
@@ -93,6 +95,7 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/nouvelle', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('/transactions/{id}/justificatif', [TransactionController::class, 'telechargerJustificatif'])->whereNumber('id')->name('transactions.justificatif');
     Route::get('/transactions/{id}/modifier', [TransactionController::class, 'edit'])->whereNumber('id')->name('transactions.edit');
     Route::put('/transactions/{id}', [TransactionController::class, 'update'])->whereNumber('id')->name('transactions.update');
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->whereNumber('id')->name('transactions.destroy');
