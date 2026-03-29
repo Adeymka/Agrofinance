@@ -21,7 +21,7 @@ Document de référence sur **l’architecture applicative**, les **parcours**, 
 - Indicateurs financiers dans **`App\Services\FinancialIndicatorsService`**.
 - OTP dans **`App\Services\OtpService`**.
 - Fonds d’écran hebdomadaires : **`App\Support\WeeklyBackgroundImages`**.
-- Réponses API d’erreur harmonisées pour les requêtes « API » (y compris sous **XAMPP** `/public/api/...`) : détection du segment `api` dans **`bootstrap/app.php`**.
+- Réponses API d’erreur harmonisées pour les requêtes « API » (y compris sous **XAMPP** `/public/api/v1/...`) : détection du segment `api` dans **`bootstrap/app.php`**.
 
 ---
 
@@ -47,15 +47,15 @@ Document de référence sur **l’architecture applicative**, les **parcours**, 
 
 ### 2.2 API (`routes/api.php`)
 
-Préfixe implicite **`/api`** (Laravel).
+Préfixes Laravel **`/api`** + groupe applicatif **`/v1`** → URLs **`/api/v1/...`**.
 
 | Zone | Middleware | Contenu |
 |------|------------|---------|
-| `POST /api/auth/*` | — | Inscription, OTP, PIN, connexion |
-| `GET/POST /api/auth/me`, déconnexion | `auth:sanctum` | Utilisateur connecté par token |
-| `POST /api/abonnement/initier`, `finaliser-mock` | `auth:sanctum` | Initiation paiement (sans `subscribed`) |
+| `POST /api/v1/auth/*` | — | Inscription, OTP, PIN, connexion |
+| `GET/POST /api/v1/auth/me`, déconnexion | `auth:sanctum` | Utilisateur connecté par token |
+| `POST /api/v1/abonnement/initier`, `finaliser-mock` | `auth:sanctum` | Initiation paiement (sans `subscribed`) |
 | Reste (dashboard, exploitations, activités, transactions, indicateurs, rapports) | `auth:sanctum`, **`subscribed`** | Données métier |
-| `GET /api/abonnement/callback` | — | Callback FedaPay (sans Bearer) |
+| `GET /api/v1/abonnement/callback` | — | Callback FedaPay (sans Bearer) — à déclarer dans FedaPay pour les paiements initiés via API |
 
 ---
 
@@ -66,7 +66,7 @@ Fichier : `app/Http/Middleware/VerifierAbonnement.php`.
 - Si pas d’utilisateur → redirection **connexion** (web).
 - **Routes toujours autorisées** sans abonnement actif :  
   `abonnement`, `abonnement.initier`, `abonnement.callback`, `abonnement.finaliser-mock`, `profil`, `profil.update`, `deconnexion`.
-- Préfixe **`api/abonnement/*`** et **`api/auth/*`** : laissés passer (initier paiement, auth).
+- Préfixe **`api/v1/abonnement/*`** et **`api/v1/auth/*`** : laissés passer (initier paiement, auth).
 - Sinon : si **`AbonnementService::estActif`** est faux → **403 JSON** (API) ou **redirect** vers `abonnement` avec message (web).
 
 ---
@@ -86,9 +86,9 @@ Layout : **`layouts/app-auth.blade.php`** (fond fixe Unsplash).
 
 Contrôleurs sous `App\Http\Controllers\Api\Auth\` :
 
-- `POST /api/auth/inscription`, `verification-otp`, `renvoyer-otp`, `creer-pin`, `connexion`.
-- `GET /api/auth/me` : profil avec token.
-- `POST /api/auth/deconnexion` : révoque le token courant.
+- `POST /api/v1/auth/inscription`, `verification-otp`, `renvoyer-otp`, `creer-pin`, `connexion`.
+- `GET /api/v1/auth/me` : profil avec token.
+- `POST /api/v1/auth/deconnexion` : révoque le token courant.
 
 Format JSON typique : `{ "succes": bool, "message": "...", "data": { ... } }`.
 

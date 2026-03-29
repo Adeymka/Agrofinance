@@ -35,7 +35,7 @@ class VerifierAbonnement
             return $next($request);
         }
 
-        if ($request->is('api/abonnement/*') || $request->is('api/auth/*')) {
+        if ($request->is('api/v1/abonnement/*') || $request->is('api/v1/auth/*')) {
             return $next($request);
         }
 

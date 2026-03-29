@@ -86,7 +86,7 @@ php artisan serve
 Dans un second terminal : `npm run dev` pour servir les assets via Vite.
 
 - Interface web : URL de l’app (ex. `http://127.0.0.1:8000`) — routes définies dans `routes/web.php`.  
-- API JSON : préfixe **`/api`** — routes dans `routes/api.php`.
+- API JSON : préfixe **`/api/v1`** — routes dans `routes/api.php` (groupe `Route::prefix('v1')`).
 
 **Worker de queue (optionnel en local)** : si vous dispatch des jobs, lancez `php artisan queue:work` ou configurez Supervisor en production.
 
@@ -104,7 +104,7 @@ Dans un second terminal : `npm run dev` pour servir les assets via Vite.
 | Emplacement | Rôle |
 |-------------|------|
 | `app/Http/Controllers/Web` | Pages et actions navigateur (dashboard, exploitations, transactions, rapports, abonnement web) |
-| `app/Http/Controllers/Api` | Endpoints JSON sous `/api` |
+| `app/Http/Controllers/Api` | Endpoints JSON sous `/api/v1` |
 | `app/Services` | Logique métier partagée : `FinancialIndicatorsService`, `RapportService`, `AbonnementService`, `DashboardService`, `OtpService`, `ActiviteStatutService`, etc. |
 | `app/Models` | Modèles Eloquent (`User`, `Exploitation`, `Activite`, `Transaction`, `Rapport`, `Abonnement`, …) |
 | `app/Jobs` | Jobs asynchrones (ex. génération PDF) si la queue est utilisée |
@@ -127,7 +127,7 @@ Dans un second terminal : `npm run dev` pour servir les assets via Vite.
 
 ## API REST
 
-- **Préfixe** : toutes les routes API sont sous **`/api`** (ex. `GET /api/dashboard`).  
+- **Préfixe** : toutes les routes API sont sous **`/api/v1`** (ex. `GET /api/v1/dashboard`).  
 - **Authentification** : en-tête `Authorization: Bearer <token>` et `Accept: application/json` pour les routes protégées.  
 - **Réponses** : souvent `{ "succes": true, "data": { ... } }` ; erreurs de validation **422** avec `errors` (voir gestion dans `bootstrap/app.php`).
 
@@ -139,7 +139,9 @@ Dans un second terminal : `npm run dev` pour servir les assets via Vite.
 
 **Avec token + abonnement actif (`subscribed`)** : exploitations, activités (dont clôture / abandon), transactions, indicateurs, dashboard, rapports (liste, génération, téléchargement).
 
-**Callback FedaPay** : `GET /api/abonnement/callback` (sans Sanctum — redirection navigateur).
+**Callback FedaPay** : `GET /api/v1/abonnement/callback` (sans Sanctum — redirection navigateur après paiement initié via **API**). Le flux **web** utilise `GET /abonnement/callback` (session). Déclarer l’URL correspondante dans le dashboard FedaPay ; **`APP_URL`** doit matcher l’URL publique (voir **`.env.example`**).
+
+**Clients (Postman, app mobile, scripts)** : utiliser la base **`{{APP_URL}}/api/v1`** (sans slash final) pour toutes les routes JSON — variable d’environnement type `base_url` dans Postman. Guide : **[`docs/POSTMAN.md`](docs/POSTMAN.md)**.
 
 La documentation détaillée des corps de requêtes, champs et cas limites se trouve dans **[`docs/API_CLIENT.md`](docs/API_CLIENT.md)** (indicateurs, dashboard, rapports, FedaPay, etc.).
 

@@ -17,7 +17,7 @@ class IndicateurController extends Controller
     ) {}
 
     /**
-     * GET /api/indicateurs/activite/{id}
+     * GET /api/v1/indicateurs/activite/{id}
      * Retourne les indicateurs financiers agricoles + statut pour une activité.
      * Paramètres optionnels : ?debut=2025-01-01&fin=2025-12-31
      */
@@ -48,7 +48,7 @@ class IndicateurController extends Controller
     }
 
     /**
-     * GET /api/indicateurs/exploitation/{id}
+     * GET /api/v1/indicateurs/exploitation/{id}
      */
     public function parExploitation(int $id)
     {
@@ -69,7 +69,7 @@ class IndicateurController extends Controller
     }
 
     /**
-     * GET /api/indicateurs/activite/{id}/evolution
+     * GET /api/v1/indicateurs/activite/{id}/evolution
      */
     public function evolution(int $id)
     {

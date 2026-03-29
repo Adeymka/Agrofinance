@@ -21,7 +21,7 @@ class RapportController extends Controller
     ) {}
 
     /**
-     * GET /api/rapports
+     * GET /api/v1/rapports
      */
     public function index()
     {
@@ -41,7 +41,7 @@ class RapportController extends Controller
     }
 
     /**
-     * POST /api/rapports/generer
+     * POST /api/v1/rapports/generer
      */
     public function generer(Request $request)
     {
@@ -104,7 +104,7 @@ class RapportController extends Controller
     }
 
     /**
-     * GET /api/rapports/{id}/telecharger
+     * GET /api/v1/rapports/{id}/telecharger
      */
     public function telecharger(Request $request, int $id)
     {

@@ -20,7 +20,7 @@ class Sprint5Test extends TestCase
 
     public function test_get_rapports_without_token_returns_401(): void
     {
-        $this->getJson('/api/rapports')->assertStatus(401);
+        $this->getJson('/api/v1/rapports')->assertStatus(401);
     }
 
     public function test_partage_token_invalide_returns_404(): void
@@ -42,7 +42,7 @@ class Sprint5Test extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/abonnement/initier', [
+        $this->postJson('/api/v1/abonnement/initier', [
             'plan' => 'mensuel',
             'telephone' => '+22967000099',
         ])
@@ -75,12 +75,12 @@ class Sprint5Test extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/abonnement/initier', [
+        $this->postJson('/api/v1/abonnement/initier', [
             'plan' => 'mensuel',
             'telephone' => '+22967000100',
         ])->assertStatus(200);
 
-        $this->postJson('/api/abonnement/finaliser-mock')
+        $this->postJson('/api/v1/abonnement/finaliser-mock')
             ->assertStatus(200)
             ->assertJsonPath('succes', true)
             ->assertJsonPath('data.statut', 'actif');
@@ -106,7 +106,7 @@ class Sprint5Test extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/abonnement/finaliser-mock')
+        $this->postJson('/api/v1/abonnement/finaliser-mock')
             ->assertStatus(403);
     }
 
@@ -153,7 +153,7 @@ class Sprint5Test extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/rapports/generer', [
+        $this->postJson('/api/v1/rapports/generer', [
             'activite_id' => $activite->id,
             'type' => 'campagne',
             'periode_debut' => '2025-01-01',

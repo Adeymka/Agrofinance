@@ -16,7 +16,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @auth
         <meta name="api-token" content="{{ session('api_token') }}">
-        <meta name="api-base" content="{{ url('/api') }}">
+        <meta name="api-base" content="{{ url('/api/v1') }}">
         <meta name="user-id" content="{{ auth()->user()->id }}">
     @endauth
     <style>

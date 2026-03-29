@@ -1287,7 +1287,7 @@
     var token = @json(session('api_token'));
     var ctx = document.getElementById('chartMB');
     if (!ctx || !token) return;
-    fetch(@json(url('/api/indicateurs/activite')) + '/' + id + '/evolution', {
+    fetch(@json(url('/api/v1/indicateurs/activite')) + '/' + id + '/evolution', {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
         credentials: 'same-origin'
     }).then(function (r) { return r.json(); }).then(function (json) {

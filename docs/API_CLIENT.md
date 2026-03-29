@@ -4,8 +4,8 @@
 
 ## Base URL
 
-- **Développement (ex.)** : `http://localhost/agrofinanceplus/public/api`  
-- Toutes les routes ci-dessous sont **relatives** à ce préfixe (ex. `GET /dashboard` → `GET …/api/dashboard`).
+- **Développement (ex.)** : `http://localhost/agrofinanceplus/public/api/v1`  
+- Toutes les routes ci-dessous sont **relatives** à ce préfixe (ex. `GET /dashboard` → `GET …/api/v1/dashboard`).
 
 ## Authentification
 
@@ -163,9 +163,9 @@ Vue d’ensemble pour l’utilisateur connecté.
 
 | Méthode | Route | Description |
 |--------|--------|-------------|
-| POST | `/rapports/generer` | Body JSON : `activite_id`, `type` (`campagne`, `dossier_credit`, `mensuel`, `annuel`), `periode_debut`, `periode_fin` — crée un PDF dans `storage/app/rapports/`, token de partage 72h |
-| GET | `/rapports` | Liste des rapports de l’utilisateur (+ exploitation) |
-| GET | `/rapports/{id}/telecharger` | Téléchargement PDF (propriétaire uniquement) |
+| POST | `/api/v1/rapports/generer` | Body JSON : `activite_id`, `type` (`campagne`, `dossier_credit`, `mensuel`, `annuel`), `periode_debut`, `periode_fin` — crée un PDF dans `storage/app/rapports/`, token de partage 72h |
+| GET | `/api/v1/rapports` | Liste des rapports de l’utilisateur (+ exploitation) |
+| GET | `/api/v1/rapports/{id}/telecharger` | Téléchargement PDF (propriétaire uniquement) |
 
 **Partage public (sans token)** — route **web** : `GET /partage/{token}` (ex. `{{APP_URL}}/partage/...`). Réponses JSON si lien invalide / expiré (**404**, **410**), sinon PDF **inline**.
 
@@ -175,14 +175,14 @@ Vue d’ensemble pour l’utilisateur connecté.
 
 | Méthode | Route | Auth |
 |--------|--------|------|
-| POST | `/abonnement/initier` | Oui — body : `plan` (`mensuel` \| `annuel`), `telephone` → `data.url_paiement` |
-| GET | `/abonnement/callback` | **Non** — redirection FedaPay ; active l’abonnement si statut `approved` / `transferred` |
+| POST | `/api/v1/abonnement/initier` | Oui — body : `plan` (`mensuel` \| `annuel`), `telephone` → `data.url_paiement` |
+| GET | `/api/v1/abonnement/callback` | **Non** — redirection FedaPay ; active l’abonnement si statut `approved` / `transferred` |
 
 Variables `.env` : `FEDAPAY_SECRET_KEY`, `FEDAPAY_PUBLIC_KEY`, `FEDAPAY_ENVIRONMENT` (`sandbox` / `live`). Clés : compte **FedaPay** (<https://fedapay.com>).
 
 **Sans API FedaPay (démo / Postman)** : `FEDAPAY_MOCK=true`  
-→ `POST /abonnement/initier` ne appelle pas FedaPay ; réponse avec `data.mock: true` et `url_paiement: null`.  
-→ Ensuite **`POST /api/abonnement/finaliser-mock`** (Bearer requis) pour créer l’abonnement comme si le paiement avait réussi.  
+→ `POST /api/v1/abonnement/initier` ne appelle pas FedaPay ; réponse avec `data.mock: true` et `url_paiement: null`.  
+→ Ensuite **`POST /api/v1/abonnement/finaliser-mock`** (Bearer requis) pour créer l’abonnement comme si le paiement avait réussi.  
 **Ne pas activer `FEDAPAY_MOCK` en production.**
 
 Sans clé **et** sans mock : `initier` répond **503** avec message explicite.

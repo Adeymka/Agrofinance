@@ -16,7 +16,7 @@ class AuthFlowTest extends TestCase
     {
         $telephone = '+22967000001';
 
-        $inscription = $this->postJson('/api/auth/inscription', [
+        $inscription = $this->postJson('/api/v1/auth/inscription', [
             'nom' => 'Akobi',
             'prenom' => 'Fidele',
             'telephone' => $telephone,
@@ -34,7 +34,7 @@ class AuthFlowTest extends TestCase
         $this->assertNotNull($otpData);
         $this->assertArrayHasKey('code', $otpData);
 
-        $verification = $this->postJson('/api/auth/verification-otp', [
+        $verification = $this->postJson('/api/v1/auth/verification-otp', [
             'telephone' => $telephone,
             'code' => $otpData['code'],
         ]);
@@ -44,7 +44,7 @@ class AuthFlowTest extends TestCase
                 'succes' => true,
             ]);
 
-        $this->postJson('/api/auth/creer-pin', [
+        $this->postJson('/api/v1/auth/creer-pin', [
             'telephone' => $telephone,
             'pin' => '1234',
             'pin_confirmation' => '1234',
@@ -52,7 +52,7 @@ class AuthFlowTest extends TestCase
             'succes' => true,
         ]);
 
-        $connexion = $this->postJson('/api/auth/connexion', [
+        $connexion = $this->postJson('/api/v1/auth/connexion', [
             'telephone' => $telephone,
             'pin' => '1234',
         ]);
@@ -64,13 +64,13 @@ class AuthFlowTest extends TestCase
         $this->assertNotEmpty($token);
 
         $this->withToken($token)
-            ->getJson('/api/auth/me')
+            ->getJson('/api/v1/auth/me')
             ->assertStatus(200)
             ->assertJsonPath('succes', true)
             ->assertJsonPath('data.telephone', $telephone);
 
         $this->withToken($token)
-            ->postJson('/api/auth/deconnexion')
+            ->postJson('/api/v1/auth/deconnexion')
             ->assertStatus(200)
             ->assertJson([
                 'succes' => true,
@@ -82,7 +82,7 @@ class AuthFlowTest extends TestCase
 
     public function test_me_requires_authentication_without_token(): void
     {
-        $this->getJson('/api/auth/me')
+        $this->getJson('/api/v1/auth/me')
             ->assertStatus(401)
             ->assertJson([
                 'succes' => false,
@@ -102,7 +102,7 @@ class AuthFlowTest extends TestCase
 
         $this->assertNotNull($user->id);
 
-        $this->postJson('/api/auth/connexion', [
+        $this->postJson('/api/v1/auth/connexion', [
             'telephone' => '+22967000002',
             'pin' => '9999',
         ])->assertStatus(401)->assertJson([

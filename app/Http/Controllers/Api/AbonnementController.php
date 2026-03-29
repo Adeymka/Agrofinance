@@ -17,7 +17,7 @@ class AbonnementController extends Controller
     ) {}
 
     /**
-     * POST /api/abonnement/initier
+     * POST /api/v1/abonnement/initier
      */
     public function initier(Request $request)
     {
@@ -27,7 +27,7 @@ class AbonnementController extends Controller
         ]);
 
         $user = auth()->user();
-        $callbackUrl = rtrim(config('app.url'), '/').'/api/abonnement/callback';
+        $callbackUrl = rtrim(config('app.url'), '/').'/api/v1/abonnement/callback';
 
         $resultat = $this->abonnementService->initierPaiementFedaPay(
             $user,
@@ -40,14 +40,14 @@ class AbonnementController extends Controller
         return match ($resultat['type']) {
             'mock' => response()->json([
                 'succes' => true,
-                'message' => 'Mode simulation (FEDAPAY_MOCK) : aucun appel FedaPay. Appelez POST /api/abonnement/finaliser-mock pour activer l’abonnement.',
+                'message' => 'Mode simulation (FEDAPAY_MOCK) : aucun appel FedaPay. Appelez POST /api/v1/abonnement/finaliser-mock pour activer l’abonnement.',
                 'data' => [
                     'mock' => true,
                     'transaction_id' => $resultat['ref'],
                     'montant' => $resultat['montant'],
                     'plan' => $resultat['plan'],
                     'url_paiement' => null,
-                    'finaliser_mock' => 'POST '.rtrim(config('app.url'), '/').'/api/abonnement/finaliser-mock',
+                    'finaliser_mock' => 'POST '.rtrim(config('app.url'), '/').'/api/v1/abonnement/finaliser-mock',
                 ],
             ]),
             'config_manquante' => response()->json([
@@ -72,7 +72,7 @@ class AbonnementController extends Controller
     }
 
     /**
-     * GET /api/abonnement/callback
+     * GET /api/v1/abonnement/callback
      * Appel public après redirection FedaPay (pas de Bearer).
      */
     public function callback(Request $request)
@@ -86,7 +86,7 @@ class AbonnementController extends Controller
     }
 
     /**
-     * POST /api/abonnement/finaliser-mock
+     * POST /api/v1/abonnement/finaliser-mock
      * Uniquement lorsque FEDAPAY_MOCK=true — simule un paiement réussi.
      */
     public function finaliserMock(Request $request)
@@ -104,7 +104,7 @@ class AbonnementController extends Controller
         if (! $pending || (int) $pending['user_id'] !== (int) $userId) {
             return response()->json([
                 'succes' => false,
-                'message' => 'Aucune initiation mock en attente — appelez d’abord POST /api/abonnement/initier.',
+                'message' => 'Aucune initiation mock en attente — appelez d’abord POST /api/v1/abonnement/initier.',
             ], 422);
         }
 

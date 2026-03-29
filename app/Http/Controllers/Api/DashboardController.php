@@ -17,7 +17,7 @@ class DashboardController extends Controller
     ) {}
 
     /**
-     * GET /api/dashboard
+     * GET /api/v1/dashboard
      */
     public function __invoke()
     {

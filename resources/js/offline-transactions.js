@@ -1,6 +1,6 @@
 /**
  * File d'attente IndexedDB pour transactions créées hors ligne, synchro via API Sanctum.
- * Idempotence : client_uuid (UUID v4) côté client, traité par POST /api/transactions.
+ * Idempotence : client_uuid (UUID v4) côté client, traité par POST /api/v1/transactions.
  */
 import axios from 'axios';
 
