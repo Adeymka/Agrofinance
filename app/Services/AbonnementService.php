@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Abonnement;
 use App\Models\Exploitation;
 use App\Models\User;
+use App\Support\TarifsAbonnement;
 use FedaPay\FedaPay;
 use FedaPay\Transaction;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -35,7 +36,7 @@ class AbonnementService
      */
     public function normaliserPlan(?string $planBrut): string
     {
-        $p = $planBrut ?? '';
+        $p = strtolower(trim((string) ($planBrut ?? '')));
 
         return match ($p) {
             'gratuit', 'essentielle', 'pro', 'cooperative' => $p,
@@ -48,15 +49,13 @@ class AbonnementService
 
     /**
      * Montants facturés (FCFA) pour l’initiation paiement FedaPay.
+     *
+     * @see TarifsAbonnement
+     * @see config('tarifs_abonnement.fcfa')
      */
     public function montantFacturation(string $planFacturation): int
     {
-        return match ($planFacturation) {
-            'mensuel' => 1500,
-            'annuel' => 5000,
-            'cooperative' => 8000,
-            default => 0,
-        };
+        return TarifsAbonnement::montant($planFacturation);
     }
 
     /**
@@ -76,6 +75,15 @@ class AbonnementService
     public function estActif(User $user): bool
     {
         return $this->abonnementEnVigueur($user) !== null;
+    }
+
+    /**
+     * Au moins une ligne d’abonnement en base (même expirée) — pour distinguer
+     * « jamais souscrit » et « période terminée » dans les messages utilisateur.
+     */
+    public function aHistoriqueAbonnement(User $user): bool
+    {
+        return Abonnement::query()->where('user_id', $user->id)->exists();
     }
 
     /**
@@ -314,6 +322,7 @@ class AbonnementService
                 [
                     'user_id' => $user->id,
                     'plan' => $plan,
+                    'montant_fcfa' => $montant,
                 ],
                 now()->addHours(48)
             );
@@ -394,12 +403,17 @@ class AbonnementService
                 if ($pending) {
                     $planChoisi = $pending['plan'];
                     $userId = $pending['user_id'];
+                    $montantAttendu = $pending['montant_fcfa'] ?? null;
                 } elseif ($fallbackSession) {
                     $planChoisi = session('fedapay_plan', 'mensuel');
                     $userId = session('fedapay_user_id');
+                    $montantAttendu = $planChoisi
+                        ? $this->montantFacturation((string) $planChoisi)
+                        : null;
                 } else {
                     $planChoisi = null;
                     $userId = null;
+                    $montantAttendu = null;
                 }
 
                 if (! $userId) {
@@ -429,6 +443,15 @@ class AbonnementService
                         'message' => 'Paiement non confirmé.',
                         'http_code' => 422,
                     ];
+                }
+
+                $montantTx = (int) round((float) ($transaction->amount ?? 0));
+                if ($montantAttendu !== null && $montantTx > 0 && $montantTx !== (int) $montantAttendu) {
+                    Log::warning('FedaPay callback : montant transaction différent du montant attendu', [
+                        'transaction_id' => $txKey,
+                        'montant_transaction' => $montantTx,
+                        'montant_attendu' => $montantAttendu,
+                    ]);
                 }
 
                 $deja = Abonnement::where('ref_fedapay', (string) $transaction->id)->exists();

@@ -32,22 +32,22 @@
 
     <div class="auth-mobile-grid2 auth-mobile-field">
         <div>
-            <label class="auth-mobile-label">Prénom</label>
-            <input type="text" name="prenom" value="{{ old('prenom') }}"
-                   placeholder="Donald" class="auth-mobile-input" required>
+            <label class="auth-mobile-label" for="inscription_mobile_prenom">Prénom</label>
+            <input id="inscription_mobile_prenom" type="text" name="prenom" value="{{ old('prenom') }}"
+                   placeholder="Donald" class="auth-mobile-input" required autocomplete="given-name">
         </div>
         <div>
-            <label class="auth-mobile-label">Nom</label>
-            <input type="text" name="nom" value="{{ old('nom') }}"
-                   placeholder="Adjinda" class="auth-mobile-input" required>
+            <label class="auth-mobile-label" for="inscription_mobile_nom">Nom</label>
+            <input id="inscription_mobile_nom" type="text" name="nom" value="{{ old('nom') }}"
+                   placeholder="Adjinda" class="auth-mobile-input" required autocomplete="family-name">
         </div>
     </div>
 
     <div class="auth-mobile-field">
-        <label class="auth-mobile-label">Numéro de téléphone</label>
-        <input type="tel" name="telephone" value="{{ old('telephone') }}"
+        <label class="auth-mobile-label" for="inscription_mobile_telephone">Numéro de téléphone</label>
+        <input id="inscription_mobile_telephone" type="tel" name="telephone" value="{{ old('telephone') }}"
                placeholder="+229 XX XX XX XX"
-               class="auth-mobile-input" required inputmode="tel">
+               class="auth-mobile-input" required inputmode="tel" autocomplete="tel">
         <p style="font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,0.22); margin:5px 0 0;">
             Format : +229 suivi de 8 chiffres
         </p>
@@ -124,7 +124,7 @@
 </div>
 <div style="display:flex; flex-direction:column; gap:14px; margin-top:36px;">
     @foreach([
-        ['🌱', 'Indicateurs financiers automatiques', 'PB, MB, RNE, RF calculés en temps réel'],
+        ['🌱', 'Indicateurs financiers automatiques', 'Ventes, reste avant charges fixes, gain ou perte, rentabilité — calculés en temps réel'],
         ['📄', 'Rapports PDF professionnels', 'Partagez avec votre agent de microfinance'],
         ['📱', 'Fonctionne hors ligne', 'Saisissez vos données même sans connexion'],
     ] as [$emoji, $titre, $desc])
@@ -155,23 +155,23 @@
 <div class="auth-form-title">Créer un compte</div>
 <div class="auth-form-subtitle">Étape 1 sur 3 — Vos informations personnelles</div>
 @if ($errors->any())
-    <div class="auth-error">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
+    <div class="auth-error" role="alert" aria-live="polite">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
 @endif
 <form method="POST" action="{{ route('inscription.store') }}">
     @csrf
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:0;">
         <div class="auth-field">
-            <label class="auth-label">Prénom</label>
-            <input type="text" name="prenom" value="{{ old('prenom') }}" placeholder="Ex : Donald" class="auth-input" required>
+            <label class="auth-label" for="inscription_desktop_prenom">Prénom</label>
+            <input id="inscription_desktop_prenom" type="text" name="prenom" value="{{ old('prenom') }}" placeholder="Ex : Donald" class="auth-input" required autocomplete="given-name">
         </div>
         <div class="auth-field">
-            <label class="auth-label">Nom</label>
-            <input type="text" name="nom" value="{{ old('nom') }}" placeholder="Ex : Adjinda" class="auth-input" required>
+            <label class="auth-label" for="inscription_desktop_nom">Nom</label>
+            <input id="inscription_desktop_nom" type="text" name="nom" value="{{ old('nom') }}" placeholder="Ex : Adjinda" class="auth-input" required autocomplete="family-name">
         </div>
     </div>
     <div class="auth-field">
-        <label class="auth-label">Numéro de téléphone</label>
-        <input type="tel" name="telephone" value="{{ old('telephone') }}" placeholder="+229 XX XX XX XX" class="auth-input" required>
+        <label class="auth-label" for="inscription_desktop_telephone">Numéro de téléphone</label>
+        <input id="inscription_desktop_telephone" type="tel" name="telephone" value="{{ old('telephone') }}" placeholder="+229 XX XX XX XX" class="auth-input" required autocomplete="tel">
         <div style="font-size:11px; color:rgba(255,255,255,0.25); margin-top:5px; font-family:'Inter',sans-serif;">Format béninois : +229 suivi de 8 chiffres</div>
     </div>
     <div class="auth-field">

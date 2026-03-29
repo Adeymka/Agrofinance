@@ -45,7 +45,9 @@ class RapportController extends Controller
             $activitePreselect = (int) $pre;
         }
 
-        return view('rapports.index', compact('exploitation', 'rapports', 'activites', 'activitePreselect'));
+        $infoAbonnement = $this->abonnementService->infos(auth()->user());
+
+        return view('rapports.index', compact('exploitation', 'rapports', 'activites', 'activitePreselect', 'infoAbonnement'));
     }
 
     public function generer(Request $request)

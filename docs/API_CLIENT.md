@@ -69,6 +69,25 @@ Les erreurs Laravel classiques s’appliquent (ex. **404** si ressource inexista
 
 ---
 
+# Transactions (synchronisation)
+
+## POST `/transactions`
+
+Corps JSON : **`transactions`** (tableau d’au moins une ligne). Champs courants par ligne : `activite_id`, `type` (`depense` \| `recette`), `categorie`, `montant`, `date_transaction`, `note`, `est_imprevue`, `client_uuid` (optionnel, idempotence).
+
+**Saisie hors ligne (PWA mobile)** : la file locale utilise le même endpoint ; le jeton Sanctum est lu depuis le stockage navigateur après chargement de la page (meta `api-token`). La bannière d’état n’affiche **pas** les montants : uniquement le **nombre** de lignes en attente et des messages d’erreur génériques (session, réseau).
+
+- **Dépense** : `nature` `fixe` ou `variable` attendue.
+- **Catégorie hors intrants standard** (charges intermédiaires du moteur) : **`intrant_production`** (**booléen**, **obligatoire**) — « cet achat sert-il la production de la campagne ? » — pour alimenter correctement **CI** / **VAB**. Si la catégorie est déjà un intrant standard, ne pas envoyer (ignoré).
+
+Réponse **201** : `transactions_synchronisees`, `indicateurs` par activité concernée. **422** si `intrant_production` manquant alors qu’il est requis.
+
+## PUT `/transactions/{id}`
+
+Mise à jour partielle. Même règle **`intrant_production`** pour une dépense dont la catégorie (après fusion avec l’existant) n’est pas un intrant standard.
+
+---
+
 # Indicateurs financiers agricoles
 
 Les indicateurs suivent une logique de gestion agricole standard (ex. **PB**, **CV**, **CF**, **Marge brute**, **RNE**, **Rentabilité financière RF**, **Seuil de rentabilit SR** quand applicable).
@@ -91,6 +110,7 @@ Indicateurs pour **une activité** appartenant à une exploitation de l’utilis
 - `statut` : `vert` | `orange` | `rouge`
 - `nb_transactions`, `nb_depenses`, `nb_recettes`
 - `derniere_saisie` : dernière mise à jour parmi les transactions prises en compte (peut être `null`)
+- `donnees_indicatives` : `true` si peu de lignes ou déséquilibre recettes/dépenses — à interpréter avec prudence
 
 ## GET `/indicateurs/activite/{id}/evolution`
 
@@ -114,7 +134,7 @@ Indicateurs pour une **exploitation** de l’utilisateur.
 
 - Agrège uniquement les **activités actives** du modèle (`activitesActives`).
 - `data.par_activite` : objet dont les clés sont les **IDs d’activité** (chaînes JSON), chaque valeur contient `nom`, `type` + les mêmes champs d’indicateurs que pour une activité seule.
-- `data.consolide` : totaux exploitation — `PB`, `CT`, `MB`, `RNE`, `RF`, `statut`  
+- `data.consolide` : totaux exploitation — `PB`, `CT`, `MB`, `RNE`, `RF`, `statut`, `donnees_indicatives`, `nb_campagnes_actives`  
   *(pas tous les champs détaillés du niveau activité.)*
 
 ---
@@ -130,8 +150,9 @@ Vue d’ensemble pour l’utilisateur connecté.
 | Champ | Description |
 |-------|-------------|
 | `user` | `nom`, `prenom` |
-| `consolide_global` | Somme des `consolide` des exploitations **ayant au moins une activité active** : `PB`, `MB`, `RNE`, `CT`, `RF`, `statut` |
-| `indicateurs_par_exploitation` | Objet clé = `exploitation_id` ; uniquement les exploitations avec **au moins une activité active** ; même structure que `GET /indicateurs/exploitation/{id}` (`nom`, `par_activite`, `consolide`) |
+| `message_plancher_abonnement` | Texte si l’abonnement limite l’historique (sinon `null`) |
+| `consolide_global` | Somme des `consolide` des exploitations **ayant au moins une activité active** : `PB`, `MB`, `RNE`, `CT`, `RF`, `statut`, `donnees_indicatives`, `note_statut_global` |
+| `indicateurs_par_exploitation` | Objet clé = `exploitation_id` ; `nom`, `periode` (libellé + dates min/max des transactions retenues), `par_activite`, `consolide` |
 | `dernieres_transactions` | Jusqu’à **10** transactions, tri **par `date_transaction`** décroissante, toutes exploitations de l’utilisateur ; relation `activite` (`id`, `nom`) chargée |
 | `alertes_budget` | Tableau d’alertes issues du budget par activité active (structure détaillée à documenter si besoin) |
 | `nb_exploitations` | Nombre total d’exploitations du user (**toutes**, pas seulement celles avec indicateurs) |
@@ -160,6 +181,8 @@ La saisie **hors ligne** (mobile) ne gère pas l’envoi de justificatif : ajout
 | Situation | Comportement typique |
 |-----------|----------------------|
 | Token absent ou invalide | **401** |
+| Abonnement ou essai inactif : **aucune** ligne d’abonnement en base (jamais souscrit) | **403**, `code` **`ABONNEMENT_REQUIS`** |
+| Abonnement ou essai inactif : **historique** présent (période terminée) | **403**, `code` **`ABONNEMENT_EXPIRE`** |
 | `id` activité / exploitation inconnu ou pas à l’utilisateur | **404** |
 
 ---
@@ -190,7 +213,7 @@ La saisie **hors ligne** (mobile) ne gère pas l’envoi de justificatif : ajout
 
 | Méthode | Route | Auth |
 |--------|--------|------|
-| POST | `/api/v1/abonnement/initier` | Oui — body : `plan` (`mensuel` \| `annuel`), `telephone` → `data.url_paiement` |
+| POST | `/api/v1/abonnement/initier` | Oui — body : `plan` (`mensuel` \| `annuel` \| `cooperative`), `telephone` → `data.url_paiement`, `data.montant` (FCFA, aligné sur `config/tarifs_abonnement.php`) |
 | GET | `/api/v1/abonnement/callback` | **Non** — redirection FedaPay ; active l’abonnement si statut `approved` / `transferred` |
 
 Variables `.env` : `FEDAPAY_SECRET_KEY`, `FEDAPAY_PUBLIC_KEY`, `FEDAPAY_ENVIRONMENT` (`sandbox` / `live`). Clés : compte **FedaPay** (<https://fedapay.com>).
@@ -202,8 +225,10 @@ Variables `.env` : `FEDAPAY_SECRET_KEY`, `FEDAPAY_PUBLIC_KEY`, `FEDAPAY_ENVIRONM
 
 Sans clé **et** sans mock : `initier` répond **503** avec message explicite.
 
-Le contexte réel FedaPay est stocké en **cache** (`fedapay_pending:{transaction_id}`) + **session** à l’initiation.
+Le contexte réel FedaPay est stocké en **cache** (`fedapay_pending:{transaction_id}`) avec **`montant_fcfa`** attendu pour contrôle côté callback (écart → log).
+
+**Tarifs (FCFA / mois)** : source **`config/tarifs_abonnement.php`** — les vues marketing et `AbonnementService::montantFacturation` utilisent la même configuration (voir sprint S4).
 
 ---
 
-*Dernière mise à jour du document : mars 2026 — Sprints indicateurs, dashboard, rapports PDF & FedaPay.*
+*Dernière mise à jour du document : mars 2026 — Sprint S5 : codes **403** `ABONNEMENT_REQUIS` / `ABONNEMENT_EXPIRE`, rappel synchro hors ligne ; Sprint S4 : tarifs centralisés, `data.montant` sur `initier` ; Sprint S3 : période dashboard, `intrant_production`, `donnees_indicatives` ; rapports PDF & FedaPay.*

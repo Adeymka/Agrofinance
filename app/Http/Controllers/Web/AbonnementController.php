@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AbonnementService;
+use App\Support\TarifsAbonnement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +23,20 @@ class AbonnementController extends Controller
         $user = Auth::user();
         $abonnement = $user->abonnementActif()->first();
 
-        return view('abonnement.index', compact('user', 'abonnement'));
+        $tarifs = [
+            'mensuel' => TarifsAbonnement::libelleEspace('mensuel'),
+            'annuel' => TarifsAbonnement::libelleEspace('annuel'),
+            'cooperative' => TarifsAbonnement::libelleEspace('cooperative'),
+        ];
+
+        $tableauDroitsPlans = [
+            ['plan' => 'Gratuit / essai', 'pdf' => 'Non', 'multi' => '1', 'historique' => '6 mois', 'dossier' => 'Non'],
+            ['plan' => 'Essentielle', 'pdf' => 'Oui', 'multi' => '1', 'historique' => 'Complet', 'dossier' => 'Non'],
+            ['plan' => 'Pro', 'pdf' => 'Oui', 'multi' => 'Jusqu’à 5', 'historique' => 'Complet', 'dossier' => 'Oui'],
+            ['plan' => 'Coopérative', 'pdf' => 'Oui', 'multi' => 'Illimité', 'historique' => 'Complet', 'dossier' => 'Oui'],
+        ];
+
+        return view('abonnement.index', compact('user', 'abonnement', 'tarifs', 'tableauDroitsPlans'));
     }
 
     public function initier(Request $request)
@@ -76,8 +90,15 @@ class AbonnementController extends Controller
 
         Log::info("Abonnement mock activé (web) — user {$userId} — plan {$planChoisi}");
 
+        $libellePlan = match ($planChoisi) {
+            'mensuel' => 'Essentielle',
+            'annuel' => 'Pro',
+            'cooperative' => 'Coopérative',
+            default => $planChoisi,
+        };
+
         return redirect()->route('abonnement')
-            ->with('success', "Abonnement {$planChoisi} activé (simulation) !");
+            ->with('success', "Paiement simulé : la formule {$libellePlan} est activée. Vous pouvez utiliser l’app normalement.");
     }
 
     public function callback(Request $request)
@@ -90,7 +111,7 @@ class AbonnementController extends Controller
 
         return redirect()->route('abonnement')
             ->with('success', $resultat['deja_traite'] ?? false
-                ? 'Paiement déjà enregistré.'
-                : 'Abonnement activé avec succès !');
+                ? 'Ce paiement était déjà enregistré. Votre formule est à jour.'
+                : 'Paiement reçu : votre formule est activée. Vous pouvez continuer sur le tableau de bord.');
     }
 }

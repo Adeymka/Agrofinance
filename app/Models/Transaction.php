@@ -8,6 +8,7 @@ class Transaction extends Model
 {
     protected $fillable = [
         'client_uuid', 'activite_id', 'type', 'nature', 'categorie',
+        'intrant_production',
         'montant', 'date_transaction', 'note',
         'est_imprevue', 'synced', 'photo_justificatif',
     ];
@@ -23,8 +24,9 @@ class Transaction extends Model
     protected $casts = [
         'montant'          => 'decimal:2',
         'date_transaction' => 'date',
-        'est_imprevue'     => 'boolean',
-        'synced'           => 'boolean',
+        'est_imprevue'         => 'boolean',
+        'intrant_production'   => 'boolean',
+        'synced'               => 'boolean',
     ];
 
     public function getHasJustificatifAttribute(): bool

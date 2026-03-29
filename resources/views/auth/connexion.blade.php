@@ -21,16 +21,18 @@
 <form method="POST" action="{{ route('connexion.store') }}">
     @csrf
     <div class="auth-mobile-field">
-        <label class="auth-mobile-label">Numéro de téléphone</label>
-        <input type="tel" name="telephone" value="{{ old('telephone') }}"
+        <label class="auth-mobile-label" for="connexion_mobile_telephone">Numéro de téléphone</label>
+        <input id="connexion_mobile_telephone" type="tel" name="telephone" value="{{ old('telephone') }}"
                placeholder="+229 XX XX XX XX"
-               class="auth-mobile-input" required autofocus inputmode="tel">
+               class="auth-mobile-input" required autofocus inputmode="tel"
+               autocomplete="tel">
     </div>
     <div class="auth-mobile-field" style="margin-bottom:6px;">
-        <label class="auth-mobile-label">PIN (4 chiffres)</label>
-        <input type="password" name="pin" maxlength="4"
+        <label class="auth-mobile-label" for="connexion_mobile_pin">PIN (4 chiffres)</label>
+        <input id="connexion_mobile_pin" type="password" name="pin" maxlength="4"
                inputmode="numeric" placeholder="• • • •"
-               class="auth-mobile-pin" required>
+               class="auth-mobile-pin" required
+               autocomplete="current-password">
     </div>
     <button type="submit" class="auth-mobile-btn" style="margin-top:20px;">
         Se connecter →
@@ -89,29 +91,31 @@
 <div class="auth-form-subtitle">Entrez votre numéro et votre PIN pour accéder à votre espace</div>
 
 @if ($errors->any())
-    <div class="auth-error">
+    <div class="auth-error" role="alert" aria-live="polite">
         @foreach ($errors->all() as $e)
             <div>• {{ $e }}</div>
         @endforeach
     </div>
 @endif
 @if (session('success'))
-    <div class="auth-success">{{ session('success') }}</div>
+    <div class="auth-success" role="status">{{ session('success') }}</div>
 @endif
 
 <form method="POST" action="{{ route('connexion.store') }}">
     @csrf
     <div class="auth-field">
-        <label class="auth-label">Numéro de téléphone</label>
-        <input type="tel" name="telephone" value="{{ old('telephone') }}"
+        <label class="auth-label" for="connexion_desktop_telephone">Numéro de téléphone</label>
+        <input id="connexion_desktop_telephone" type="tel" name="telephone" value="{{ old('telephone') }}"
                placeholder="+229 XX XX XX XX"
-               class="auth-input" required autofocus>
+               class="auth-input" required autofocus
+               autocomplete="tel">
     </div>
     <div class="auth-field">
-        <label class="auth-label">PIN (4 chiffres)</label>
-        <input type="password" name="pin" maxlength="4"
+        <label class="auth-label" for="connexion_desktop_pin">PIN (4 chiffres)</label>
+        <input id="connexion_desktop_pin" type="password" name="pin" maxlength="4"
                inputmode="numeric" placeholder="• • • •"
-               class="pin-input" required>
+               class="pin-input" required
+               autocomplete="current-password">
     </div>
     <button type="submit" class="auth-btn" style="margin-top:24px;">
         Se connecter

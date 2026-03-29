@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>try{if(localStorage.getItem('af_outdoor_boost')==='1')document.documentElement.classList.add('af-outdoor');}catch(e){}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'AgroFinance+') — AgroFinance+</title>
@@ -13,6 +14,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @auth
         <meta name="api-token" content="{{ session('api_token') }}">
+        <meta name="api-base" content="{{ url('/api/v1') }}">
         <meta name="user-id" content="{{ auth()->user()->id }}">
     @endauth
     @stack('styles')
@@ -342,6 +344,34 @@
                 {{ $errors->first() }}
             </div>
             @endif
+            @auth
+            @if($infoAbonnement && ($infoAbonnement['jours_restants'] ?? 999) > 0 && ($infoAbonnement['jours_restants'] ?? 999) <= 7)
+            <div class="mx-8 mt-4 rounded-xl px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-3"
+                 style="background:rgba(245,158,11,0.12);
+                        border:1px solid rgba(245,158,11,0.35);
+                        color:#fcd34d;">
+                <span class="min-w-0">Il reste <strong>{{ $infoAbonnement['jours_restants'] }}</strong> jour(s) avant la fin de votre abonnement. Renouvelez pour garder l’accès aux fonctions payantes.</span>
+                <a href="{{ route('abonnement') }}" class="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold whitespace-nowrap"
+                   style="background:rgba(245,158,11,0.28);color:#fff;">Voir les formules</a>
+            </div>
+            @endif
+            @endauth
+
+            @auth
+            <div id="afPendingSyncBanner" class="mx-8 mt-4 rounded-xl px-4 py-3 text-sm"
+                 style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.35);color:#93c5fd;"
+                 hidden>
+                <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0 space-y-1">
+                        <p id="afPendingSyncMain" class="m-0 font-medium"></p>
+                        <p id="afPendingSyncHint" class="m-0 text-xs" style="color:#fcd34d;" hidden></p>
+                    </div>
+                    <button type="button" id="afPendingSyncRetry" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                            style="background:rgba(59,130,246,0.35);color:#e0f2fe;border:1px solid rgba(147,197,253,0.45);"
+                            hidden>Synchroniser</button>
+                </div>
+            </div>
+            @endauth
 
             <main class="flex-1 overflow-y-auto w-full min-h-0">
                 <div class="max-w-[1280px] mx-auto w-full px-8 pt-6 pb-10">

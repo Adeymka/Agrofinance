@@ -26,6 +26,7 @@
 @section('content')
 
 @php
+    use App\Support\IndicateursLibelles;
     $niv = $alerteBudget['niveau'] ?? null;
     $alertClass = $niv === 'rouge' ? 'bg-red-50 border-red-300 text-red-900' : ($niv === 'orange' ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-amber-50 border-amber-300 text-amber-900');
     $statutLabels = [
@@ -58,7 +59,7 @@
 .show-hero-meta {
     font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--af-text-muted);
     margin: 0;
 }
 .show-hero-badge {
@@ -98,7 +99,7 @@
 .show-hero-rne-label {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.38);
+    color: var(--af-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 4px;
@@ -134,11 +135,13 @@
 }
 .show-kpi-lbl {
     font-family: var(--font-ui), sans-serif;
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.28);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 8px;
+    color: var(--af-text-caption);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
     margin-bottom: 4px;
+    min-height: 2.2em;
 }
 .show-kpi-val {
     font-family: var(--font-display), sans-serif;
@@ -166,7 +169,7 @@
 .show-sr-label {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.38);
+    color: var(--af-text-muted);
 }
 .show-sr-val {
     font-family: var(--font-display), sans-serif;
@@ -226,7 +229,7 @@
 .show-sec-count {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.28);
+    color: var(--af-text-muted);
 }
 .show-tx-wrap {
     background: rgba(255, 255, 255, 0.04);
@@ -301,7 +304,7 @@
 .show-tx-empty p {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-caption);
     margin: 0;
 }
 .show-alert {
@@ -442,57 +445,47 @@
                 {{ $statutHeroBadge['label'] }}
             </span>
         </div>
-        <p class="show-hero-rne-label">Résultat net d'exploitation</p>
+        <p class="show-hero-rne-label">{{ IndicateursLibelles::label('RNE') }}</p>
         <div class="show-hero-rne {{ $rne >= 0 ? 'show-hero-rne--pos' : 'show-hero-rne--neg' }}">
             {{ $rne >= 0 ? '+' : '−' }}{{ number_format(abs($rne), 0, ',', ' ') }}<span class="show-hero-rne-unit">FCFA</span>
         </div>
 
         {{-- KPI 2×4 --}}
         <div class="show-kpi-grid">
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">PB</div>
+            @foreach (['PB', 'MB', 'CT', 'RF', 'CV', 'CF', 'VAB', 'RNE'] as $kpiKey)
+            <div class="show-kpi-cell" title="{{ IndicateursLibelles::label($kpiKey) }}">
+                <div class="show-kpi-lbl">{{ IndicateursLibelles::labelCourt($kpiKey) }}</div>
+                @if($kpiKey === 'PB')
                 <div class="show-kpi-val show-kpi-val--accent">{{ number_format($pb/1000,1,',', ' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">MB</div>
+                @elseif($kpiKey === 'MB')
                 <div class="show-kpi-val {{ $mb >= 0 ? 'show-kpi-val--accent' : 'show-kpi-val--danger' }}">{{ number_format($mb/1000,1,',',' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">CT</div>
+                @elseif($kpiKey === 'CT')
                 <div class="show-kpi-val show-kpi-val--danger">{{ number_format($ct/1000,1,',',' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">RF</div>
+                @elseif($kpiKey === 'RF')
                 <div class="show-kpi-val show-kpi-val--strong">{{ number_format($rf,1,',',' ') }}%</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">CV</div>
+                @elseif($kpiKey === 'CV')
                 <div class="show-kpi-val show-kpi-val--muted">{{ number_format($cv/1000,1,',',' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">CF</div>
+                @elseif($kpiKey === 'CF')
                 <div class="show-kpi-val show-kpi-val--muted">{{ number_format($cf/1000,1,',',' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">VAB</div>
+                @elseif($kpiKey === 'VAB')
                 <div class="show-kpi-val show-kpi-val--muted">{{ number_format($vab/1000,1,',',' ') }}K</div>
-            </div>
-            <div class="show-kpi-cell">
-                <div class="show-kpi-lbl">RNE</div>
+                @else
                 <div class="show-kpi-val {{ $rne >= 0 ? 'show-kpi-val--accent' : 'show-kpi-val--danger' }}">{{ number_format($rne/1000,1,',',' ') }}K</div>
+                @endif
             </div>
+            @endforeach
         </div>
 
         {{-- SR --}}
         <div class="show-sr">
             <div class="show-sr-top">
-                <span class="show-sr-label">Seuil de rentabilité (SR)</span>
+                <span class="show-sr-label">{{ IndicateursLibelles::label('SR') }}</span>
                 <span class="show-sr-val">{{ number_format($sr, 0, ',', ' ') }} FCFA</span>
             </div>
             @if($srAtteint)
-                <p class="show-sr-status show-sr-status--ok">✅ Seuil atteint</p>
+                <p class="show-sr-status show-sr-status--ok">✅ Objectif d’équilibre atteint</p>
             @else
-                <p class="show-sr-status show-sr-status--bad">❌ Seuil non atteint</p>
+                <p class="show-sr-status show-sr-status--bad">❌ Objectif d’équilibre non atteint</p>
             @endif
         </div>
 
@@ -610,16 +603,8 @@
     @endif
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        @foreach ([
-            'PB' => 'Produit Brut (PB)',
-            'CV' => 'Charges variables (CV)',
-            'CF' => 'Charges fixes (CF)',
-            'CT' => 'Coût total (CT)',
-            'VAB' => 'Valeur ajoutée (VAB)',
-            'MB' => 'Marge brute (MB)',
-            'RNE' => 'Résultat net (RNE)',
-            'RF' => 'Rentabilité (RF %)',
-        ] as $key => $label)
+        @foreach (['PB', 'CV', 'CF', 'CT', 'VAB', 'MB', 'RNE', 'RF'] as $key)
+            @php $label = IndicateursLibelles::label($key); @endphp
             <div class="card bg-gray-50/80">
                 <p class="text-xs text-gray-500">{{ $label }}</p>
                 <p class="text-lg font-bold text-gray-900 mt-1">
@@ -635,7 +620,7 @@
 
     <div class="card mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-            <p class="text-sm text-gray-600">Seuil de rentabilité (SR)</p>
+            <p class="text-sm text-gray-600">{{ IndicateursLibelles::label('SR') }}</p>
             <p class="text-xl font-bold text-agro-vert">{{ number_format($indicateurs['SR'] ?? 0, 0, ',', ' ') }} FCFA</p>
         </div>
         @if($srAtteint)

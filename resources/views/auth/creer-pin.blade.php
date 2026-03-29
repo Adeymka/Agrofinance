@@ -48,16 +48,16 @@
 <form method="POST" action="{{ route('creer.pin.store') }}">
     @csrf
     <div class="auth-mobile-field">
-        <label class="auth-mobile-label">Votre PIN</label>
-        <input type="password" name="pin" maxlength="4"
+        <label class="auth-mobile-label" for="pin_mobile">Votre PIN</label>
+        <input id="pin_mobile" type="password" name="pin" maxlength="4"
                inputmode="numeric" placeholder="• • • •"
-               class="auth-mobile-pin" required autofocus>
+               class="auth-mobile-pin" required autofocus autocomplete="new-password">
     </div>
     <div class="auth-mobile-field" style="margin-bottom:8px;">
-        <label class="auth-mobile-label">Confirmer le PIN</label>
-        <input type="password" name="pin_confirmation" maxlength="4"
+        <label class="auth-mobile-label" for="pin_mobile_confirmation">Confirmer le PIN</label>
+        <input id="pin_mobile_confirmation" type="password" name="pin_confirmation" maxlength="4"
                inputmode="numeric" placeholder="• • • •"
-               class="auth-mobile-pin" required>
+               class="auth-mobile-pin" required autocomplete="new-password">
     </div>
     <button type="submit" class="auth-mobile-btn" style="margin-top:16px;">
         Créer mon compte ✓
@@ -107,17 +107,17 @@
 <div class="auth-form-title">Créez votre PIN</div>
 <div class="auth-form-subtitle">4 chiffres — rapide et sécurisé</div>
 @if ($errors->any())
-    <div class="auth-error">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
+    <div class="auth-error" role="alert" aria-live="polite">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
 @endif
 <form method="POST" action="{{ route('creer.pin.store') }}">
     @csrf
     <div class="auth-field">
-        <label class="auth-label">Votre PIN</label>
-        <input type="password" name="pin" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required autofocus>
+        <label class="auth-label" for="pin_desktop">Votre PIN</label>
+        <input id="pin_desktop" type="password" name="pin" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required autofocus autocomplete="new-password">
     </div>
     <div class="auth-field">
-        <label class="auth-label">Confirmer le PIN</label>
-        <input type="password" name="pin_confirmation" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required>
+        <label class="auth-label" for="pin_desktop_confirmation">Confirmer le PIN</label>
+        <input id="pin_desktop_confirmation" type="password" name="pin_confirmation" maxlength="4" inputmode="numeric" placeholder="• • • •" class="pin-input" required autocomplete="new-password">
     </div>
     <button type="submit" class="auth-btn" style="margin-top:16px;">Créer mon compte ✓</button>
 </form>

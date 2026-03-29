@@ -44,17 +44,33 @@ class VerifierAbonnement
                 || $request->is('api/*')
                 || in_array('api', $request->segments(), true);
 
+            $aDejaEteAbonne = $this->abonnementService->aHistoriqueAbonnement($user);
+
             if ($isApi) {
+                if ($aDejaEteAbonne) {
+                    return response()->json([
+                        'succes' => false,
+                        'message' => 'Votre abonnement ou votre essai est terminé. Renouvelez une formule pour continuer.',
+                        'code' => 'ABONNEMENT_EXPIRE',
+                    ], 403);
+                }
+
                 return response()->json([
                     'succes' => false,
-                    'message' => 'Abonnement expiré. Veuillez renouveler votre abonnement.',
-                    'code' => 'ABONNEMENT_EXPIRE',
+                    'message' => 'Aucune formule active. Choisissez un plan ou un essai pour accéder à ces fonctions.',
+                    'code' => 'ABONNEMENT_REQUIS',
                 ], 403);
+            }
+
+            if ($aDejaEteAbonne) {
+                return redirect()
+                    ->route('abonnement')
+                    ->with('alerte', 'Votre abonnement ou votre essai est terminé. Renouvelez une formule pour continuer.');
             }
 
             return redirect()
                 ->route('abonnement')
-                ->with('alerte', 'Votre abonnement a expiré. Choisissez un plan pour continuer.');
+                ->with('alerte', 'Pour utiliser le tableau de bord et la saisie, choisissez une formule ou un essai.');
         }
 
         return $next($request);

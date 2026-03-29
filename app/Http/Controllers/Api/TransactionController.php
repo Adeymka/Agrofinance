@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\TransactionCategories;
 use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Transaction;
@@ -71,7 +72,7 @@ class TransactionController extends Controller
             'transactions.*.client_uuid' => 'nullable|uuid',
         ]);
 
-        foreach ($request->transactions as $data) {
+        foreach ($request->transactions as $i => $data) {
             $activite = Activite::pourUtilisateur((int) auth()->user()->id)
                 ->findOrFail($data['activite_id']);
 
@@ -80,6 +81,16 @@ class TransactionController extends Controller
                     'succes' => false,
                     'message' => 'La campagne n’accepte plus de nouvelles transactions (statut : '.$activite->statut.').',
                 ], 422);
+            }
+
+            if (($data['type'] ?? '') === 'depense'
+                && ! TransactionCategories::estSlugChargesIntermediaires($data['categorie'])) {
+                if (! array_key_exists('intrant_production', $data)) {
+                    return response()->json([
+                        'succes' => false,
+                        'message' => 'Pour une dépense dont la catégorie n’est pas un intrant standard, indiquez « intrant_production » (true ou false) : cet achat sert-il la production de la campagne ? (transaction #'.($i + 1).')',
+                    ], 422);
+                }
             }
         }
 
@@ -104,6 +115,13 @@ class TransactionController extends Controller
                 }
             }
 
+            $intrant = null;
+            if ($data['type'] === 'depense') {
+                $intrant = TransactionCategories::estSlugChargesIntermediaires($data['categorie'])
+                    ? null
+                    : (bool) ($data['intrant_production'] ?? false);
+            }
+
             $creees[] = Transaction::create([
                 'client_uuid' => $data['client_uuid'] ?? null,
                 'activite_id' => $activite->id,
@@ -113,6 +131,7 @@ class TransactionController extends Controller
                                         ? null
                                         : ($data['nature'] ?? 'variable'),
                 'categorie' => $data['categorie'],
+                'intrant_production' => $intrant,
                 'montant' => $data['montant'],
                 'date_transaction' => $data['date_transaction'],
                 'note' => $data['note'] ?? null,
@@ -159,22 +178,37 @@ class TransactionController extends Controller
             'type' => 'sometimes|in:depense,recette',
             'nature' => 'nullable|in:fixe,variable',
             'categorie' => 'sometimes|string|max:100',
+            'intrant_production' => 'nullable|boolean',
             'montant' => 'sometimes|numeric|min:0',
             'date_transaction' => 'sometimes|date',
             'note' => 'nullable|string|max:500',
             'est_imprevue' => 'boolean',
         ]);
 
-        $transaction->update($request->only([
+        $payload = $request->only([
             'type', 'nature', 'categorie', 'montant',
             'date_transaction', 'note', 'est_imprevue',
-        ]));
+        ]);
 
-        if ($transaction->type === 'recette') {
-            $transaction->update(['nature' => null]);
+        $cat = $request->input('categorie', $transaction->categorie);
+        $typeEff = $request->input('type', $transaction->type);
+        if ($typeEff === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($cat)) {
+            $request->validate(['intrant_production' => 'required|boolean']);
+            $payload['intrant_production'] = $request->boolean('intrant_production');
+        } elseif ($typeEff === 'depense' && TransactionCategories::estSlugChargesIntermediaires($cat)) {
+            $payload['intrant_production'] = null;
+        } else {
+            $payload['intrant_production'] = null;
         }
 
-        $indicateurs = $this->indicateurs->calculer($transaction->activite_id);
+        $transaction->update($payload);
+
+        if ($transaction->type === 'recette') {
+            $transaction->update(['nature' => null, 'intrant_production' => null]);
+        }
+
+        $floor = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $indicateurs = $this->indicateurs->calculer($transaction->activite_id, null, null, $floor);
 
         return response()->json([
             'succes' => true,

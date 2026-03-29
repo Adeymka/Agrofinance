@@ -55,6 +55,7 @@
                         <div class="rounded-lg border-2 border-gray-200 p-3 text-center text-sm peer-checked:border-agro-vert peer-checked:bg-green-50">Fixe</div>
                     </label>
                 </div>
+                <p class="text-[11px] text-gray-500 leading-relaxed">Le reste avant charges fixes suit surtout les dépenses liées au volume ; le gain ou la perte finale prend en compte fixe et variable.</p>
             </div>
         </div>
 
@@ -141,6 +142,21 @@
             @enderror
         </div>
 
+        @php $slugsCi = $slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires(); @endphp
+        <div id="blocIntrantProduction" class="card hidden border-amber-200 bg-amber-50/80 space-y-3">
+            <p class="text-xs text-gray-700">Cette catégorie n’est pas un intrant « standard » pour les indicateurs (valeur ajoutée). Indiquez si l’achat sert la production.</p>
+            <p class="text-xs font-medium text-gray-800">Cet achat sert la production de cette campagne ?</p>
+            <div class="flex flex-wrap gap-6">
+                <label class="flex items-center gap-2 text-sm text-gray-800">
+                    <input type="radio" name="intrant_production" value="1" class="rounded border-gray-400" @checked(old('intrant_production', $transaction->intrant_production) !== false)> Oui
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-800">
+                    <input type="radio" name="intrant_production" value="0" class="rounded border-gray-400" @checked(old('intrant_production', $transaction->intrant_production) === false)> Non
+                </label>
+            </div>
+            @error('intrant_production')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+        </div>
+
         <div class="card space-y-5">
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1 text-center">Montant (FCFA)</label>
@@ -187,6 +203,21 @@
 
     <script>
         (function () {
+            var CI_SLUGS = @json($slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires());
+            function categorieCouranteDesktop() {
+                if (inputCategorieMode.value === 'libre') {
+                    return (inputCategorieLibre.value || '').trim();
+                }
+                var cr = document.querySelector('#catDepenses input[name="categorie"]:checked, #catRecettes input[name="categorie"]:checked');
+                return cr ? cr.value : '';
+            }
+            function updateIntrantBlocDesktop() {
+                var dep = inputType.value === 'depense';
+                var cat = categorieCouranteDesktop();
+                var need = dep && cat && CI_SLUGS.indexOf(cat) === -1;
+                var bloc = document.getElementById('blocIntrantProduction');
+                if (bloc) bloc.classList.toggle('hidden', !need);
+            }
             var suggestionsPayload = @json($suggestionsByExploitation);
             var inputType = document.getElementById('inputType');
             var catD = document.getElementById('catDepenses');
@@ -257,6 +288,7 @@
                 btnModeListe.classList.remove('text-gray-500');
                 btnModeLibre.classList.remove('txn-cat-mode-btn--active');
                 btnModeLibre.classList.add('text-gray-500');
+                updateIntrantBlocDesktop();
             }
 
             function setModeLibre() {
@@ -271,6 +303,7 @@
                 btnModeListe.classList.add('text-gray-500');
                 catD.querySelectorAll('input[type="radio"]').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
                 catR.querySelectorAll('input[type="radio"]').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
+                updateIntrantBlocDesktop();
             }
 
             function setType(type) {
@@ -286,6 +319,7 @@
                     catR.querySelectorAll('input[type="radio"]').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
                     btnValider.className = 'btn-primary px-8 ' + (dep ? 'bg-red-600 hover:bg-red-700' : 'bg-green-700 hover:bg-green-800');
                     renderMesCategories();
+                    updateIntrantBlocDesktop();
                     return;
                 }
 
@@ -303,13 +337,16 @@
                     btnValider.className = 'btn-primary px-8 bg-green-700 hover:bg-green-800';
                 }
                 renderMesCategories();
+                updateIntrantBlocDesktop();
             }
 
             zoneListe.addEventListener('change', function (e) {
                 if (e.target && e.target.classList.contains('cat-radio-std') && e.target.checked) {
                     clearLibre();
                 }
+                updateIntrantBlocDesktop();
             });
+            if (inputCategorieLibre) inputCategorieLibre.addEventListener('input', updateIntrantBlocDesktop);
 
             btnD.addEventListener('click', function () { setType('depense'); });
             btnR.addEventListener('click', function () { setType('recette'); });
@@ -324,6 +361,7 @@
                 setModeListe();
             }
             setType(inputType.value || 'depense');
+            updateIntrantBlocDesktop();
         })();
     </script>
 @endsection

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>try{if(localStorage.getItem('af_outdoor_boost')==='1')document.documentElement.classList.add('af-outdoor');}catch(e){}</script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0D1F0D">
@@ -143,12 +144,33 @@
         color: #93c5fd;
         text-align: center;
         font-size: 12px;
-        padding: 8px 16px;
+        padding: 10px 14px;
         font-family: 'Inter', sans-serif;
         font-weight: 500;
-        line-height: 1.35;
+        line-height: 1.4;
     }
     .mobile-pending-sync-banner[hidden] { display: none !important; }
+    .af-pending-sync-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 100%; }
+    .af-pending-sync-main { margin: 0; }
+    .af-pending-sync-hint {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 500;
+        color: #fcd34d;
+        line-height: 1.35;
+    }
+    .af-pending-sync-btn {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(147, 197, 253, 0.45);
+        background: rgba(59, 130, 246, 0.25);
+        color: #e0f2fe;
+        cursor: pointer;
+    }
+    .af-pending-sync-btn:active { opacity: 0.9; }
 
     /* ── Alertes flash (dark) ── */
     .flash-dark {
@@ -232,6 +254,12 @@
     }
     .dock-item svg { transition: transform 0.15s; }
     .dock-item.active svg { transform: scale(1.08); }
+    .dock-item:focus-visible,
+    .dock-fab:focus-visible {
+        outline: 2px solid rgba(74, 222, 128, 0.75);
+        outline-offset: 2px;
+        border-radius: 12px;
+    }
 
     /* Bouton FAB central (saisie) */
     .dock-fab {
@@ -280,12 +308,14 @@
 @php
     $initiales = '';
     $userLabel  = '';
+    $infoAbonnement = null;
     if (auth()->check()) {
         $u = auth()->user();
         $initiales = mb_strtoupper(
             mb_substr($u->prenom ?? '', 0, 1) . mb_substr($u->nom ?? '', 0, 1)
         );
         $userLabel = trim(($u->prenom ?? '') . ' ' . mb_strtoupper(mb_substr($u->nom ?? '', 0, 1) . '.'));
+        $infoAbonnement = app(\App\Services\AbonnementService::class)->infos($u);
     }
     // Détection automatique de l'onglet actif depuis le nom de route
     $currentRoute = request()->route()?->getName() ?? '';
@@ -312,8 +342,14 @@
     </div>
 
     @auth
-    {{-- ── File locale : transactions à envoyer (IndexedDB) ── --}}
-    <div id="afPendingSyncBanner" class="mobile-pending-sync-banner" hidden></div>
+    {{-- ── File locale : transactions à envoyer (IndexedDB) — pas de montants dans le DOM hors synchro API ── --}}
+    <div id="afPendingSyncBanner" class="mobile-pending-sync-banner" hidden>
+        <div class="af-pending-sync-inner">
+            <p id="afPendingSyncMain" class="af-pending-sync-main"></p>
+            <p id="afPendingSyncHint" class="af-pending-sync-hint" hidden></p>
+            <button type="button" id="afPendingSyncRetry" class="af-pending-sync-btn" hidden>Synchroniser</button>
+        </div>
+    </div>
     @endauth
 
     {{-- ── Header Glass ── --}}
@@ -355,7 +391,7 @@
 
         {{-- Flash success --}}
         @if (session('success'))
-            <div class="flash-dark flash-success">
+            <div class="flash-dark flash-success" role="status" aria-live="polite">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -365,7 +401,7 @@
 
         {{-- Flash alerte / warning --}}
         @if (session('alerte'))
-            <div class="flash-dark flash-warning">
+            <div class="flash-dark flash-warning" role="status" aria-live="polite">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                 </svg>
@@ -375,7 +411,7 @@
 
         {{-- Flash error --}}
         @if (session('error'))
-            <div class="flash-dark flash-error">
+            <div class="flash-dark flash-error" role="alert" aria-live="polite">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -385,7 +421,7 @@
 
         {{-- Flash info --}}
         @if (session('info'))
-            <div class="flash-dark flash-info">
+            <div class="flash-dark flash-info" role="status" aria-live="polite">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -395,13 +431,22 @@
 
         {{-- Erreurs de validation --}}
         @if ($errors->any())
-            <div class="flash-dark flash-error">
+            <div class="flash-dark flash-error" role="alert" aria-live="polite">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>{{ $errors->first() }}</span>
             </div>
         @endif
+
+        @auth
+        @if($infoAbonnement && ($infoAbonnement['jours_restants'] ?? 999) > 0 && ($infoAbonnement['jours_restants'] ?? 999) <= 7)
+            <div class="flash-dark flash-warning" style="flex-direction:column;align-items:stretch;gap:10px;">
+                <span>Il reste <strong>{{ $infoAbonnement['jours_restants'] }}</strong> jour(s) avant la fin de votre abonnement. Renouvelez pour garder l’accès aux fonctions payantes.</span>
+                <a href="{{ route('abonnement') }}" class="text-center rounded-lg py-2 text-sm font-semibold" style="background:rgba(245,158,11,0.25);color:#fcd34d;">Voir les formules</a>
+            </div>
+        @endif
+        @endauth
 
         @yield('content')
     </main>

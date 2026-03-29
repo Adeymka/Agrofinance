@@ -26,14 +26,15 @@ class DashboardController extends Controller
         $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
 
         $exploitations = Exploitation::where('user_id', $user->id)
-            ->with('activitesActives')
+            ->with(['activitesActives' => fn ($q) => $q->with('transactions')])
             ->get();
 
         $indicateursParExploitation = [];
         foreach ($exploitations as $exploitation) {
             if ($exploitation->activitesActives->count() > 0) {
+                $periode = $this->service->resumerPeriodeExploitation($exploitation, $dateDebutHistorique);
                 $indicateursParExploitation[$exploitation->id] = array_merge(
-                    ['nom' => $exploitation->nom],
+                    ['nom' => $exploitation->nom, 'periode' => $periode],
                     $this->service->calculerExploitation($exploitation->id, $dateDebutHistorique)
                 );
             }
@@ -44,6 +45,20 @@ class DashboardController extends Controller
         $RNETotal = collect($indicateursParExploitation)->sum(fn ($item) => $item['consolide']['RNE'] ?? 0);
         $CTTotal = collect($indicateursParExploitation)->sum(fn ($item) => $item['consolide']['CT'] ?? 0);
 
+        $nbTxGlobal = 0;
+        $nbRecGlobal = 0;
+        $nbDepGlobal = 0;
+        foreach ($indicateursParExploitation as $bloc) {
+            foreach ($bloc['par_activite'] ?? [] as $pa) {
+                $nbTxGlobal += (int) ($pa['nb_transactions'] ?? 0);
+                $nbRecGlobal += (int) ($pa['nb_recettes'] ?? 0);
+                $nbDepGlobal += (int) ($pa['nb_depenses'] ?? 0);
+            }
+        }
+        $donneesIndicativesGlobal = $nbTxGlobal < 5
+            || ($nbRecGlobal > 0 && $nbDepGlobal === 0)
+            || ($nbDepGlobal > 0 && $nbRecGlobal === 0);
+
         $consolideGlobal = [
             'PB' => round($PBTotal, 2),
             'MB' => round($MBTotal, 2),
@@ -51,6 +66,8 @@ class DashboardController extends Controller
             'CT' => round($CTTotal, 2),
             'RF' => $CTTotal > 0 ? round(($RNETotal / $CTTotal) * 100, 2) : 0,
             'statut' => $this->determinerStatutGlobal($MBTotal, $RNETotal),
+            'donnees_indicatives' => $donneesIndicativesGlobal,
+            'note_statut_global' => 'Vue toutes exploitations : la couleur est une synthèse sur les totaux ; le détail par campagne peut afficher un seuil de rentabilité.',
         ];
 
         $dernieresTransactions = Transaction::whereHas('activite.exploitation', function ($q) use ($user) {
@@ -77,6 +94,10 @@ class DashboardController extends Controller
 
         $abonnement = $user->abonnementActif;
 
+        $messagePlancher = $dateDebutHistorique
+            ? 'Votre formule limite l’historique : aucune donnée avant le '.\Carbon\Carbon::parse($dateDebutHistorique)->format('d/m/Y').'.'
+            : null;
+
         return response()->json([
             'succes' => true,
             'data' => [
@@ -84,6 +105,7 @@ class DashboardController extends Controller
                     'nom' => $user->nom,
                     'prenom' => $user->prenom,
                 ],
+                'message_plancher_abonnement' => $messagePlancher,
                 'consolide_global' => $consolideGlobal,
                 'indicateurs_par_exploitation' => $indicateursParExploitation,
                 'dernieres_transactions' => $dernieresTransactions,

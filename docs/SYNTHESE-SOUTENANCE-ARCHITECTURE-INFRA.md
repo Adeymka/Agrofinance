@@ -76,6 +76,8 @@ Tu montres que le **produit** repose sur des **choix** **explicites** (Laravel, 
 
 Ce résumé est **descriptif** ; l’**infra** réelle (fournisseur cloud, VPS) est **à** **compléter** selon le **déploiement** choisi.
 
+**Implémentation et checklist déploiement dans le dépôt :** le compte rendu de sprint **`docs/SPRINT-S2-ARCHITECTURE-INFRA.md`** décrit l’état des lieux (routes, queues, stockage, `/up`) et une **checklist** reproductible pour passer en production.
+
 ---
 
 ## D. Thèmes de comparaison : situation actuelle, objectif, exemple

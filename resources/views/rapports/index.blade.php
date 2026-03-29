@@ -47,7 +47,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-bottom: 6px;
 }
 .rpt-select, .rpt-input {
@@ -75,7 +75,7 @@
 .rpt-hint {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--af-text-dim);
     margin-top: 6px;
 }
 .rpt-date-grid {
@@ -104,7 +104,7 @@
 .rpt-upsell-sub {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.38);
+    color: var(--af-text-muted);
     line-height: 1.55;
     margin-bottom: 16px;
 }
@@ -231,8 +231,16 @@
 .rpt-empty p {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.28);
+    color: var(--af-text-muted);
     margin: 0;
+}
+.rpt-share-note {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 11px;
+    color: var(--af-text-muted);
+    line-height: 1.5;
+    margin: 0 0 18px 0;
+    max-width: 100%;
 }
 </style>
 @endpush
@@ -240,6 +248,7 @@
 <div class="rpt-page-head">
     <h1 class="rpt-page-title">Rapports PDF</h1>
     <p class="rpt-page-sub">Génération et téléchargement de rapports</p>
+    <p class="rpt-share-note">Partage : le lien permet de consulter le PDF sans compte ; il cesse de fonctionner après la durée affichée. Ne le transmettez qu’à des personnes de confiance.</p>
 </div>
 
 {{-- ── Générer un rapport ── --}}
@@ -254,7 +263,7 @@
     <div class="rpt-upsell">
         <div class="rpt-upsell-icon">🔒</div>
         <div class="rpt-upsell-title">Fonctionnalité Premium</div>
-        <p class="rpt-upsell-sub">La génération de rapports PDF nécessite le plan <strong>Essentielle</strong> ou supérieur.</p>
+        <p class="rpt-upsell-sub">Plan actuel : <strong>{{ ucfirst($infoAbonnement['plan_metier'] ?? '—') }}</strong>. Les rapports PDF nécessitent le plan <strong>Essentielle</strong> ou supérieur (souscription ou simulation en local).</p>
         <a href="{{ route('abonnement') }}" class="rpt-upsell-btn">Voir les plans →</a>
     </div>
 @else
@@ -350,6 +359,7 @@ document.querySelectorAll('.js-copy').forEach(function (btn) {
 
 @else
 {{-- ════ DESKTOP (original) ════ --}}
+    <p class="text-xs text-gray-500 mb-4 max-w-3xl leading-relaxed">Partage : le lien permet de consulter le PDF sans compte ; il cesse de fonctionner après la durée affichée. Ne le transmettez qu’à des personnes de confiance.</p>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-1">
             <div class="card">
@@ -357,7 +367,7 @@ document.querySelectorAll('.js-copy').forEach(function (btn) {
                 @if ($activites->isEmpty())
                     <p class="text-sm text-gray-600">Créez une campagne en cours pour générer un PDF.</p>
                 @elseif (! ($infoAbonnement['peut_pdf'] ?? false))
-                    <p class="text-sm text-gray-600">La génération de rapports PDF nécessite le plan <strong>Essentielle</strong> ou supérieur. <a href="{{ route('abonnement') }}" class="text-agro-vert font-medium underline">Voir les plans</a>.</p>
+                    <p class="text-sm text-gray-600">Plan actuel : <strong>{{ ucfirst($infoAbonnement['plan_metier'] ?? '—') }}</strong>. Les rapports PDF nécessitent <strong>Essentielle</strong> ou supérieur. <a href="{{ route('abonnement') }}" class="text-agro-vert font-medium underline">Voir les plans</a></p>
                 @else
                     <form method="POST" action="{{ route('rapports.generer') }}" class="space-y-4">
                         @csrf

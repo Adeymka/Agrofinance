@@ -24,24 +24,24 @@
     --af-color-accent: #4ade80;
     --af-color-accent-mid: #22c55e;
     --af-color-accent-dark: #16a34a;
-    --af-text-primary: rgba(255, 255, 255, 0.92);
-    --af-text-high: rgba(255, 255, 255, 0.95);
-    --af-text-secondary: rgba(255, 255, 255, 0.72);
-    --af-text-muted: rgba(255, 255, 255, 0.55);
-    --af-text-dim: rgba(255, 255, 255, 0.45);
-    --af-text-label: rgba(255, 255, 255, 0.42);
-    --af-text-nav-inactive: rgba(255, 255, 255, 0.28);
-    --af-text-dock-meta: rgba(255, 255, 255, 0.38);
-    --af-border-glass: rgba(255, 255, 255, 0.18);
-    --af-border-glass-mid: rgba(255, 255, 255, 0.16);
-    --af-border-glass-soft: rgba(255, 255, 255, 0.1);
-    --af-glass-05: rgba(255, 255, 255, 0.05);
-    --af-glass-06: rgba(255, 255, 255, 0.06);
-    --af-glass-08: rgba(255, 255, 255, 0.08);
-    --af-glass-09: rgba(255, 255, 255, 0.09);
-    --af-glass-10: rgba(255, 255, 255, 0.1);
-    --af-glass-12: rgba(255, 255, 255, 0.12);
-    --af-glass-14: rgba(255, 255, 255, 0.14);
+    --af-text-primary: rgba(255, 255, 255, 0.94);
+    --af-text-high: rgba(255, 255, 255, 0.96);
+    --af-text-secondary: rgba(255, 255, 255, 0.78);
+    --af-text-muted: rgba(255, 255, 255, 0.65);
+    --af-text-dim: rgba(255, 255, 255, 0.60);
+    --af-text-label: rgba(255, 255, 255, 0.58);
+    --af-text-nav-inactive: rgba(255, 255, 255, 0.46);
+    --af-text-dock-meta: rgba(255, 255, 255, 0.55);
+    --af-border-glass: rgba(255, 255, 255, 0.2);
+    --af-border-glass-mid: rgba(255, 255, 255, 0.18);
+    --af-border-glass-soft: rgba(255, 255, 255, 0.12);
+    --af-glass-05: rgba(255, 255, 255, 0.07);
+    --af-glass-06: rgba(255, 255, 255, 0.085);
+    --af-glass-08: rgba(255, 255, 255, 0.1);
+    --af-glass-09: rgba(255, 255, 255, 0.11);
+    --af-glass-10: rgba(255, 255, 255, 0.12);
+    --af-glass-12: rgba(255, 255, 255, 0.14);
+    --af-glass-14: rgba(255, 255, 255, 0.16);
     --af-accent-glow-line: rgba(74, 222, 128, 0.08);
     --af-photo-overlay-gradient: linear-gradient(
         180deg,
@@ -57,13 +57,13 @@
     --af-radius-lg: 20px;
     --af-touch-min: 44px;
 
-    /* Texte secondaire (légendes, sous-titres) */
-    --af-text-caption: rgba(255, 255, 255, 0.3);
-    --af-text-faint: rgba(255, 255, 255, 0.28);
-    --af-text-subtle: rgba(255, 255, 255, 0.35);
-    --af-text-body-strong: rgba(255, 255, 255, 0.82);
-    --af-text-body: rgba(255, 255, 255, 0.88);
-    --af-text-heading-soft: rgba(255, 255, 255, 0.9);
+    /* Texte secondaire — lisibilité renforcée sur glass (éviter gris « fantômes ») */
+    --af-text-caption: rgba(255, 255, 255, 0.48);
+    --af-text-faint: rgba(255, 255, 255, 0.46);
+    --af-text-subtle: rgba(255, 255, 255, 0.52);
+    --af-text-body-strong: rgba(255, 255, 255, 0.88);
+    --af-text-body: rgba(255, 255, 255, 0.9);
+    --af-text-heading-soft: rgba(255, 255, 255, 0.92);
 
     /* Statuts métier (badges KPI / campagnes) */
     --af-color-warning: #fbbf24;
@@ -83,15 +83,15 @@
     --af-stat-mobile-rouge-bg: rgba(248, 113, 113, 0.15);
     --af-stat-mobile-rouge-border: rgba(248, 113, 113, 0.25);
 
-    /* Surfaces mobile (cartes glass) */
-    --af-mobile-surface-hero: rgba(255, 255, 255, 0.14);
-    --af-mobile-surface-card: rgba(255, 255, 255, 0.13);
-    --af-mobile-surface-muted: rgba(255, 255, 255, 0.12);
-    --af-mobile-surface-press: rgba(255, 255, 255, 0.18);
-    --af-mobile-border-strong: rgba(255, 255, 255, 0.22);
-    --af-mobile-border-mid: rgba(255, 255, 255, 0.14);
-    --af-mobile-divider: rgba(255, 255, 255, 0.12);
-    --af-mobile-divider-soft: rgba(255, 255, 255, 0.1);
+    /* Surfaces mobile (cartes glass) — fond un peu plus opaque = texte plus net */
+    --af-mobile-surface-hero: rgba(255, 255, 255, 0.17);
+    --af-mobile-surface-card: rgba(255, 255, 255, 0.16);
+    --af-mobile-surface-muted: rgba(255, 255, 255, 0.14);
+    --af-mobile-surface-press: rgba(255, 255, 255, 0.2);
+    --af-mobile-border-strong: rgba(255, 255, 255, 0.24);
+    --af-mobile-border-mid: rgba(255, 255, 255, 0.17);
+    --af-mobile-divider: rgba(255, 255, 255, 0.14);
+    --af-mobile-divider-soft: rgba(255, 255, 255, 0.12);
     --af-green-tint-bg: rgba(74, 222, 128, 0.1);
     --af-green-tint-border: rgba(74, 222, 128, 0.18);
     --af-green-icon-bg: rgba(74, 222, 128, 0.15);
@@ -126,6 +126,64 @@
     --af-tx-type-rec-bg: rgba(74, 222, 128, 0.14);
     --af-tx-type-rec-border: rgba(74, 222, 128, 0.3);
     --af-avatar-gradient-end: rgba(27, 94, 32, 0.5);
+
+    /* Lisibilité critique (S6) — montants / actions : légèrement au-dessus du corps secondaire */
+    --af-text-kpi: rgba(255, 255, 255, 0.96);
+    --af-focus-ring-color: rgba(74, 222, 128, 0.75);
+    --af-focus-ring-offset: 2px;
+}
+
+/* Focus visible — clavier & a11y (ne remplace pas le style tactile :outline none sur mesure) */
+:is(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--af-focus-ring-color);
+    outline-offset: var(--af-focus-ring-offset);
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        --af-text-caption: rgba(255, 255, 255, 0.55);
+        --af-text-faint: rgba(255, 255, 255, 0.52);
+        --af-text-subtle: rgba(255, 255, 255, 0.58);
+        --af-text-muted: rgba(255, 255, 255, 0.72);
+        --af-text-dim: rgba(255, 255, 255, 0.66);
+        --af-text-label: rgba(255, 255, 255, 0.64);
+        --af-text-secondary: rgba(255, 255, 255, 0.86);
+        --af-text-body-strong: rgba(255, 255, 255, 0.94);
+        --af-mobile-surface-hero: rgba(255, 255, 255, 0.19);
+        --af-mobile-surface-card: rgba(255, 255, 255, 0.18);
+    }
+}
+
+/**
+ * Lecture plein soleil (glass + forte lumière ambiante).
+ * Activé via préférence locale : classe `af-outdoor` sur <html> (voir profil + script layouts).
+ */
+html.af-outdoor {
+    --af-text-primary: rgba(255, 255, 255, 0.97);
+    --af-text-high: rgba(255, 255, 255, 0.99);
+    --af-text-secondary: rgba(255, 255, 255, 0.86);
+    --af-text-muted: rgba(255, 255, 255, 0.76);
+    --af-text-dim: rgba(255, 255, 255, 0.7);
+    --af-text-label: rgba(255, 255, 255, 0.68);
+    --af-text-caption: rgba(255, 255, 255, 0.58);
+    --af-text-faint: rgba(255, 255, 255, 0.56);
+    --af-text-subtle: rgba(255, 255, 255, 0.64);
+    --af-text-body: rgba(255, 255, 255, 0.94);
+    --af-text-body-strong: rgba(255, 255, 255, 0.96);
+    --af-text-heading-soft: rgba(255, 255, 255, 0.96);
+    --af-text-kpi: #ffffff;
+    --af-text-nav-inactive: rgba(255, 255, 255, 0.5);
+    --af-text-dock-meta: rgba(255, 255, 255, 0.58);
+    --af-mobile-surface-hero: rgba(255, 255, 255, 0.22);
+    --af-mobile-surface-card: rgba(255, 255, 255, 0.21);
+    --af-mobile-surface-muted: rgba(255, 255, 255, 0.18);
+    --af-mobile-border-strong: rgba(255, 255, 255, 0.3);
+    --af-mobile-border-mid: rgba(255, 255, 255, 0.22);
+    --af-blur-hero-mobile: 18px;
+    --af-blur-card-mobile: 16px;
+    --af-glass-05: rgba(255, 255, 255, 0.09);
+    --af-glass-06: rgba(255, 255, 255, 0.1);
+    --af-glass-08: rgba(255, 255, 255, 0.12);
 }
 
 /* ── Base body ── */
@@ -174,7 +232,7 @@ body {
     font-family: var(--font-ui);
     font-size: 10px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.32);
+    color: rgba(255, 255, 255, 0.46);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-top: 1px;
@@ -195,7 +253,7 @@ body {
     font-family: var(--font-ui);
     font-size: 13px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.52);
     letter-spacing: 0.005em;
     margin-top: 2px;
 }
@@ -215,7 +273,7 @@ body {
     font-family: var(--font-ui);
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.42);
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
     letter-spacing: 0.09em;
     margin-bottom: 6px;
@@ -243,7 +301,7 @@ body {
     font-family: var(--font-ui);
     font-size: 12px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.5);
     letter-spacing: 0.01em;
 }
 
@@ -264,7 +322,7 @@ body {
     font-family: var(--font-ui);
     font-size: 10px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.42);
     text-transform: uppercase;
     letter-spacing: 0.14em;
     padding: 0 14px;
@@ -297,7 +355,7 @@ body {
     font-family: var(--font-ui);
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.42);
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
@@ -314,7 +372,7 @@ body {
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.36);
+    color: rgba(255, 255, 255, 0.48);
 }
 
 /* ── Cellules de tableau ── */
@@ -322,7 +380,7 @@ body {
     font-family: var(--font-ui);
     font-size: 13.5px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.88);
 }
 
 /* ── Montants dans les tableaux ── */
@@ -357,7 +415,7 @@ body {
     font-family: var(--font-ui);
     font-size: 11px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.34);
+    color: rgba(255, 255, 255, 0.48);
     letter-spacing: 0.02em;
 }
 
@@ -390,7 +448,7 @@ body {
     font-family: var(--font-ui);
     font-size: 11px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.36);
+    color: rgba(255, 255, 255, 0.48);
     letter-spacing: 0.02em;
 }
 
@@ -406,25 +464,25 @@ body {
 
 /* Lisibilité sur fond image + glass (pages app-desktop) */
 #mainContent main {
-    color: rgba(255, 255, 255, 0.88);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 #mainContent main .text-gray-900,
 #mainContent main .text-gray-800 {
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: rgba(255, 255, 255, 0.96) !important;
 }
 
 #mainContent main .text-gray-700,
 #mainContent main .text-gray-600 {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: rgba(255, 255, 255, 0.78) !important;
 }
 
 #mainContent main .text-gray-500 {
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: rgba(255, 255, 255, 0.64) !important;
 }
 
 #mainContent main .text-gray-400 {
-    color: rgba(255, 255, 255, 0.45) !important;
+    color: rgba(255, 255, 255, 0.56) !important;
 }
 
 #mainContent main .border-gray-100,
@@ -653,7 +711,7 @@ body {
 #sidebar .nav-section-label {
     padding: 0 14px;
     margin-bottom: 10px;
-    color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.42);
     letter-spacing: 0.14em;
 }
 
@@ -672,7 +730,7 @@ body {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.65);
     text-decoration: none;
     transition:
         color 0.15s ease,
@@ -818,7 +876,7 @@ body {
     font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.42);
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-top: 4px;
@@ -828,7 +886,7 @@ body {
     font-family: "Inter", sans-serif;
     font-size: 13px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.5);
     margin-left: 4px;
 }
 
@@ -912,7 +970,7 @@ body {
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.12em;
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     margin-bottom: 6px;
 }
@@ -1016,7 +1074,7 @@ body {
 }
 
 .input-glass::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.42);
 }
 
 .input-glass:focus {
@@ -1049,7 +1107,7 @@ select.input-glass {
 .table-glass thead th {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     padding: 8px 16px;
@@ -1069,7 +1127,7 @@ select.input-glass {
 
 .table-glass tbody td {
     padding: 14px 16px;
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.88);
     font-size: 14px;
 }
 
@@ -1194,7 +1252,7 @@ select.input-glass {
 }
 
 .input-field::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.42);
 }
 
 .input-field:focus {
@@ -1223,6 +1281,7 @@ select.input-field option {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(74, 222, 128, 0.35);
     color: #fff;
+    min-height: var(--af-touch-min);
     padding: 0.625rem 1rem;
     border-radius: 12px;
     font-size: 0.875rem;
@@ -1233,6 +1292,7 @@ select.input-field option {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.375rem;
 }
 
@@ -1246,6 +1306,7 @@ select.input-field option {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #fff;
+    min-height: var(--af-touch-min);
     padding: 0.625rem 1rem;
     border-radius: 12px;
     font-size: 0.875rem;
@@ -1311,7 +1372,7 @@ select.input-field option {
 }
 
 .auth-input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.48);
     font-size: 14px;
     font-weight: 300;
 }
@@ -1329,7 +1390,7 @@ select.input-field option {
     font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     display: block;
@@ -1342,6 +1403,7 @@ select.input-field option {
 
 .auth-btn {
     width: 100%;
+    min-height: var(--af-touch-min);
     background: #16a34a;
     color: white;
     border: none;
@@ -1398,14 +1460,25 @@ select.input-field option {
 }
 
 .auth-error {
+    position: relative;
+    padding: 10px 14px 10px 38px;
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 8px;
-    padding: 10px 14px;
     margin-bottom: 20px;
     font-family: "Inter", sans-serif;
     font-size: 13px;
-    color: #fca5a5;
+    color: #fecaca;
+    line-height: 1.5;
+}
+
+.auth-error::before {
+    content: "⚠";
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    font-size: 16px;
+    line-height: 1.2;
 }
 
 .auth-success {
@@ -1444,8 +1517,8 @@ select.input-field option {
     font-family: "Space Grotesk", sans-serif;
     font-size: 14px;
     font-weight: 600;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.48);
     transition: all 0.3s;
 }
 
@@ -1465,7 +1538,7 @@ select.input-field option {
     font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.44);
     text-align: center;
     letter-spacing: 0.02em;
 }
@@ -1924,7 +1997,7 @@ select.input-field option {
     font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 10px 14px;
@@ -1934,8 +2007,8 @@ select.input-field option {
 
 .aide-content td {
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.65);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.78);
     font-size: 14px;
 }
 

@@ -320,6 +320,8 @@ onboarding **guidé**, **expiration** des liens de partage, **articles** avancé
 
 Elle ne remplace pas une **étude UX** complète (tests utilisateurs, eye-tracking), ni un **inventaire** **exhaustif** de **chaque** composant Blade. Elle se **connecte** aux documents **métier** et **sécurité** sans les **dupliquer**. Le détail **lisibilité / accessibilité** et **démo institutionnelle** est dans `SYNTHESE-SOUTENANCE-UX-ACCESSIBILITE.md`. Les **tests automatisés** (E2E) peuvent faire l’objet d’un **complément** ultérieur.
 
+**Implémentation livrée (sprint S5) :** le compte rendu **`docs/SPRINT-S5-PRODUIT-PARCOURS.md`** décrit les mesures présentes dans le dépôt (messages d’abonnement distincts, bannière de synchro hors ligne mobile/desktop, textes partage rapports et page offline, codes API **403**).
+
 ---
 
 ## H. Texte court pour l’oral (environ trente secondes)

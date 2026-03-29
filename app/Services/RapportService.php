@@ -14,7 +14,8 @@ use Illuminate\Validation\ValidationException;
 class RapportService
 {
     public function __construct(
-        private FinancialIndicatorsService $indicateurs
+        private FinancialIndicatorsService $indicateurs,
+        private AbonnementService $abonnement
     ) {}
 
     /**
@@ -68,16 +69,29 @@ class RapportService
         $periodeDebut = $rapport->periode_debut->toDateString();
         $periodeFin = $rapport->periode_fin->toDateString();
 
+        $floor = $this->abonnement->dateDebutHistorique($user)?->toDateString();
+
         $indicateurs = $this->indicateurs->calculer(
             $activite->id,
             $periodeDebut,
-            $periodeFin
+            $periodeFin,
+            $floor
         );
 
+        $effDebut = $periodeDebut;
+        if ($floor && $effDebut < $floor) {
+            $effDebut = $floor;
+        }
+
         $transactions = $activite->transactions()
-            ->whereBetween('date_transaction', [$periodeDebut, $periodeFin])
+            ->where('date_transaction', '>=', $effDebut)
+            ->where('date_transaction', '<=', $periodeFin)
             ->orderBy('date_transaction')
             ->get();
+
+        $plancherAbonnementPdf = $floor
+            ? 'Les données du rapport ne remontent pas avant le '.Carbon::parse($floor)->format('d/m/Y').' (limite liée à votre formule d’abonnement).'
+            : null;
 
         $template = $rapport->type === 'dossier_credit'
             ? 'rapports.pdf.dossier-credit'
@@ -89,7 +103,8 @@ class RapportService
             'activite',
             'rapport',
             'indicateurs',
-            'transactions'
+            'transactions',
+            'plancherAbonnementPdf'
         ));
 
         $token = $rapport->lien_token ?? Str::random(40);

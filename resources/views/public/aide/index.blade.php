@@ -39,7 +39,7 @@
 
       <input id="searchInput"
              type="text"
-             placeholder="Rechercher... ex: marge brute, OTP, rapport PDF"
+             placeholder="Rechercher... ex: gain ou perte, OTP, rapport PDF"
              autocomplete="off"
              style="width:100%; padding:16px 48px 16px 52px;
                     background:rgba(255,255,255,0.07);

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>try{if(localStorage.getItem('af_outdoor_boost')==='1')document.documentElement.classList.add('af-outdoor');}catch(e){}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0D1F0D">
@@ -178,15 +179,24 @@
 
 /* ── Errors / success ── */
 .auth-mobile-error {
+    position: relative;
+    padding: 12px 14px 12px 38px;
     background: rgba(248,113,113,0.08);
     border: 1px solid rgba(248,113,113,0.22);
     border-radius: 12px;
-    padding: 12px 14px;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
-    color: #fca5a5;
+    color: #fecaca;
     margin-bottom: 16px;
     line-height: 1.55;
+}
+.auth-mobile-error::before {
+    content: "⚠";
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    font-size: 16px;
+    line-height: 1.2;
 }
 .auth-mobile-success {
     background: rgba(74,222,128,0.08);
@@ -320,6 +330,7 @@
 /* ── Submit button ── */
 .auth-mobile-btn {
     width: 100%;
+    min-height: 44px;
     background: #16a34a;
     color: white;
     font-family: 'Inter', sans-serif;
@@ -412,16 +423,18 @@
     {{-- Card formulaire --}}
     <div class="auth-mobile-card">
 
-        {{-- Erreurs --}}
+        {{-- Erreurs — texte + icône (pas la couleur seule) --}}
         @if ($errors->any())
-            <div class="auth-mobile-error">
-                @foreach ($errors->all() as $e)
-                    <div>{{ $e }}</div>
-                @endforeach
+            <div class="auth-mobile-error" role="alert" aria-live="polite">
+                <div>
+                    @foreach ($errors->all() as $e)
+                        <div>{{ $e }}</div>
+                    @endforeach
+                </div>
             </div>
         @endif
         @if (session('success'))
-            <div class="auth-mobile-success">{{ session('success') }}</div>
+            <div class="auth-mobile-success" role="status">{{ session('success') }}</div>
         @endif
         @if (session('info'))
             <div class="auth-mobile-info">{{ session('info') }}</div>

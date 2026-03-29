@@ -141,12 +141,15 @@ class ActiviteController extends Controller
         $pb = $indicateurs['PB'] ?? 0;
         $srAtteint = $sr !== null && $pb > 0 && $pb >= $sr;
 
+        $infoAbonnement = $this->abonnementService->infos(auth()->user());
+
         return view('activites.show', compact(
             'activite',
             'indicateurs',
             'transactions',
             'alerteBudget',
-            'srAtteint'
+            'srAtteint',
+            'infoAbonnement'
         ));
     }
 

@@ -49,7 +49,8 @@ class Sprint5Test extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('succes', true)
             ->assertJsonPath('data.mock', true)
-            ->assertJsonPath('data.url_paiement', null);
+            ->assertJsonPath('data.url_paiement', null)
+            ->assertJsonPath('data.montant', 5000);
 
         $this->assertDatabaseMissing('abonnements', ['user_id' => $user->id]);
     }

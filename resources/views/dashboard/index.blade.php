@@ -20,6 +20,7 @@
 
 @section('content')
 @php
+    use App\Support\IndicateursLibelles;
     $statutHero = $heroInd['statut'] ?? ($statut ?? 'rouge');
     $statutHeroConfig = match ($statutHero) {
         'vert'   => ['label' => 'RENTABLE',    'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-vert-bg)',  'border' => 'var(--af-stat-vert-border)'],
@@ -59,6 +60,15 @@
 /* ── Greeting ── */
 .dash-greeting {
     padding: 16px 0 6px;
+}
+.dash-overview-title {
+    font-family: var(--font-display), sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--af-text-heading-soft);
+    letter-spacing: -0.02em;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
 }
 .dash-greeting-hello {
     font-family: var(--font-ui), sans-serif;
@@ -130,6 +140,8 @@
     letter-spacing: -0.04em;
     line-height: 1;
     margin-bottom: 4px;
+    color: var(--af-text-kpi);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 .dash-hero-rne-unit {
     font-size: 13px;
@@ -175,6 +187,7 @@
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Hero actions ── */
@@ -480,7 +493,7 @@
 .dash-tx-meta {
     font-family: var(--font-ui), sans-serif;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
@@ -501,7 +514,7 @@
 .dash-consol-sub {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.38);
+    color: var(--af-text-muted);
     margin-top: 4px;
 }
 .dash-consol-grid {
@@ -625,12 +638,24 @@
 </style>
 @endpush
 
+{{-- ── Vue d'ensemble (hiérarchie D4) ── --}}
 {{-- ── Greeting ── --}}
-<div class="dash-greeting">
+<section class="dash-greeting" aria-labelledby="dash-mobile-overview">
+    <h1 id="dash-mobile-overview" class="dash-overview-title">Vue d'ensemble</h1>
     <p class="dash-greeting-hello">Bonjour,</p>
-    <h1 class="dash-greeting-name">{{ $user->prenom ?? '' }} {{ mb_strtoupper(mb_substr($user->nom ?? '', 0, 1)) }}. 👋</h1>
+    <p class="dash-greeting-name">{{ $user->prenom ?? '' }} {{ mb_strtoupper(mb_substr($user->nom ?? '', 0, 1)) }}. 👋</p>
     <p class="dash-greeting-exploit">{{ $exploitation->nom }}</p>
-</div>
+    <p class="text-[11px] text-white/45 leading-relaxed mt-2 px-0.5">{{ $periodeTableauBord['libelle_periode'] ?? '' }}</p>
+    @if(!empty($messagePlancherAbonnement))
+        <p class="text-[11px] text-amber-200/85 mt-1 px-0.5">{{ $messagePlancherAbonnement }}</p>
+    @endif
+    @if(!empty($resultats['consolide']['donnees_indicatives']))
+        <p class="text-[11px] text-amber-100/90 mt-1 px-0.5">Peu de données saisies : les indicateurs sont indicatifs.</p>
+    @endif
+    @if(($resultats['consolide']['nb_campagnes_actives'] ?? 0) > 1)
+        <p class="text-[11px] text-white/52 mt-1 px-0.5">Total sur {{ $resultats['consolide']['nb_campagnes_actives'] }} campagne(s) en cours — le détail par campagne est ci-dessous.</p>
+    @endif
+</section>
 
 {{-- ── Sélecteur campagne (chips scrollables) ── --}}
 @if(count($activitesCards) > 1)
@@ -671,7 +696,7 @@
     </div>
 
     {{-- Label + grand chiffre RNE --}}
-    <p class="dash-hero-label">Résultat net d'exploitation</p>
+    <p class="dash-hero-label">{{ IndicateursLibelles::label('RNE') }}</p>
     <div class="dash-hero-rne" style="color:{{ $rneHero >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
         {{ $rneHero >= 0 ? '+' : '−' }}{{ number_format(abs($rneHero), 0, ',', ' ') }}
         <span class="dash-hero-rne-unit">FCFA</span>
@@ -680,22 +705,22 @@
 
     {{-- 4 mini métriques --}}
     <div class="dash-mini-metrics">
-        <div class="dash-mini-cell">
-            <div class="dash-mini-lbl">PB</div>
+        <div class="dash-mini-cell" title="{{ IndicateursLibelles::label('PB') }}">
+            <div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('PB') }}</div>
             <div class="dash-mini-val" style="color:var(--af-color-accent);">{{ number_format($pbHero / 1000, 1, ',', ' ') }}K</div>
         </div>
-        <div class="dash-mini-cell">
-            <div class="dash-mini-lbl">MB</div>
+        <div class="dash-mini-cell" title="{{ IndicateursLibelles::label('MB') }}">
+            <div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('MB') }}</div>
             <div class="dash-mini-val" style="color:{{ $mbHero >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                 {{ $mbHero >= 0 ? '+' : '' }}{{ number_format($mbHero / 1000, 1, ',', ' ') }}K
             </div>
         </div>
-        <div class="dash-mini-cell">
-            <div class="dash-mini-lbl">CT</div>
+        <div class="dash-mini-cell" title="{{ IndicateursLibelles::label('CT') }}">
+            <div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('CT') }}</div>
             <div class="dash-mini-val" style="color:var(--af-color-danger);">{{ number_format($ctHero / 1000, 1, ',', ' ') }}K</div>
         </div>
-        <div class="dash-mini-cell">
-            <div class="dash-mini-lbl">RF</div>
+        <div class="dash-mini-cell" title="{{ IndicateursLibelles::label('RF') }}">
+            <div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('RF') }}</div>
             <div class="dash-mini-val" style="color:var(--af-text-body);">{{ number_format($rfHero, 1, ',', ' ') }}%</div>
         </div>
     </div>
@@ -746,13 +771,22 @@
     <div class="dash-section-hd" style="margin-bottom:4px;">
         <span class="dash-section-title">Indicateurs consolidés</span>
     </div>
-    <p class="dash-consol-sub">Synthèse exploitation sur la période affichée</p>
+    <p class="dash-consol-sub">{{ $periodeTableauBord['libelle_periode'] ?? 'Synthèse sur les campagnes en cours.' }}</p>
+    @if(!empty($messagePlancherAbonnement))
+        <p class="text-[11px] text-amber-200/85 mt-1">{{ $messagePlancherAbonnement }}</p>
+    @endif
+    @if(!empty($resultats['consolide']['donnees_indicatives']))
+        <p class="text-[11px] text-amber-100/90 mt-1">Peu de données saisies : les indicateurs sont indicatifs.</p>
+    @endif
+    @if(($resultats['consolide']['nb_campagnes_actives'] ?? 0) > 1)
+        <p class="text-[11px] text-white/50 mt-1">Détail par campagne plus bas — {{ $resultats['consolide']['nb_campagnes_actives'] }} campagne(s) en cours.</p>
+    @endif
 </div>
 <div class="dash-consol-grid">
     {{-- Pictos identiques au bloc web « Indicateurs consolidés » (mêmes path SVG, stroke-width 2) --}}
     <div class="dash-consol-card">
         <div class="dash-consol-card-hd">
-            <span class="dash-consol-lbl">Recettes totales</span>
+            <span class="dash-consol-lbl">{{ IndicateursLibelles::label('PB') }}</span>
             <div class="dash-consol-kpi-icon" style="background:var(--af-stat-mobile-vert-bg);border:1px solid var(--af-stat-mobile-vert-border);" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-accent)" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
@@ -763,7 +797,7 @@
     </div>
     <div class="dash-consol-card">
         <div class="dash-consol-card-hd">
-            <span class="dash-consol-lbl">Coût total</span>
+            <span class="dash-consol-lbl">{{ IndicateursLibelles::label('CT') }}</span>
             <div class="dash-consol-kpi-icon" style="background:var(--af-stat-mobile-rouge-bg);border:1px solid var(--af-stat-mobile-rouge-border);" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-danger)" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 17H5m0 0V9m0 8l8-8 4 4 6-6"/>
@@ -774,7 +808,7 @@
     </div>
     <div class="dash-consol-card">
         <div class="dash-consol-card-hd">
-            <span class="dash-consol-lbl">Marge brute</span>
+            <span class="dash-consol-lbl">{{ IndicateursLibelles::label('MB') }}</span>
             <div class="dash-consol-kpi-icon"
                  style="background:{{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-bg)' : 'var(--af-stat-mobile-rouge-bg)' }};border:1px solid {{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-border)' : 'var(--af-stat-mobile-rouge-border)' }};"
                  aria-hidden="true">
@@ -793,14 +827,15 @@
             <div class="dash-consol-kpi-icon" style="background:{{ $statutConfigMobile['bg'] }};border:1px solid {{ $statutConfigMobile['border'] }};font-size:18px;line-height:1;">{{ $statutConfigMobile['emoji'] }}</div>
         </div>
         <div class="dash-consol-val" style="color:{{ $statutConfigMobile['color'] }}; font-size:13px;">{{ $statutConfigMobile['label'] }}</div>
-        <div class="dash-consol-sub" style="margin-top:6px;">Rendement : {{ number_format($resultats['consolide']['RF'] ?? 0, 1, ',', ' ') }}%</div>
+        <div class="dash-consol-sub" style="margin-top:6px;">{{ IndicateursLibelles::label('RF') }} : {{ number_format($resultats['consolide']['RF'] ?? 0, 1, ',', ' ') }}%</div>
+        <p class="dash-consol-sub" style="margin-top:8px;line-height:1.35;">Synthèse sur les totaux — le détail par campagne indique si le seuil d’équilibre est atteint.</p>
     </div>
 </div>
 
-{{-- ── Évolution marge brute + alertes budget (parité web) ── --}}
+{{-- ── Évolution reste avant fixes + alertes budget (parité web) ── --}}
 <div class="dash-section-hd" style="margin-top:8px;">
     <div>
-        <span class="dash-section-title">Évolution — Marge brute</span>
+        <span class="dash-section-title">Évolution — {{ IndicateursLibelles::label('MB') }}</span>
         <p class="dash-consol-sub" style="margin-top:4px;">
             @if($chartActiviteId && $heroInd) Campagne : {{ $heroInd['nom'] ?? '—' }} · 12 derniers mois
             @else 12 derniers mois @endif
@@ -895,7 +930,7 @@
                     <div class="dash-camp-metric-val" style="color:var(--af-color-danger);">{{ number_format(($c['depenses'] ?? 0) / 1000, 1, ',', ' ') }}K</div>
                 </div>
                 <div class="dash-camp-metric-cell">
-                    <div class="dash-camp-metric-lbl">Marge</div>
+                    <div class="dash-camp-metric-lbl">{{ IndicateursLibelles::labelCourt('MB') }}</div>
                     <div class="dash-camp-metric-val" style="color:{{ $mbC >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                         {{ $mbC >= 0 ? '+' : '' }}{{ number_format($mbC / 1000, 1, ',', ' ') }}K
                     </div>
@@ -966,8 +1001,10 @@
 ══════════════════════════════════════════════════════════════ --}}
 @else
 
+    <p class="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3" id="dash-desktop-overview">Vue d’ensemble</p>
+
     <!-- Carte résumé (focus campagne ou exploitation) -->
-    <div class="dashboard-hero glass mb-8">
+    <div class="dashboard-hero glass mb-8" aria-labelledby="dash-desktop-overview">
         <div class="dashboard-hero__top">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -1011,30 +1048,30 @@
         </div>
 
         <div class="dashboard-hero__rne">
-            <p class="kpi-label mb-1">Résultat net (RNE)</p>
+            <p class="kpi-label mb-1">{{ IndicateursLibelles::label('RNE') }}</p>
             <div class="dashboard-hero__rne-value font-display {{ $rneHero >= 0 ? 'text-emerald-400' : 'text-red-400' }}">
                 {{ $rneHero >= 0 ? '+' : '−' }}{{ number_format(abs($rneHero), 0, ',', ' ') }}
-                <span class="text-xl font-ui font-normal text-white/40 ml-1">FCFA</span>
+                <span class="text-xl font-ui font-normal text-white/52 ml-1">FCFA</span>
             </div>
         </div>
 
         <div class="dashboard-mini-metrics">
             <div class="dashboard-mini-metrics__cell">
-                <span class="dashboard-mini-metrics__label">PB</span>
+                <span class="dashboard-mini-metrics__label" title="{{ IndicateursLibelles::label('PB') }}">{{ IndicateursLibelles::labelCourt('PB') }}</span>
                 <span class="dashboard-mini-metrics__val text-emerald-400">{{ number_format($pbHero / 1000, 1, ',', ' ') }}K</span>
             </div>
             <div class="dashboard-mini-metrics__cell">
-                <span class="dashboard-mini-metrics__label">MB</span>
+                <span class="dashboard-mini-metrics__label" title="{{ IndicateursLibelles::label('MB') }}">{{ IndicateursLibelles::labelCourt('MB') }}</span>
                 <span class="dashboard-mini-metrics__val {{ $mbHero >= 0 ? 'text-emerald-400' : 'text-red-400' }}">
                     {{ $mbHero >= 0 ? '+' : '' }}{{ number_format($mbHero / 1000, 1, ',', ' ') }}K
                 </span>
             </div>
             <div class="dashboard-mini-metrics__cell">
-                <span class="dashboard-mini-metrics__label">CT</span>
+                <span class="dashboard-mini-metrics__label" title="{{ IndicateursLibelles::label('CT') }}">{{ IndicateursLibelles::labelCourt('CT') }}</span>
                 <span class="dashboard-mini-metrics__val text-red-400">{{ number_format($ctHero / 1000, 1, ',', ' ') }}K</span>
             </div>
             <div class="dashboard-mini-metrics__cell">
-                <span class="dashboard-mini-metrics__label">RF</span>
+                <span class="dashboard-mini-metrics__label" title="{{ IndicateursLibelles::label('RF') }}">{{ IndicateursLibelles::labelCourt('RF') }}</span>
                 <span class="dashboard-mini-metrics__val text-white/90">{{ number_format($rfHero, 1, ',', ' ') }}%</span>
             </div>
         </div>
@@ -1069,7 +1106,16 @@
     <!-- KPI rapides (consolidé) -->
     <div class="mb-6">
         <h2 class="section-title">Indicateurs consolidés</h2>
-        <p class="section-subtitle mt-1">Synthèse exploitation sur la période affichée</p>
+        <p class="section-subtitle mt-1">{{ $periodeTableauBord['libelle_periode'] ?? 'Synthèse sur les campagnes en cours.' }}</p>
+        @if(!empty($messagePlancherAbonnement))
+            <p class="text-xs text-amber-200/80 mt-1">{{ $messagePlancherAbonnement }}</p>
+        @endif
+        @if(!empty($resultats['consolide']['donnees_indicatives']))
+            <p class="text-xs text-amber-100/90 mt-1">Peu de données saisies : les indicateurs sont indicatifs.</p>
+        @endif
+        @if(($resultats['consolide']['nb_campagnes_actives'] ?? 0) > 1)
+            <p class="text-xs text-white/45 mt-1">Détail par campagne ci-dessous — total sur {{ $resultats['consolide']['nb_campagnes_actives'] }} campagne(s) en cours.</p>
+        @endif
     </div>
 
     <div class="dashboard-kpi-grid">
@@ -1081,7 +1127,7 @@
         @endphp
         <div class="kpi-glass">
             <div class="flex items-center justify-between">
-                <span class="kpi-label">Recettes totales</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('PB') }}</span>
                 <div class="kpi-icon-wrap" style="background:var(--af-stat-mobile-vert-bg);border:1px solid var(--af-stat-mobile-vert-border);">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-accent)" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
@@ -1092,7 +1138,7 @@
         </div>
         <div class="kpi-glass">
             <div class="flex items-center justify-between">
-                <span class="kpi-label">Coût total</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('CT') }}</span>
                 <div class="kpi-icon-wrap" style="background:var(--af-stat-mobile-rouge-bg);border:1px solid var(--af-stat-mobile-rouge-border);">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="var(--af-color-danger)" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 17H5m0 0V9m0 8l8-8 4 4 6-6"/>
@@ -1103,7 +1149,7 @@
         </div>
         <div class="kpi-glass">
             <div class="flex items-center justify-between">
-                <span class="kpi-label">Marge brute</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('MB') }}</span>
                 <div class="kpi-icon-wrap"
                      style="background:{{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-bg)' : 'var(--af-stat-mobile-rouge-bg)' }};border:1px solid {{ $mbCons >= 0 ? 'var(--af-stat-mobile-vert-border)' : 'var(--af-stat-mobile-rouge-border)' }};">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="{{ $mbCons >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }}" stroke-width="2">
@@ -1127,7 +1173,8 @@
             </div>
             <div>
                 <div class="kpi-value" style="color:{{ $statutConfig['color'] }}; font-size:26px;">{{ $statutConfig['label'] }}</div>
-                <div class="font-ui text-xs text-white/35 mt-1">Rendement : {{ number_format($resultats['consolide']['RF'] ?? 0, 1, ',', ' ') }}%</div>
+                <div class="font-ui text-xs text-white/48 mt-1">{{ IndicateursLibelles::label('RF') }} : {{ number_format($resultats['consolide']['RF'] ?? 0, 1, ',', ' ') }}%</div>
+                <p class="font-ui text-[11px] text-white/48 mt-2 max-w-md leading-snug">Ce statut est une synthèse sur les totaux ; chaque campagne peut avoir une couleur et un seuil d’équilibre différents.</p>
             </div>
         </div>
     </div>
@@ -1136,7 +1183,7 @@
     <div class="dashboard-section-spaced">
         <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h2 class="section-title">Évolution — Marge brute</h2>
+                <h2 class="section-title">Évolution — {{ IndicateursLibelles::label('MB') }}</h2>
                 <p class="section-subtitle mt-1">
                     @if($chartActiviteId && $heroInd) Campagne : {{ $heroInd['nom'] ?? '—' }} · 12 derniers mois
                     @else 12 derniers mois @endif
@@ -1175,7 +1222,7 @@
                             <li class="flex justify-between gap-3 text-sm">
                                 <div class="min-w-0">
                                     <p class="font-medium text-white/90 truncate">{{ str_replace('_', ' ', $t->categorie) }}</p>
-                                    <p class="text-xs text-white/40">{{ $t->date_transaction->format('d/m/Y') }}@if($t->activite) · {{ $t->activite->nom }}@endif</p>
+                                    <p class="text-xs text-white/52">{{ $t->date_transaction->format('d/m/Y') }}@if($t->activite) · {{ $t->activite->nom }}@endif</p>
                                 </div>
                                 <span class="font-semibold shrink-0 {{ $t->type === 'recette' ? 'text-emerald-400' : 'text-red-400' }}">
                                     {{ $t->type === 'recette' ? '+' : '−' }}{{ number_format($t->montant, 0, ',', ' ') }}
@@ -1256,7 +1303,7 @@
                     </div>
                     <div class="mt-3 mb-2">
                         <div class="flex justify-between mb-1">
-                            <span class="font-ui text-[10px] text-white/35">@if($budgetPrev > 0) Budget : {{ $pourcent }}% utilisé @else Aucun budget défini @endif</span>
+                            <span class="font-ui text-[10px] text-white/48">@if($budgetPrev > 0) Budget : {{ $pourcent }}% utilisé @else Aucun budget défini @endif</span>
                             @if($budgetPrev > 0)<span class="font-ui text-[10px]" style="color:{{ $couleurBarre }};">{{ number_format($budgetPrev / 1000, 0, ',', ' ') }}K FCFA</span>@endif
                         </div>
                         <div class="h-1 bg-white/10 rounded overflow-hidden">
@@ -1264,9 +1311,9 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div class="text-center"><div class="font-ui text-[10px] text-white/35 mb-0.5">Rec.</div><div class="font-display text-sm font-semibold text-emerald-400">{{ number_format($pbA / 1000, 1, ',', ' ') }}K</div></div>
-                        <div class="text-center"><div class="font-ui text-[10px] text-white/35 mb-0.5">Dép.</div><div class="font-display text-sm font-semibold text-red-400">{{ number_format($ctA / 1000, 1, ',', ' ') }}K</div></div>
-                        <div class="text-center"><div class="font-ui text-[10px] text-white/35 mb-0.5">Marge</div><div class="font-display text-sm font-semibold {{ $mbA >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ number_format($mbA, 0, ',', ' ') }}</div></div>
+                        <div class="text-center"><div class="font-ui text-[10px] text-white/48 mb-0.5">Rec.</div><div class="font-display text-sm font-semibold text-emerald-400">{{ number_format($pbA / 1000, 1, ',', ' ') }}K</div></div>
+                        <div class="text-center"><div class="font-ui text-[10px] text-white/48 mb-0.5">Dép.</div><div class="font-display text-sm font-semibold text-red-400">{{ number_format($ctA / 1000, 1, ',', ' ') }}K</div></div>
+                        <div class="text-center"><div class="font-ui text-[10px] text-white/48 mb-0.5">{{ IndicateursLibelles::labelCourt('MB') }}</div><div class="font-display text-sm font-semibold {{ $mbA >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ number_format($mbA, 0, ',', ' ') }}</div></div>
                     </div>
                     <p class="text-xs text-white/45 font-ui inline-flex items-center gap-1">Voir détails <x-icon name="arrow-right" class="w-3.5 h-3.5 opacity-70" /></p>
                 </a>

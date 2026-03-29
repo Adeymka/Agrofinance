@@ -15,9 +15,10 @@ Application web et API **Laravel 11** de suivi financier pour exploitations agri
 5. [Architecture](#architecture)  
 6. [API REST](#api-rest)  
 7. [Sécurité](#sécurité)  
-8. [Production : Supervisor (queues)](#production--supervisor-queues)  
-9. [Tests](#tests)  
-10. [Licence](#licence)
+8. [Déploiement & infra (S2)](#déploiement--infra-compte-rendu-s2)  
+9. [Production : Supervisor (queues)](#production--supervisor-queues)  
+10. [Tests](#tests)  
+11. [Licence](#licence)
 
 ---
 
@@ -116,7 +117,7 @@ Dans un second terminal : `npm run dev` pour servir les assets via Vite.
 
 - **`auth`** (web) : session utilisateur.  
 - **`auth:sanctum`** (API) : token Bearer.  
-- **`subscribed`** : vérifie un abonnement actif via `AbonnementService` ; en API, réponse **403** avec `code: ABONNEMENT_EXPIRE` si expiré ; certaines routes (abonnement, profil, déconnexion, etc.) restent accessibles selon `VerifierAbonnement`.
+- **`subscribed`** : vérifie un abonnement actif via `AbonnementService` ; en API, réponse **403** avec `code: ABONNEMENT_REQUIS` (aucune formule active, pas d’historique) ou `ABONNEMENT_EXPIRE` (période terminée) ; certaines routes (abonnement, profil, déconnexion, etc.) restent accessibles selon `VerifierAbonnement`.
 
 ### Règles métier transverses
 
@@ -156,8 +157,19 @@ La documentation détaillée des corps de requêtes, champs et cas limites se tr
 - **`FEDAPAY_MOCK`** : réservé aux environnements de test ; **désactivé** en production.  
 - **OTP** : en environnement local, les codes peuvent apparaître dans les logs ; en production, s’appuyer sur l’envoi SMS réel.  
 - **Partage de rapports** : liens signés par token à durée limitée (`GET /partage/{token}` côté web) — ne pas partager des URL de production publiquement sans conscience du risque.
+- **Connexion** : limitation du nombre de tentatives (rate limiting) sur la route de connexion API et web — voir le détail dans `docs/SPRINT-S1-SECURITE-DONNEES.md`.
 
 Pour signaler une vulnérabilité dans **Laravel** lui-même, voir la [politique de sécurité du framework](https://laravel.com/docs/contributions#security-vulnerabilities).
+
+---
+
+## Déploiement & infra (compte rendu S2)
+
+Le passage **développement local** (XAMPP, `php artisan serve`) à la **production** est détaillé dans **`docs/SPRINT-S2-ARCHITECTURE-INFRA.md`** : checklist (HTTPS, `APP_URL`, base de données, `config:cache`, droits `storage/`, sauvegardes, worker de file d’attente), schéma d’architecture et **recette** rapide.
+
+- **Santé applicative** : Laravel expose **`GET /up`** (déclaré dans `bootstrap/app.php`) — utile pour un load balancer ou une sonde de disponibilité.  
+- **Supervisor** : modèle versionné **`docs/supervisor-worker.conf.example`** (complément de la section ci-dessous).  
+- **Sprint S1 (sécurité)** : checklist production **`docs/SPRINT-S1-SECURITE-DONNEES.md`** §5 ; les **actions concrètes** sont regroupées dans le document S2 §4.
 
 ---
 

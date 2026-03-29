@@ -10,7 +10,7 @@
 
     <div style="font-family:'Inter',sans-serif; font-size:15px; line-height:1.75; color:rgba(255,255,255,0.78);">
       <h2 style="font-size:17px; color:#a7f3d0; margin:28px 0 12px;">1. Qui sommes-nous ?</h2>
-      <p style="margin:0 0 16px;">AgroFinance+ est un service numérique qui permet de suivre l’activité financière de votre exploitation agricole (recettes, dépenses) et d’afficher des <strong>indicateurs financiers agricoles</strong> (par exemple soldes et marges sur une période).</p>
+      <p style="margin:0 0 16px;">AgroFinance+ est un service numérique qui permet de suivre l’activité financière de votre exploitation agricole (recettes, dépenses) et d’afficher des <strong>indicateurs financiers agricoles</strong> (par exemple ventes, dépenses et gain ou perte sur une période).</p>
 
       <h2 style="font-size:17px; color:#a7f3d0; margin:28px 0 12px;">2. Quelles données collectons-nous ?</h2>
       <p style="margin:0 0 12px;">Nous traitons notamment :</p>

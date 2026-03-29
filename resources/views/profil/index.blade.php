@@ -42,7 +42,7 @@
 .prf-phone {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
 }
 .prf-plan-badge {
     display: inline-flex;
@@ -85,7 +85,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255, 255, 255, 0.28);
+    color: var(--af-text-muted);
     margin-bottom: 6px;
 }
 .prf-input {
@@ -103,10 +103,10 @@
     -webkit-appearance: none;
 }
 .prf-input:focus { border-color: var(--af-chip-active-border); }
-.prf-input::placeholder { color: rgba(255, 255, 255, 0.22); }
+.prf-input::placeholder { color: rgba(255, 255, 255, 0.38); }
 .prf-input:disabled {
     background: rgba(255, 255, 255, 0.02);
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.42);
     border-color: rgba(255, 255, 255, 0.07);
     cursor: not-allowed;
 }
@@ -205,7 +205,7 @@
 .prf-abo-empty {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-bottom: 12px;
 }
 .prf-manage-link {
@@ -239,7 +239,7 @@
 .prf-pin-hint {
     font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.28);
+    color: var(--af-text-muted);
     margin-bottom: 14px;
 }
 .prf-logout-form { margin-bottom: 16px; }
@@ -258,6 +258,33 @@
 }
 .prf-logout-btn:active { opacity: 0.85; }
 .prf-pad { padding-bottom: 32px; }
+.prf-outdoor-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    margin: 0;
+}
+.prf-outdoor-cb {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--af-color-accent);
+    flex-shrink: 0;
+}
+.prf-outdoor-row-text { display: flex; flex-direction: column; gap: 4px; }
+.prf-outdoor-title {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--af-text-body-strong);
+}
+.prf-outdoor-sub {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--af-text-muted);
+}
 </style>
 @endpush
 
@@ -276,6 +303,18 @@
                 Plan {{ ucfirst($abonnement->plan) }}
             </div>
         @endif
+    </div>
+
+    {{-- ── Affichage (plein soleil) ── --}}
+    <div class="prf-block">
+        <div class="prf-block-title">Affichage</div>
+        <label class="prf-outdoor-row">
+            <input type="checkbox" class="prf-outdoor-cb js-af-outdoor-toggle" autocomplete="off">
+            <span class="prf-outdoor-row-text">
+                <span class="prf-outdoor-title">Lecture plein soleil</span>
+                <span class="prf-outdoor-sub">Texte et cartes plus lisibles quand la lumière est forte (réglage enregistré sur cet appareil).</span>
+            </span>
+        </label>
     </div>
 
     {{-- ── Infos personnelles ── --}}
@@ -390,6 +429,16 @@
 {{-- ════ DESKTOP (original) ════ --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card space-y-6">
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+                <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Affichage</p>
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" class="js-af-outdoor-toggle mt-1 h-4 w-4 rounded border-gray-300 text-agro-vert focus:ring-agro-vert" autocomplete="off">
+                    <span>
+                        <span class="block text-sm font-medium text-gray-900">Lecture plein soleil</span>
+                        <span class="block text-xs text-gray-500 mt-1">Texte et cartes plus lisibles en pleine lumière (réglage enregistré sur cet appareil).</span>
+                    </span>
+                </label>
+            </div>
             <div class="flex items-center gap-4">
                 <div class="w-16 h-16 rounded-full bg-agro-vert text-white flex items-center justify-center text-2xl font-bold">
                     {{ strtoupper(mb_substr((string) $user->prenom, 0, 1)) }}{{ strtoupper(mb_substr((string) $user->nom, 0, 1)) }}
@@ -446,5 +495,36 @@
         </div>
     </div>
 @endif
+
+@push('scripts')
+<script>
+(function () {
+    var KEY = 'af_outdoor_boost';
+    function apply(v) {
+        document.documentElement.classList.toggle('af-outdoor', v);
+    }
+    var boxes = document.querySelectorAll('.js-af-outdoor-toggle');
+    var stored = localStorage.getItem(KEY) === '1';
+    apply(stored);
+    boxes.forEach(function (cb) {
+        cb.checked = stored;
+        cb.addEventListener('change', function () {
+            var on = cb.checked;
+            if (on) {
+                localStorage.setItem(KEY, '1');
+            } else {
+                localStorage.removeItem(KEY);
+            }
+            apply(on);
+            boxes.forEach(function (x) {
+                if (x !== cb) {
+                    x.checked = on;
+                }
+            });
+        });
+    });
+})();
+</script>
+@endpush
 
 @endsection

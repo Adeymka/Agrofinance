@@ -67,6 +67,8 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 ### Sprint S1 — Sécurité & données (`SYNTHESE-SOUTENANCE-SECURITE-DONNEES.md`)
 
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S1-SECURITE-DONNEES.md` (thèmes D1–D6, checklist prod, recette).
+
 **Objectif.** Garantir une authentification cohérente, un **cloisonnement** des données par utilisateur / exploitation, et des **pratiques saines** (logs, secrets, fichiers).
 
 **Thèmes D à traiter en priorité (référence doc) :**
@@ -88,6 +90,8 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 ### Sprint S2 — Architecture & infra (`SYNTHESE-SOUTENANCE-ARCHITECTURE-INFRA.md`)
 
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S2-ARCHITECTURE-INFRA.md` (checklist local → prod, D1–D6, recette, hors périmètre).
+
 **Objectif.** Aligner **environnements**, **URLs** (dont sous-dossier XAMPP si pertinent), **queues**, **stockage**, **sauvegardes** et **observabilité**.
 
 **Thèmes D :**
@@ -103,9 +107,13 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 **Livrable.** Document court ou section README : **comment** passer de local à prod ; jobs supervisés si utilisés.
 
+*Compte rendu du sprint S2 réalisé :* `docs/SPRINT-S2-ARCHITECTURE-INFRA.md`.
+
 ---
 
 ### Sprint S3 — Métier & indicateurs (`SYNTHESE-SOUTENANCE-METIER-INDICATEURS.md`)
+
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S3-METIER-INDICATEURS.md` (D1–D6, intrant production, recette, hors périmètre).
 
 **Objectif.** Cohérence des **calculs**, **périodes**, **consolidation multi-campagnes**, **PDF / API** avec les mêmes règles.
 
@@ -122,9 +130,13 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 **Livrable.** Comportement **explicite** sur la période et les campagnes **en_cours** ; alignement avec la section **F** de la synthèse métier.
 
+*Compte rendu du sprint S3 réalisé :* `docs/SPRINT-S3-METIER-INDICATEURS.md`.
+
 ---
 
 ### Sprint S4 — Paiement & abonnement (`SYNTHESE-SOUTENANCE-PAIEMENT-ABONNEMENT.md`)
+
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S4-PAIEMENT-ABONNEMENT.md` (D1–D6, tarifs centralisés, recette, hors périmètre).
 
 **Objectif.** Aligner **prix affichés**, **`AbonnementService`**, **FedaPay**, **middleware subscribed**, **droits** (PDF, exploitations, historique).
 
@@ -141,9 +153,13 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 **Livrable.** Tableau **plan → droits** vérifiable dans l’UI ; parcours post-paiement clair ; mock documenté pour les démos.
 
+*Compte rendu du sprint S4 réalisé :* `docs/SPRINT-S4-PAIEMENT-ABONNEMENT.md`.
+
 ---
 
 ### Sprint S5 — Produit & parcours (`SYNTHESE-SOUTENANCE-PRODUIT-PARCOURS.md`)
+
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S5-PRODUIT-PARCOURS.md` (D1–D6, messages abonnement, synchro offline, recette).
 
 **Objectif.** Cohérence **inscription → OTP → PIN → abonnement → usage** ; **mobile vs desktop** ; **offline** ; **aide**.
 
@@ -160,9 +176,13 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 
 **Livrable.** Parcours **sans impasse** ; même logique métier sur les deux plateformes ; synchro offline alignée sur `docs/API_CLIENT.md`.
 
+*Compte rendu du sprint S5 réalisé :* `docs/SPRINT-S5-PRODUIT-PARCOURS.md`.
+
 ---
 
 ### Sprint S6 — UX & accessibilité (`SYNTHESE-SOUTENANCE-UX-ACCESSIBILITE.md`)
+
+**Statut : terminé** — voir le compte rendu consolidé `docs/SPRINT-S6-UX-ACCESSIBILITE.md` (D1–D6, focus, erreurs, recette).
 
 **Objectif.** Lisibilité (**thème glass**, contraste), **tactile**, **formulaires et erreurs**, **charge cognitive**, **a11y** de base.
 
@@ -178,6 +198,8 @@ L’ordre ci-dessous **réduit les retours en arrière** : une base **sécurité
 **Périmètre code typique.** `resources/css/app.css`, composants Blade, JS UI, textes d’erreur.
 
 **Livrable.** Pas de régression fonctionnelle ; critères de la section **F** de la synthèse UX appliqués progressivement.
+
+*Compte rendu du sprint S6 réalisé :* `docs/SPRINT-S6-UX-ACCESSIBILITE.md`.
 
 ---
 

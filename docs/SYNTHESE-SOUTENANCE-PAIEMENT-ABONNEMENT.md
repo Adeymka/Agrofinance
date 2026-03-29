@@ -54,7 +54,7 @@ Tu montres que **l’argent** **n’est** **pas** **anecdotique** : il **structu
 
 **Service central** : **`AbonnementService`** — **teste** si l’abonnement est **actif**, **normalise** le **plan**, **calcule** **droits** et **limites**.
 
-**Tarification indicielle (FCFA)** pour l’**initiation** paiement : **1 500** (clé **`mensuel`** → plan **essentielle**), **5 000** (**`annuel`** → **pro**), **8 000** (**`cooperative`**). **Gratuit** / **essai** : **montant** **0** selon contexte.
+**Tarification indicielle (FCFA)** pour l’**initiation** paiement : valeurs dans **`config/tarifs_abonnement.php`** (exposées aussi par **`TarifsAbonnement`**), en pratique **5 000** (clé **`mensuel`** → plan **essentielle**), **10 000** (**`annuel`** → **pro**), **16 000** (**`cooperative`**). **Gratuit** / **essai** : **montant** **0** selon contexte. **Implémentation livrée (sprint S4) :** `docs/SPRINT-S4-PAIEMENT-ABONNEMENT.md`.
 
 **Droits liés au plan (extraits)**  
 - **PDF** « classiques » : **essentielle**, **pro**, **cooperative** (**pas** **gratuit** seul).  
@@ -86,7 +86,7 @@ Une **page** **marketing** qui annonce **« Pro à X FCFA »** **différent** du
 **Une** **source** **de** **vérité** **affichée** (ou **générée** depuis **constantes** **partagées** **avec** **PHP**).
 
 **Exemple.**  
-Brochure **« Essentielle 2 000 »** alors que **`montantFacturation('mensuel')`** vaut **1 500** → **crise** **de** **confiance**.
+Brochure **« Essentielle 2 000 »** alors que **`montantFacturation('mensuel')`** ne correspond pas au **config** → **crise** **de** **confiance**.
 
 **Intérêt pour le PO.**  
 **Réduction** des **erreurs** **humaines** **entre** **com** et **dev**.
@@ -301,6 +301,8 @@ Une **coopérative** **qui** **veut** **payer** **100** **comptes** **veut** **u
 ## G. Ce que cette synthèse ne remplace pas
 
 Elle ne remplace pas un **contrat** **FedaPay** **signé**, ni une **analyse** **juridique** **des** **conditions** **générales** **de** **vente**, ni un **audit** **comptable**. Les **montants** **et** **durées** **exactes** **à** **la** **date** **de** **soutenance** **doivent** **être** **vérifiés** **dans** **le** **code** **et** **les** **écrans** **réels**.
+
+**Implémentation livrée (sprint S4) :** le compte rendu **`docs/SPRINT-S4-PAIEMENT-ABONNEMENT.md`** décrit les mesures présentes dans le dépôt (config tarifs, tableau des droits, bannière fin de période, messages après paiement).
 
 ---
 

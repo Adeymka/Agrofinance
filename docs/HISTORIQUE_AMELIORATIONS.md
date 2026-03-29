@@ -4,7 +4,9 @@ Document de synthèse : modifications apportées au code et intérêt métier / 
 
 ---
 
-## Sprint S1 — Sécurité & données
+## Sprint S1 — Sécurité & données (**clôturé**)
+
+Le sprint S1 (domaine « sécurité & données ») est **terminé** au sens produit : thèmes D1–D6 sont couverts dans le code ou documentés (voir **`docs/SPRINT-S1-SECURITE-DONNEES.md`**). Les compléments **justificatifs** et **pages légales** font partie de la même logique de clôture D4/D6.
 
 | Modification | Avantage |
 |--------------|----------|
@@ -13,11 +15,78 @@ Document de synthèse : modifications apportées au code et intérêt métier / 
 | **Log** d’échec de connexion API (**IP** uniquement, jamais le PIN) | Traçabilité légère sans fuite de secret (D2). |
 | Tests **Feature** : rate limit après 10 échecs, **404** si accès à l’exploitation d’un autre utilisateur | Documentation exécutable du cloisonnement (D3). |
 
-Détail et cartographie des routes : `docs/SPRINT-S1-SECURITE-DONNEES.md`.
+**Document de synthèse sprint :** `docs/SPRINT-S1-SECURITE-DONNEES.md` (recette, checklist production D5, suites hors périmètre).
 
 ---
 
-## Justificatifs de transaction & pages légales
+## Sprint S2 — Architecture & infrastructure (**clôturé**)
+
+Le sprint S2 (domaine « architecture & infra ») est **terminé** au sens documentation et process : la **checklist production** du sprint S1 (§5) est **opérationnalisée** dans `docs/SPRINT-S2-ARCHITECTURE-INFRA.md` (étapes local → prod, queues, stockage, `/up`, sauvegardes).
+
+| Livrable | Intérêt |
+|----------|---------|
+| **`docs/SPRINT-S2-ARCHITECTURE-INFRA.md`** | Source de vérité déploiement : D1–D6, recette, hors périmètre (IaC, APM, etc.). |
+| **`docs/supervisor-worker.conf.example`** | Modèle Supervisor aligné sur `queue:work database`. |
+| **`.env.example` enrichi** | Rappels XAMPP vs prod, `LOG_LEVEL`, callbacks FedaPay. |
+| **README** | Lien vers le compte rendu S2 et rappel health `/up`. |
+
+---
+
+## Sprint S3 — Métier & indicateurs (**clôturé**)
+
+Le sprint S3 (domaine « métier & indicateurs ») est **terminé** : transparence sur la **période** des chiffres, clarification **charges intermédiaires** / **VAB** via `intrant_production`, **données indicatives**, textes **multi-campagnes** et **statut consolidé**, alignement **PDF** et **API** (`docs/SPRINT-S3-METIER-INDICATEURS.md`).
+
+| Livrable | Intérêt |
+|----------|---------|
+| **`intrant_production`** sur `transactions` + liste **`TransactionCategories::slugsChargesIntermediaires()`** | CI reproductible pour les catégories hors liste standard (synthèse D2). |
+| **`FinancialIndicatorsService`** : `resumerPeriodeExploitation`, `donnees_indicatives`, CI élargi | Période lisible, prudence si dossier léger, cohérence indicateurs. |
+| **Dashboard** web/mobile + **API** `periode`, `message_plancher_abonnement` | Même logique d’affichage que la synthèse (D1, D4, D5, D6). |
+| **PDF** (`RapportService`) | Plancher abonnement + encart données indicatives sur la période du rapport. |
+| **`docs/API_CLIENT.md`** | Contrat `intrant_production`, dashboard enrichi. |
+| **Tests** `FinancialIndicatorsIntrantsTest` | CI avec intrant, flag indicatif. |
+
+---
+
+## Sprint S4 — Paiement & abonnement (**clôturé**)
+
+Le sprint S4 (domaine « paiement & abonnement ») est **terminé** : **tarifs centralisés** (`config/tarifs_abonnement.php`, `TarifsAbonnement`), alignement **accueil / page abonnement / facturation FedaPay**, **tableau des droits** dans l’UI, **messages** après paiement ou simulation, **bannière** J−7 avant fin d’abonnement, contrôle **montant** en callback (journal) (`docs/SPRINT-S4-PAIEMENT-ABONNEMENT.md`).
+
+| Livrable | Intérêt |
+|----------|---------|
+| **`TarifsAbonnement` + config** | Une seule source pour l’écran et le montant envoyé à la passerelle (synthèse D1). |
+| **`AbonnementService`** (cache + log montant) | Traçabilité si écart FedaPay sans exposer de données inutiles dans l’URL. |
+| **Layouts** bannière renouvellement | Rappel avant blocage (D6). |
+| **`docs/API_CLIENT.md`** | Montants d’`initier` alignés sur la config. |
+
+---
+
+## Sprint S5 — Produit & parcours (**clôturé**)
+
+Le sprint S5 (domaine « produit & parcours ») est **terminé** : messages **middleware** **abonnement** différenciés (jamais souscrit vs période terminée), codes API **`ABONNEMENT_REQUIS`** / **`ABONNEMENT_EXPIRE`**, bannière **synchro hors ligne** (compteur, session, réseau, bouton réessai) sur **mobile et desktop**, texte **partage** sur les **rapports**, page **`/offline`** rassurante, **`meta api-base`** sur le layout bureau (`docs/SPRINT-S5-PRODUIT-PARCOURS.md`).
+
+| Livrable | Intérêt |
+|----------|---------|
+| **`VerifierAbonnement` + `AbonnementService::aHistoriqueAbonnement`** | L’exploitant comprend pourquoi l’accès est bloqué (synthèse D1, F P0). |
+| **`offline-transactions.js` + layouts** | État de synchro visible sans afficher les montants dans la bannière (D4, sécurité S5). |
+| **Rapports / offline** | Transparence sur le lien de partage et sur les données locales (D5, D6). |
+| **`docs/API_CLIENT.md`** | Contrat **403** et rappel synchro PWA. |
+
+---
+
+## Sprint S6 — UX & accessibilité (**clôturé**)
+
+Le sprint S6 (domaine « UX & accessibilité ») est **terminé** : **`:focus-visible`** global sur les contrôles interactifs, **tokens** `--af-text-kpi` / `prefers-contrast: more`, **erreurs** connexion avec repère **⚠** et **`role="alert"`**, **labels** `for`/`id` et **autocomplete**, **zones tactiles** (boutons auth, primaires desktop, assistant transaction mobile), **résumé d’erreurs** sur la saisie transaction, **libellé « Vue d’ensemble »** sur le dashboard, **focus** dock mobile (`docs/SPRINT-S6-UX-ACCESSIBILITE.md`).
+
+| Livrable | Intérêt |
+|----------|---------|
+| **`app.css` + vues auth / dashboard / transaction** | Lisibilité et clavier sans refonte métier (synthèse F P0–P1). |
+| **Complément** : `inscription` / `otp` / `creer-pin` (**labels**, **autocomplete**), flashs **`app-mobile`** (**`role` / `aria-live`**) | Parcours d’entrée aligné sur les mêmes règles a11y de base que la connexion. |
+| **Checklist recette S6** | Préparation démo institutionnelle (D6). |
+| **Complément** : **Lecture plein soleil** (`af_outdoor_boost` + classe `af-outdoor` sur `<html>`), profil **Affichage**, ombres portées sur les grands chiffres du **dashboard mobile** | Meilleure lisibilité en pleine lumière sans refonte du theme (post-S6). |
+
+---
+
+## Justificatifs de transaction & pages légales *(complément sprint S1 — D4 / D6)*
 
 | Modification | Avantage |
 |--------------|----------|

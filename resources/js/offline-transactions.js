@@ -107,17 +107,49 @@ async function getAllPending() {
     });
 }
 
+/** @type {string} */
+let syncExtraHint = '';
+
+function setSyncExtraHint(msg) {
+    syncExtraHint = typeof msg === 'string' ? msg : '';
+}
+
 function updateBanner(count) {
-    const el = document.getElementById('afPendingSyncBanner');
-    if (!el) return;
-    if (count > 0) {
-        el.hidden = false;
-        el.textContent = count === 1
-            ? '1 transaction en attente d’envoi (sera synchronisée à la reconnexion)'
-            : `${count} transactions en attente d’envoi (seront synchronisées à la reconnexion)`;
-    } else {
-        el.hidden = true;
-        el.textContent = '';
+    const wrap = document.getElementById('afPendingSyncBanner');
+    const main = document.getElementById('afPendingSyncMain');
+    const hint = document.getElementById('afPendingSyncHint');
+    const btn = document.getElementById('afPendingSyncRetry');
+    if (!wrap) return;
+
+    const hasPending = count > 0;
+    const showBar = hasPending || syncExtraHint.length > 0;
+
+    if (!showBar) {
+        wrap.hidden = true;
+        if (main) main.textContent = '';
+        if (hint) {
+            hint.textContent = '';
+            hint.hidden = true;
+        }
+        if (btn) btn.hidden = true;
+
+        return;
+    }
+
+    wrap.hidden = false;
+    if (main) {
+        main.textContent = hasPending
+            ? (count === 1
+                ? '1 dépense ou recette en attente d’envoi sur le serveur'
+                : `${count} dépenses ou recettes en attente d’envoi sur le serveur`)
+            : '';
+    }
+    if (hint) {
+        hint.textContent = syncExtraHint;
+        hint.hidden = syncExtraHint.length === 0;
+    }
+    if (btn) {
+        btn.hidden = !hasPending;
     }
 }
 
@@ -132,6 +164,8 @@ export async function refreshOfflineBanner() {
 export async function syncPendingQueue() {
     const base = apiBase();
     const token = bearer();
+    setSyncExtraHint('');
+
     if (!base || !token || !navigator.onLine) {
         await refreshOfflineBanner();
 
@@ -163,10 +197,14 @@ export async function syncPendingQueue() {
         } catch (e) {
             const status = e.response?.status;
             if (status === 401) {
+                setSyncExtraHint('Session expirée. Reconnectez-vous pour envoyer les données en attente.');
                 break;
             }
             if (status === 422 || status === 403) {
                 await deletePending(row.id);
+            }
+            if (!e.response && navigator.onLine) {
+                setSyncExtraHint('Connexion instable. Réessayez quand le réseau revient.');
             }
             break;
         }
@@ -176,7 +214,18 @@ export async function syncPendingQueue() {
 }
 
 export function initOfflineTransactions() {
+    const retryBtn = document.getElementById('afPendingSyncRetry');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+            setSyncExtraHint('');
+            syncPendingQueue();
+        });
+    }
+
+    window.__AF_syncPendingQueue = syncPendingQueue;
+
     window.addEventListener('online', () => {
+        setSyncExtraHint('');
         syncPendingQueue();
     });
     if (document.readyState === 'loading') {

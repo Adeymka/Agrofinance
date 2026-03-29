@@ -178,7 +178,7 @@
             @foreach([
               ['📈','Recettes','450 K','#4ade80'],
               ['📉','Dépenses','189 K','#f87171'],
-              ['💰','Marge','261 K','#4ade80'],
+              ['💰','Reste avant fixes','261 K','#4ade80'],
               ['🟢','Statut','Rentable','#4ade80'],
             ] as [$icon,$label,$val,$color])
             <div style="background:rgba(255,255,255,0.06);
@@ -199,7 +199,7 @@
                       border-radius:12px; padding:14px;">
             <div style="font-family:'Space Grotesk',sans-serif; font-size:12px;
                          font-weight:600; color:rgba(255,255,255,0.70);
-                         margin-bottom:12px;">Évolution — Marge Brute</div>
+                         margin-bottom:12px;">Évolution — reste avant charges fixes</div>
             <div style="display:flex; align-items:flex-end; gap:4px; height:50px;">
               @foreach([20,35,25,45,30,60,40,75,55,80,65,90] as $h)
               <div style="flex:1; background:rgba(74,222,128,{{ $h > 50 ? '0.60' : '0.25' }});
@@ -291,7 +291,7 @@
           'bd'   => 'rgba(74,222,128,0.20)',
           'color'=> '#4ade80',
           'titre'=> 'Savoir en temps réel',
-          'texte'=> 'Recettes, dépenses, marge brute, seuil de rentabilité. 8 indicateurs financiers agricoles calculés automatiquement à chaque saisie.',
+          'texte'=> 'Recettes, dépenses, reste avant charges fixes, seuil d’équilibre. Huit indicateurs financiers agricoles calculés automatiquement à chaque saisie.',
           'stat' => '8 indicateurs',
           'delay'=> '0s',
         ],
@@ -396,7 +396,7 @@
       <p style="font-family:'Inter',sans-serif; font-size:16px;
                 color:rgba(255,255,255,0.45); line-height:1.7; margin:0 0 32px;">
         AgroFinance+ s’appuie sur des indicateurs financiers agricoles reconnus
-        (produit brut, marges, rentabilité, seuil de rentabilité…). Ils sont
+        (ventes totales, reste avant charges fixes, gain ou perte, rentabilité, seuil d’équilibre…). Ils sont
         calculés automatiquement à partir de vos saisies — aucune formule à
         retaper à la main.
       </p>
@@ -404,9 +404,9 @@
       {{-- Feux tricolores --}}
       <div style="display:flex; flex-direction:column; gap:12px;">
         @foreach([
-          ['🟢','Rentable',   'RNE > 0 et seuil de rentabilité atteint',   'rgba(74,222,128,0.10)', 'rgba(74,222,128,0.25)'],
-          ['🟠','À surveiller','Marge positive mais charges fixes non couvertes','rgba(251,191,36,0.10)','rgba(251,191,36,0.25)'],
-          ['🔴','Déficitaire', 'Marge brute négative — action requise',       'rgba(248,113,113,0.10)','rgba(248,113,113,0.25)'],
+          ['🟢','Rentable',   'Gain ou perte positif et objectif d’équilibre atteint',   'rgba(74,222,128,0.10)', 'rgba(74,222,128,0.25)'],
+          ['🟠','À surveiller','Reste positif mais charges fixes pas encore couvertes','rgba(251,191,36,0.10)','rgba(251,191,36,0.25)'],
+          ['🔴','Déficitaire', 'Reste avant charges fixes négatif — action requise',       'rgba(248,113,113,0.10)','rgba(248,113,113,0.25)'],
         ] as [$emoji,$label,$desc,$bg,$bd])
         <div style="display:flex; align-items:center; gap:14px; padding:14px 16px;
                     background:{{ $bg }}; border:1px solid {{ $bd }};
@@ -452,12 +452,12 @@
         {{-- Indicateurs --}}
         <div style="padding:8px 0;">
           @foreach([
-            ['PB — Produit Brut',          '450 000', 'FCFA', '#4ade80', true],
-            ['CV — Coûts Variables',        '151 000', 'FCFA', '#f87171', false],
-            ['CF — Coûts Fixes',           ' 38 000', 'FCFA', '#f87171', false],
-            ['MB — Marge Brute',           '299 000', 'FCFA', '#4ade80', true],
-            ['RNE — Revenu Net',           '261 000', 'FCFA', '#4ade80', true],
-            ['RF — Rendement Financier',       '138', '%',     '#fbbf24', true],
+            ['Ventes — total',             '450 000', 'FCFA', '#4ade80', true],
+            ['Dépenses liées au volume',   '151 000', 'FCFA', '#f87171', false],
+            ['Dépenses fixes',             ' 38 000', 'FCFA', '#f87171', false],
+            ['Reste avant charges fixes',   '299 000', 'FCFA', '#4ade80', true],
+            ['Gain ou perte finale',        '261 000', 'FCFA', '#4ade80', true],
+            ['Rentabilité',                    '138', '%',     '#fbbf24', true],
           ] as [$label, $val, $unit, $color, $positive])
           <div style="display:flex; align-items:center; justify-content:space-between;
                       padding:14px 24px;
@@ -607,80 +607,7 @@
     </p>
 
     <div class="public-pricing-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1200px; margin:0 auto;">
-      @foreach([
-        [
-          'nom'    => 'Gratuit',
-          'prix'   => '0',
-          'duree'  => 'Essai 75 jours',
-          'badge'  => 'Pour démarrer',
-          'color'  => 'rgba(255,255,255,0.50)',
-          'bg'     => 'rgba(255,255,255,0.04)',
-          'bd'     => 'rgba(255,255,255,0.10)',
-          'cta'    => 'Commencer gratuitement',
-          'star'   => false,
-          'cta_variant' => 'muted',
-          'items'  => [
-            'Tableau de bord & 8 indicateurs',
-            'Saisie des transactions',
-            'Historique limité (6 mois)',
-            '1 exploitation',
-            'Pas de rapport PDF',
-          ],
-        ],
-        [
-          'nom'    => 'Essentielle',
-          'prix'   => '1 500',
-          'duree'  => 'FCFA / mois',
-          'badge'  => 'Le plus populaire',
-          'color'  => '#4ade80',
-          'bg'     => 'rgba(74,222,128,0.08)',
-          'bd'     => 'rgba(74,222,128,0.30)',
-          'cta'    => 'Choisir Essentielle',
-          'star'   => true,
-          'cta_variant' => 'green',
-          'items'  => [
-            'Tout le plan Gratuit',
-            'Rapports PDF avancés',
-            'Partage lien microfinance',
-            '1 exploitation',
-          ],
-        ],
-        [
-          'nom'    => 'Pro',
-          'prix'   => '5 000',
-          'duree'  => 'FCFA / mois',
-          'badge'  => 'Pour les pros',
-          'color'  => '#fbbf24',
-          'bg'     => 'rgba(245,158,11,0.06)',
-          'bd'     => 'rgba(245,158,11,0.20)',
-          'cta'    => 'Choisir Pro',
-          'star'   => false,
-          'cta_variant' => 'amber',
-          'items'  => [
-            'Tout le plan Essentielle',
-            'Jusqu’à 5 exploitations',
-            'Dossier crédit (PDF)',
-            'Historique complet',
-          ],
-        ],
-        [
-          'nom'    => 'Coopérative',
-          'prix'   => '8 000',
-          'duree'  => 'FCFA / mois',
-          'badge'  => 'Groupes & coopératives',
-          'color'  => '#c4b5fd',
-          'bg'     => 'rgba(139,92,246,0.10)',
-          'bd'     => 'rgba(167,139,250,0.28)',
-          'cta'    => 'Choisir Coopérative',
-          'star'   => false,
-          'cta_variant' => 'violet',
-          'items'  => [
-            'Tout le plan Pro',
-            'Exploitations illimitées',
-            'Idéal coopératives & structures',
-          ],
-        ],
-      ] as $plan)
+      @foreach($plansAccueilTarifs as $plan)
       <div class="reveal"
            style="background:{{ $plan['bg'] }};
                   backdrop-filter:blur(12px);

@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Helpers\TransactionCategories;
 use App\Models\Activite;
 use App\Models\Exploitation;
+use Carbon\Carbon;
 
 /**
  * Calcul des indicateurs financiers agricoles (PB, coûts, marges, seuil de rentabilité, statut).
@@ -35,7 +37,8 @@ class FinancialIndicatorsService
      *     nb_transactions: int,
      *     nb_depenses: int,
      *     nb_recettes: int,
-     *     derniere_saisie: \Carbon\CarbonInterface|string|null
+     *     derniere_saisie: \Carbon\CarbonInterface|string|null,
+     *     donnees_indicatives: bool
      * }
      */
     public function calculer(int $activiteId, ?string $debut = null, ?string $fin = null, ?string $dateDebutMin = null): array
@@ -60,13 +63,14 @@ class FinancialIndicatorsService
         $CF = $depenses->where('nature', 'fixe')->sum('montant');
         $CT = $CV + $CF;
 
-        $categoriesCI = [
-            'semences', 'engrais_mineraux', 'engrais_organiques',
-            'pesticides', 'herbicides', 'fongicides', 'vaccins',
-            'medicaments_veterinaires', 'aliments_animaux', 'eau_abreuvement',
-            'energie_transformation', 'emballages', 'matieres_premieres', 'produits_chimiques', 'carburant',
-        ];
-        $CI = $depenses->whereIn('categorie', $categoriesCI)->sum('montant');
+        $ciSlugs = TransactionCategories::slugsChargesIntermediaires();
+        $CI = $depenses->filter(function ($d) use ($ciSlugs) {
+            if (in_array($d->categorie, $ciSlugs, true)) {
+                return true;
+            }
+
+            return $d->intrant_production === true;
+        })->sum('montant');
         $VAB = $PB - $CI;
         $MB = $PB - $CV;
         $RNE = $PB - $CT;
@@ -80,6 +84,10 @@ class FinancialIndicatorsService
             $SR = $CF;
         }
 
+        $nbTx = $transactions->count();
+        $nbDep = $depenses->count();
+        $nbRec = $recettes->count();
+
         return [
             'PB' => round($PB, 2),
             'CV' => round($CV, 2),
@@ -92,10 +100,11 @@ class FinancialIndicatorsService
             'RF' => $RF,
             'SR' => $SR,
             'statut' => $this->determinerStatut($PB, $MB, $RNE, $SR),
-            'nb_transactions' => $transactions->count(),
-            'nb_depenses' => $depenses->count(),
-            'nb_recettes' => $recettes->count(),
+            'nb_transactions' => $nbTx,
+            'nb_depenses' => $nbDep,
+            'nb_recettes' => $nbRec,
             'derniere_saisie' => $transactions->max('updated_at'),
+            'donnees_indicatives' => $this->evaluerDonneesIndicatives($nbTx, $nbRec, $nbDep),
         ];
     }
 
@@ -125,7 +134,8 @@ class FinancialIndicatorsService
      *         nb_transactions: int,
      *         nb_depenses: int,
      *         nb_recettes: int,
-     *         derniere_saisie: \Carbon\CarbonInterface|string|null
+     *         derniere_saisie: \Carbon\CarbonInterface|string|null,
+     *         donnees_indicatives: bool
      *     }>,
      *     consolide: array{
      *         PB: float,
@@ -133,7 +143,9 @@ class FinancialIndicatorsService
      *         MB: float,
      *         RNE: float,
      *         RF: float,
-     *         statut: 'vert'|'orange'|'rouge'
+     *         statut: 'vert'|'orange'|'rouge',
+     *         donnees_indicatives: bool,
+     *         nb_campagnes_actives: int
      *     }
      * }
      */
@@ -155,6 +167,10 @@ class FinancialIndicatorsService
         $MBt = collect($parActivite)->sum('MB');
         $RNEt = collect($parActivite)->sum('RNE');
 
+        $nbTxT = (int) collect($parActivite)->sum('nb_transactions');
+        $nbDepT = (int) collect($parActivite)->sum('nb_depenses');
+        $nbRecT = (int) collect($parActivite)->sum('nb_recettes');
+
         return [
             'par_activite' => $parActivite,
             'consolide' => [
@@ -164,8 +180,86 @@ class FinancialIndicatorsService
                 'RNE' => round($RNEt, 2),
                 'RF' => $CTt > 0 ? round(($RNEt / $CTt) * 100, 2) : 0,
                 'statut' => $this->determinerStatut($PBt, $MBt, $RNEt, null),
+                'donnees_indicatives' => $this->evaluerDonneesIndicatives($nbTxT, $nbRecT, $nbDepT),
+                'nb_campagnes_actives' => count($parActivite),
             ],
         ];
+    }
+
+    /**
+     * Résumé des dates min / max des transactions (campagnes en cours, plancher abonnement appliqué).
+     *
+     * @return array{
+     *     debut: string|null,
+     *     fin: string|null,
+     *     plancher_abonnement: string|null,
+     *     nb_transactions: int,
+     *     libelle_periode: string
+     * }
+     */
+    public function resumerPeriodeExploitation(Exploitation $exploitation, ?string $dateDebutMin): array
+    {
+        $dates = collect();
+        foreach ($exploitation->activitesActives as $activite) {
+            foreach ($activite->transactions as $t) {
+                $d = $t->date_transaction instanceof \Carbon\CarbonInterface
+                    ? $t->date_transaction->toDateString()
+                    : (string) $t->date_transaction;
+                if ($dateDebutMin === null || $dateDebutMin === '' || $d >= $dateDebutMin) {
+                    $dates->push($d);
+                }
+            }
+        }
+
+        if ($dates->isEmpty()) {
+            $plancher = $dateDebutMin ?: null;
+            $msg = $plancher
+                ? 'Aucune transaction enregistrée depuis le '.$this->formatDateCourte($plancher).' (période autorisée par votre formule).'
+                : 'Aucune transaction enregistrée pour les campagnes en cours.';
+
+            return [
+                'debut' => null,
+                'fin' => null,
+                'plancher_abonnement' => $dateDebutMin,
+                'nb_transactions' => 0,
+                'libelle_periode' => $msg,
+            ];
+        }
+
+        $debut = $dates->min();
+        $fin = $dates->max();
+        $libelle = 'Période des chiffres : du '.$this->formatDateCourte($debut).' au '.$this->formatDateCourte($fin).'.';
+
+        return [
+            'debut' => $debut,
+            'fin' => $fin,
+            'plancher_abonnement' => $dateDebutMin,
+            'nb_transactions' => $dates->count(),
+            'libelle_periode' => $libelle,
+        ];
+    }
+
+    private function formatDateCourte(string $dateYmd): string
+    {
+        return Carbon::parse($dateYmd)->format('d/m/Y');
+    }
+
+    /**
+     * Peu de lignes ou déséquilibre recettes / dépenses : les indicateurs restent calculés mais sont moins fiables.
+     */
+    private function evaluerDonneesIndicatives(int $nbTx, int $nbRec, int $nbDep): bool
+    {
+        if ($nbTx < 5) {
+            return true;
+        }
+        if ($nbRec > 0 && $nbDep === 0) {
+            return true;
+        }
+        if ($nbDep > 0 && $nbRec === 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

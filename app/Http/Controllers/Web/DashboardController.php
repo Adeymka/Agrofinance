@@ -44,6 +44,11 @@ class DashboardController extends Controller
 
         $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
 
+        $periodeTableauBord = $this->service->resumerPeriodeExploitation($exploitation, $dateDebutHistorique);
+        $messagePlancherAbonnement = $dateDebutHistorique
+            ? 'Votre formule limite l’historique : aucune donnée avant le '.\Carbon\Carbon::parse($dateDebutHistorique)->format('d/m/Y').'.'
+            : null;
+
         $resultats = $this->service->calculerExploitation($exploitation->id, $dateDebutHistorique);
         $consolide = $resultats['consolide'];
 
@@ -110,6 +115,8 @@ class DashboardController extends Controller
             'chartActiviteId' => $heroGraph['chartActiviteId'],
             'alertesBudget' => $alertesBudget,
             'bannerBudgetCritique' => $bannerBudgetCritique,
+            'periodeTableauBord' => $periodeTableauBord,
+            'messagePlancherAbonnement' => $messagePlancherAbonnement,
         ]);
     }
 }

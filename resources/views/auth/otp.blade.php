@@ -54,8 +54,8 @@
 <form method="POST" action="{{ route('verification.otp.submit') }}">
     @csrf
     <div class="auth-mobile-field" style="margin-bottom:24px;">
-        <label class="auth-mobile-label">Code de vérification</label>
-        <input type="text" name="code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
+        <label class="auth-mobile-label" for="otp_mobile_code">Code de vérification</label>
+        <input id="otp_mobile_code" type="text" name="code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
                placeholder="— — — — — —"
                class="auth-mobile-otp"
                autocomplete="one-time-code" required autofocus>
@@ -116,18 +116,19 @@
 <div class="auth-form-title">Code de vérification</div>
 <div class="auth-form-subtitle">Entrez les 6 chiffres reçus par SMS</div>
 @if (session('info'))
-    <div class="auth-success" style="color:#fcd34d; border-color:rgba(251,191,36,0.35); background:rgba(245,158,11,0.12);">{{ session('info') }}</div>
+    <div class="auth-success" role="status" style="color:#fcd34d; border-color:rgba(251,191,36,0.35); background:rgba(245,158,11,0.12);">{{ session('info') }}</div>
 @endif
 @if ($errors->any())
-    <div class="auth-error">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
+    <div class="auth-error" role="alert" aria-live="polite">@foreach ($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
 @endif
 @if (session('success'))
-    <div class="auth-success">{{ session('success') }}</div>
+    <div class="auth-success" role="status">{{ session('success') }}</div>
 @endif
 <form method="POST" action="{{ route('verification.otp.submit') }}">
     @csrf
     <div class="auth-field" style="margin-bottom:36px;">
-        <input type="text" name="code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
+        <label class="auth-label" for="otp_desktop_code">Code à 6 chiffres</label>
+        <input id="otp_desktop_code" type="text" name="code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
                placeholder="— — — — — —" class="otp-input" autocomplete="one-time-code" required autofocus>
     </div>
     <button type="submit" class="auth-btn">Vérifier le code</button>

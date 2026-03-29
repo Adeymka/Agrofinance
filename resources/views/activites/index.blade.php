@@ -9,6 +9,7 @@
 @endsection
 
 @section('content')
+@php use App\Support\IndicateursLibelles; @endphp
 
 @if($platform === 'mobile')
 
@@ -93,7 +94,7 @@
 .act-card-meta {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
 }
 .act-badge {
     font-family: var(--font-ui), sans-serif;
@@ -181,7 +182,7 @@
 .act-empty-sub {
     font-family: var(--font-ui), sans-serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
 }
 </style>
 @endpush
@@ -277,7 +278,7 @@ $activeTab = request('tab', 'en_cours');
                 <div class="act-metric-val" style="color:var(--af-color-danger);">{{ number_format($ct / 1000, 1, ',', ' ') }}K</div>
             </div>
             <div class="act-metric-cell">
-                <div class="act-metric-lbl">Marge</div>
+                <div class="act-metric-lbl" title="{{ IndicateursLibelles::label('MB') }}">{{ IndicateursLibelles::labelCourt('MB') }}</div>
                 <div class="act-metric-val" style="color:{{ $mb >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
                     {{ $mb >= 0 ? '+' : '' }}{{ number_format($mb / 1000, 1, ',', ' ') }}K
                 </div>
@@ -319,7 +320,7 @@ $activeTab = request('tab', 'en_cours');
     <div id="panel-en-cours" class="tab-panel" data-panel="1">
         <div class="card overflow-x-auto">
             <table class="w-full text-sm">
-                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Début</th><th class="py-2 pr-4 text-right">Recettes</th><th class="py-2 pr-4 text-right">Dépenses</th><th class="py-2 pr-4 text-right">Marge</th><th class="py-2 pr-4">Statut</th><th class="py-2">Actions</th></tr></thead>
+                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Début</th><th class="py-2 pr-4 text-right">Recettes</th><th class="py-2 pr-4 text-right">Dépenses</th><th class="py-2 pr-4 text-right" title="{{ IndicateursLibelles::label('MB') }}">{{ IndicateursLibelles::labelCourt('MB') }}</th><th class="py-2 pr-4">Statut</th><th class="py-2">Actions</th></tr></thead>
                 <tbody>
                     @forelse($actives as $a)
                         @php $ind = $indicateursParActivite[$a->id] ?? []; @endphp
@@ -348,7 +349,7 @@ $activeTab = request('tab', 'en_cours');
     <div id="panel-terminees" class="tab-panel hidden" data-panel="2">
         <div class="card overflow-x-auto bg-gray-50/50">
             <table class="w-full text-sm">
-                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Date fin</th><th class="py-2 pr-4 text-right">Marge</th><th class="py-2 pr-4 text-right">RNE</th><th class="py-2">Actions</th></tr></thead>
+                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Date fin</th><th class="py-2 pr-4 text-right" title="{{ IndicateursLibelles::label('MB') }}">{{ IndicateursLibelles::labelCourt('MB') }}</th><th class="py-2 pr-4 text-right" title="{{ IndicateursLibelles::label('RNE') }}">{{ IndicateursLibelles::labelCourt('RNE') }}</th><th class="py-2">Actions</th></tr></thead>
                 <tbody>
                     @forelse($terminees as $a)
                         @php $ind = $indicateursTerminees[$a->id] ?? []; @endphp
@@ -366,7 +367,7 @@ $activeTab = request('tab', 'en_cours');
     <div id="panel-abandonnees" class="tab-panel hidden" data-panel="3">
         <div class="card overflow-x-auto bg-gray-50/50 border border-dashed border-gray-200">
             <table class="w-full text-sm">
-                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Date fin</th><th class="py-2 pr-4 text-right">Marge</th><th class="py-2 pr-4 text-right">RNE</th><th class="py-2">Actions</th></tr></thead>
+                <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-4">Campagne</th><th class="py-2 pr-4">Type</th><th class="py-2 pr-4">Date fin</th><th class="py-2 pr-4 text-right" title="{{ IndicateursLibelles::label('MB') }}">{{ IndicateursLibelles::labelCourt('MB') }}</th><th class="py-2 pr-4 text-right" title="{{ IndicateursLibelles::label('RNE') }}">{{ IndicateursLibelles::labelCourt('RNE') }}</th><th class="py-2">Actions</th></tr></thead>
                 <tbody>
                     @forelse($abandonnees as $a)
                         @php $ind = $indicateursAbandonnees[$a->id] ?? []; @endphp

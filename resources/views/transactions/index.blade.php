@@ -70,7 +70,7 @@
 .txli-meta {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-bottom: 10px;
 }
 .txli-type-pill {

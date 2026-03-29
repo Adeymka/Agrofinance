@@ -45,7 +45,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-bottom: 10px;
 }
 
@@ -56,6 +56,7 @@
     margin-bottom: 2px;
 }
 .txm-type-btn {
+    min-height: 44px;
     padding: 14px;
     border-radius: 14px;
     border: 1px solid var(--af-border-glass-soft);
@@ -87,6 +88,7 @@
     margin-top: 12px;
 }
 .txm-nature-pill {
+    min-height: 44px;
     padding: 12px;
     border-radius: 14px;
     border: 1px solid var(--af-border-glass-soft);
@@ -144,7 +146,7 @@
     text-align: center;
     font-family: var(--font-ui), sans-serif;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--af-text-dim);
     letter-spacing: 0.08em;
     margin-bottom: 12px;
 }
@@ -167,14 +169,14 @@
     box-sizing: border-box;
 }
 .txm-input:focus { border-color: var(--af-chip-active-border); }
-.txm-input::placeholder { color: rgba(255, 255, 255, 0.22); }
+.txm-input::placeholder { color: rgba(255, 255, 255, 0.38); }
 .txm-input-label {
     font-family: var(--font-ui), sans-serif;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--af-text-muted);
     margin-bottom: 6px;
 }
 .txm-field { margin-bottom: 12px; }
@@ -191,7 +193,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.38);
     padding: 10px 0 6px;
     display: block;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -239,6 +241,7 @@
 }
 .txm-mode-btn {
     flex: 1;
+    min-height: 44px;
     font-family: var(--font-ui), sans-serif;
     font-size: 12px;
     font-weight: 600;
@@ -248,7 +251,7 @@
     cursor: pointer;
     text-align: center;
     background: transparent;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--af-text-muted);
     transition: all 0.15s;
 }
 .txm-mode-btn.active {
@@ -284,6 +287,7 @@
 }
 .txm-btn-next {
     flex: 1;
+    min-height: 44px;
     padding: 14px;
     border-radius: 14px;
     font-family: var(--font-ui), sans-serif;
@@ -342,9 +346,28 @@
     letter-spacing: -0.02em;
     margin-bottom: 18px;
 }
-.txm-error { font-size: 12px; color: var(--af-color-danger); }
-.txm-error--center { text-align: center; margin-bottom: 6px; }
+.txm-error {
+    font-size: 12px;
+    color: #fecaca;
+    border-left: 3px solid var(--af-color-danger);
+    padding: 4px 0 4px 10px;
+    margin-top: 4px;
+}
+.txm-error--center { text-align: center; margin-bottom: 6px; border-left: none; padding-left: 0; }
 .txm-error--block { margin-bottom: 8px; }
+.txm-error-summary {
+    background: var(--af-red-alert-bg);
+    border: 1px solid var(--af-red-alert-border);
+    border-radius: var(--af-radius-md);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 12px;
+    color: #fecaca;
+    line-height: 1.45;
+}
+.txm-error-summary strong { display: block; margin-bottom: 6px; font-weight: 700; color: #fff; }
+.txm-error-summary ul { margin: 0; padding-left: 1.1rem; }
 .txm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
 .txm-checkbox-accent { width: 18px; height: 18px; border-radius: 6px; accent-color: var(--af-color-accent); }
 .txm-checkbox-label { font-family: var(--font-ui), sans-serif; font-size: 13px; color: var(--af-text-muted); }
@@ -386,6 +409,16 @@
 <div class="txm-content-pad">
     <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" enctype="multipart/form-data">
         @csrf
+        @if ($errors->any())
+            <div class="txm-error-summary" role="alert" aria-live="polite">
+                <strong>⚠ Vérifiez les champs ci-dessous</strong>
+                <ul>
+                    @foreach ($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <input type="hidden" name="type" id="inputType" value="depense">
         <input type="hidden" name="categorie_mode" id="inputCategorieMode" value="{{ $categorieModeInitial }}">
 
@@ -415,6 +448,7 @@
                     </div>
                     <input type="radio" name="nature" value="variable" id="natVar" checked class="hidden">
                     <input type="radio" name="nature" value="fixe" id="natFix" class="hidden">
+                    <p class="text-[11px] text-white/50 leading-relaxed mt-2 px-0.5">Le « reste avant charges fixes » suit surtout les dépenses liées au volume ; le gain ou la perte finale compte toutes les dépenses.</p>
                 </div>
             </div>
 
@@ -470,7 +504,7 @@
                 <div class="txm-field" style="margin-top:14px;">
                     <div class="txm-input-label">Photo ou PDF justificatif (optionnel)</div>
                     <input type="file" name="justificatif" accept="image/jpeg,image/png,image/webp,application/pdf" class="txm-input" style="font-size:13px;">
-                    <p class="text-[11px] text-white/35 mt-1">Max. 5 Mo — uniquement en ligne. Formats : JPG, PNG, WEBP, PDF.</p>
+                    <p class="text-[11px] text-white/48 mt-1">Max. 5 Mo — uniquement en ligne. Formats : JPG, PNG, WEBP, PDF.</p>
                     @error('justificatif')<p class="txm-error">{{ $message }}</p>@enderror
                 </div>
             </div>
@@ -536,6 +570,21 @@
                            autocomplete="off"
                            disabled>
                 </div>
+                <div id="txmBlocIntrant" class="hidden txm-block mt-3 border border-amber-500/30 bg-amber-500/[0.07]">
+                    <p class="text-[12px] text-white/75 leading-snug">Indiquez si l’achat sert la production (pour les indicateurs « valeur ajoutée »).</p>
+                    <div class="txm-label" style="margin-top:10px;">Cet achat sert la production ?</div>
+                    <div class="txm-nature-row" style="margin-top:8px;">
+                        <label class="flex items-center justify-center gap-2 txm-input" style="cursor:pointer;">
+                            <input type="radio" name="intrant_production" value="1" class="rounded border-white/30" @checked(old('intrant_production') === null || old('intrant_production') === true || old('intrant_production') === '1' || old('intrant_production') === 1)>
+                            <span>Oui</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-2 txm-input" style="cursor:pointer;">
+                            <input type="radio" name="intrant_production" value="0" class="rounded border-white/30" @checked(old('intrant_production') === false || old('intrant_production') === '0' || old('intrant_production') === 0)>
+                            <span>Non</span>
+                        </label>
+                    </div>
+                    @error('intrant_production')<p class="text-sm text-red-400 mt-2">{{ $message }}</p>@enderror
+                </div>
             </div>
 
         </div>
@@ -553,6 +602,21 @@
 
 <script>
 (function () {
+    var CI_SLUGS_MOB = @json($slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires());
+    function updateTxmIntrant() {
+        var dep = document.getElementById('inputType').value === 'depense';
+        var mode = document.getElementById('inputCategorieMode').value;
+        var cat = '';
+        if (mode === 'libre') {
+            cat = (document.getElementById('inputCategorieLibre') && document.getElementById('inputCategorieLibre').value || '').trim();
+        } else {
+            var cr = document.querySelector('#formTransaction input[name="categorie"]:checked');
+            cat = cr ? cr.value : '';
+        }
+        var need = dep && cat && CI_SLUGS_MOB.indexOf(cat) === -1;
+        var bloc = document.getElementById('txmBlocIntrant');
+        if (bloc) bloc.classList.toggle('hidden', !need);
+    }
     var suggestionsPayload = @json($suggestionsByExploitation);
     var activiteVersExploitation = @json($activiteVersExploitation);
 
@@ -617,6 +681,7 @@
             catR.querySelectorAll('input').forEach(function (i) { i.name = 'categorie'; i.disabled = false; });
             catD.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
         }
+        updateTxmIntrant();
     };
 
     window.setModeLibre = function () {
@@ -629,6 +694,7 @@
         catR.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
         document.getElementById('btnModeLibre').classList.add('active');
         document.getElementById('btnModeListe').classList.remove('active');
+        updateTxmIntrant();
     };
 
     function setType(type) {
@@ -651,6 +717,7 @@
             setModeListe();
         }
         renderSuggestions();
+        updateTxmIntrant();
     }
 
     window.selectNature = function (val) {
@@ -675,6 +742,7 @@
             btnNext.textContent = 'Enregistrer';
             renderSuggestions();
             if (inputCategorieMode.value === 'liste') { setModeListe(); } else { setModeLibre(); }
+            updateTxmIntrant();
         } else {
             btnNext.textContent = 'Suivant →';
         }
@@ -719,7 +787,7 @@
             return null;
         }
 
-        return {
+        var out = {
             activite_id: activite_id,
             type: type,
             nature: nature,
@@ -729,6 +797,15 @@
             note: note || null,
             est_imprevue: !!est_imprevue,
         };
+        if (type === 'depense' && categorie && CI_SLUGS_MOB.indexOf(categorie) === -1) {
+            var ir = document.querySelector('#formTransaction input[name="intrant_production"]:checked');
+            if (!ir) {
+                alert('Indiquez si cet achat sert la production de la campagne (Oui / Non).');
+                return null;
+            }
+            out.intrant_production = ir.value === '1';
+        }
+        return out;
     };
 
     window.handleNext = function () {
@@ -758,6 +835,9 @@
 
     document.getElementById('btnDep').addEventListener('click', function () { setType('depense'); });
     document.getElementById('btnRec').addEventListener('click', function () { setType('recette'); });
+    catD.addEventListener('change', updateTxmIntrant);
+    catR.addEventListener('change', updateTxmIntrant);
+    if (inputCategorieLibre) inputCategorieLibre.addEventListener('input', updateTxmIntrant);
 
     setType('depense');
     goStep(1);
@@ -816,6 +896,7 @@
                         <label class="cursor-pointer"><input type="radio" name="nature" value="variable" class="peer sr-only" checked><div class="txn-nature-pill p-3 text-center text-sm">Variable</div></label>
                         <label class="cursor-pointer"><input type="radio" name="nature" value="fixe" class="peer sr-only"><div class="txn-nature-pill p-3 text-center text-sm">Fixe</div></label>
                     </div>
+                    <p class="text-[11px] text-white/45 leading-relaxed">Le reste avant charges fixes suit surtout les dépenses liées au volume ; le résultat final (gain ou perte) prend en compte fixe et variable.</p>
                 </div>
             </div>
 
@@ -858,7 +939,7 @@
                             </details>
                         @endforeach
                     </div>
-                    <p class="text-[11px] text-white/40">En « Liste », choisissez un libellé du référentiel ci-dessus ou un de vos libellés en haut. Passez en « Saisie libre » pour tout taper.</p>
+                    <p class="text-[11px] text-white/52">En « Liste », choisissez un libellé du référentiel ci-dessus ou un de vos libellés en haut. Passez en « Saisie libre » pour tout taper.</p>
                 </div>
                 <div id="zoneLibre" class="hidden space-y-2">
                     <label class="block text-xs font-medium text-gray-600 mb-1">Libellé de catégorie</label>
@@ -867,11 +948,22 @@
                 @error('categorie')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
             </div>
 
+            @php $slugsCi = $slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires(); @endphp
+            <div id="blocIntrantProduction" class="card hidden border-amber-500/25 bg-amber-500/[0.06] space-y-3">
+                <p class="text-xs text-white/75">Cette catégorie n’est pas un intrant « standard » pour les indicateurs (valeur ajoutée). Indiquez si l’achat sert la production de cette campagne.</p>
+                <p class="text-xs font-medium text-white/90">Cet achat sert la production de cette campagne ?</p>
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center gap-2 text-sm text-white/90"><input type="radio" name="intrant_production" value="1" class="rounded border-white/30" @checked(old('intrant_production') === null || old('intrant_production') === true || old('intrant_production') === '1' || old('intrant_production') === 1)> Oui</label>
+                    <label class="flex items-center gap-2 text-sm text-white/90"><input type="radio" name="intrant_production" value="0" class="rounded border-white/30" @checked(old('intrant_production') === false || old('intrant_production') === '0' || old('intrant_production') === 0)> Non</label>
+                </div>
+                @error('intrant_production')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
+            </div>
+
             <div class="card space-y-5">
                 <h2 class="text-sm font-semibold text-gray-800 font-display sr-only">Montant et détails</h2>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1 text-center">Montant (FCFA)</label>
-                    <input type="number" name="montant" min="1" step="1" required inputmode="numeric" value="{{ old('montant') }}" class="w-full text-center text-3xl font-bold rounded-xl border-2 border-white/15 bg-white/[0.05] py-4 text-emerald-300 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/40">
+                    <input type="number" name="montant" min="1" step="1" required inputmode="numeric" value="{{ old('montant') }}" class="w-full text-center text-3xl font-bold rounded-xl border-2 border-white/15 bg-white/[0.05] py-4 text-emerald-300 placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/40">
                 </div>
                 <div><label class="block text-xs font-medium text-gray-600 mb-1">Date</label><input type="date" name="date_transaction" value="{{ old('date_transaction', now()->toDateString()) }}" required class="input-field"></div>
                 <div><label class="block text-xs font-medium text-gray-600 mb-1">Note (optionnel)</label><textarea name="note" rows="2" maxlength="500" class="input-field" placeholder="Commentaire…">{{ old('note') }}</textarea></div>
@@ -890,6 +982,21 @@
 
         <script>
             (function () {
+                var CI_SLUGS = @json($slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires());
+                function categorieCouranteDesktop() {
+                    if (inputCategorieMode.value === 'libre') {
+                        return (inputCategorieLibre.value || '').trim();
+                    }
+                    var cr = document.querySelector('#catDepenses input[name="categorie"]:checked, #catRecettes input[name="categorie"]:checked');
+                    return cr ? cr.value : '';
+                }
+                function updateIntrantBlocDesktop() {
+                    var dep = inputType.value === 'depense';
+                    var cat = categorieCouranteDesktop();
+                    var need = dep && cat && CI_SLUGS.indexOf(cat) === -1;
+                    var bloc = document.getElementById('blocIntrantProduction');
+                    if (bloc) bloc.classList.toggle('hidden', !need);
+                }
                 var suggestionsPayload = @json($suggestionsByExploitation);
                 var activiteVersExploitation = @json($activiteVersExploitation);
                 var inputType = document.getElementById('inputType');
@@ -917,16 +1024,18 @@
                 }
                 function clearFsaRadios() { document.querySelectorAll('.cat-radio-std').forEach(function(i){i.checked=false;}); }
                 function clearLibre() { inputCategorieLibre.value=''; }
-                function setModeListe() { inputCategorieMode.value='liste'; zoneListe.classList.remove('hidden'); zoneLibre.classList.add('hidden'); inputCategorieLibre.disabled=true; clearLibre(); btnModeListe.classList.add('txn-cat-mode-btn--active'); btnModeListe.classList.remove('text-white/60'); btnModeLibre.classList.remove('txn-cat-mode-btn--active'); btnModeLibre.classList.add('text-white/60'); }
-                function setModeLibre() { inputCategorieMode.value='libre'; zoneListe.classList.add('hidden'); zoneLibre.classList.remove('hidden'); inputCategorieLibre.disabled=false; clearFsaRadios(); btnModeLibre.classList.add('txn-cat-mode-btn--active'); btnModeLibre.classList.remove('text-white/60'); btnModeListe.classList.remove('txn-cat-mode-btn--active'); btnModeListe.classList.add('text-white/60'); catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); }
+                function setModeListe() { inputCategorieMode.value='liste'; zoneListe.classList.remove('hidden'); zoneLibre.classList.add('hidden'); inputCategorieLibre.disabled=true; clearLibre(); btnModeListe.classList.add('txn-cat-mode-btn--active'); btnModeListe.classList.remove('text-white/60'); btnModeLibre.classList.remove('txn-cat-mode-btn--active'); btnModeLibre.classList.add('text-white/60'); updateIntrantBlocDesktop(); }
+                function setModeLibre() { inputCategorieMode.value='libre'; zoneListe.classList.add('hidden'); zoneLibre.classList.remove('hidden'); inputCategorieLibre.disabled=false; clearFsaRadios(); btnModeLibre.classList.add('txn-cat-mode-btn--active'); btnModeLibre.classList.remove('text-white/60'); btnModeListe.classList.remove('txn-cat-mode-btn--active'); btnModeListe.classList.add('text-white/60'); catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); updateIntrantBlocDesktop(); }
                 function setType(type) {
                     inputType.value=type; var dep=type==='depense'; catD.classList.toggle('hidden',!dep); catR.classList.toggle('hidden',dep); blocNat.classList.toggle('hidden',!dep); blocNat.querySelectorAll('input[name="nature"]').forEach(function(i){i.disabled=!dep;});
-                    if(inputCategorieMode.value==='libre'){catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto '+(dep?'bg-red-600 hover:bg-red-700':'bg-green-700 hover:bg-green-800'); renderMesCategories(); return;}
+                    if(inputCategorieMode.value==='libre'){catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto '+(dep?'bg-red-600 hover:bg-red-700':'bg-green-700 hover:bg-green-800'); renderMesCategories(); updateIntrantBlocDesktop(); return;}
                     if(dep){catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.setAttribute('name','categorie');i.disabled=false;}); catR.querySelectorAll('input').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); btnD.className='txn-type-btn txn-type-btn--depense-on'; btnR.className='txn-type-btn txn-type-btn--inactive'; btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto bg-red-600 hover:bg-red-700';}
                     else{catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.setAttribute('name','categorie');i.disabled=false;}); btnR.className='txn-type-btn txn-type-btn--recette-on'; btnD.className='txn-type-btn txn-type-btn--inactive'; btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto bg-green-700 hover:bg-green-800';}
                     renderMesCategories();
+                    updateIntrantBlocDesktop();
                 }
-                zoneListe.addEventListener('change',function(e){if(e.target&&e.target.classList.contains('cat-radio-std')&&e.target.checked){clearLibre();}});
+                zoneListe.addEventListener('change',function(e){if(e.target&&e.target.classList.contains('cat-radio-std')&&e.target.checked){clearLibre();} updateIntrantBlocDesktop();});
+                if (inputCategorieLibre) inputCategorieLibre.addEventListener('input', updateIntrantBlocDesktop);
                 document.getElementById('btnDepense').addEventListener('click',function(){setType('depense');});
                 document.getElementById('btnRecette').addEventListener('click',function(){setType('recette');});
                 btnModeListe.addEventListener('click',function(){setModeListe();setType(inputType.value);});
@@ -934,6 +1043,7 @@
                 selectActivite.addEventListener('change',function(){var url=new URL(window.location.href);url.searchParams.set('activite_id',selectActivite.value);window.location.href=url.toString();});
                 if(inputCategorieMode.value==='libre'){setModeLibre();}else{setModeListe();}
                 setType(inputType.value);
+                updateIntrantBlocDesktop();
             })();
         </script>
     @endif

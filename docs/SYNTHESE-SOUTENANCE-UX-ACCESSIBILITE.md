@@ -321,6 +321,8 @@ Présentation **partenaire** : **vidéo** **full** **screen** du **simulateur** 
 
 Elle ne remplace pas un **audit** **WCAG** **certifié**, ni des **tests** **utilisateurs** **quantitatifs**, ni une **charte** **design** **figée** dans **Figma**. Elle **complète** le **domaine 3** (parcours) en **centrant** **perception** et **inclusion** ; **les** **règles** **métier** sur les **couleurs** de **statut** restent dans le **domaine 1**.
 
+**Implémentation livrée (sprint S6) :** le compte rendu **`docs/SPRINT-S6-UX-ACCESSIBILITE.md`** décrit les mesures présentes dans le dépôt (focus visible, erreurs auth et saisie, cibles tactiles, titre « Vue d’ensemble » sur le dashboard mobile, **`prefers-contrast`**, token **`--af-text-kpi`**).
+
 ---
 
 ## H. Texte court pour l’oral (environ trente secondes)

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0D1F0D">
     <title>Hors ligne — AgroFinance+</title>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -71,6 +71,9 @@
         <p>
             AgroFinance+ est hors ligne.<br>
             Reconnectez-vous pour accéder à vos données et continuer la gestion de votre exploitation.
+        </p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.42);margin-bottom:20px;line-height:1.55;">
+            Si vous aviez enregistré des dépenses ou des recettes sans réseau, elles restent sur cet appareil jusqu’à la prochaine connexion ; elles seront alors envoyées vers votre compte.
         </p>
         <button class="btn" onclick="window.location.reload()">
             Réessayer

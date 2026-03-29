@@ -255,7 +255,7 @@
     <div class="abo-m-card abo-m-card--featured">
         <span class="abo-m-popular">Populaire</span>
         <span class="abo-m-badge abo-m-badge--accent">Essentielle</span>
-        <p class="abo-m-price">1 500 <span>FCFA / mois</span></p>
+        <p class="abo-m-price">{{ $tarifs['mensuel'] }} <span>FCFA / mois</span></p>
         <ul class="abo-m-list">
             <li>• Tout le gratuit</li>
             <li>• Rapports PDF avancés</li>
@@ -272,7 +272,7 @@
     {{-- Pro --}}
     <div class="abo-m-card abo-m-card--pro">
         <span class="abo-m-badge abo-m-badge--amber">Pro</span>
-        <p class="abo-m-price">5 000 <span>FCFA / mois</span></p>
+        <p class="abo-m-price">{{ $tarifs['annuel'] }} <span>FCFA / mois</span></p>
         <ul class="abo-m-list">
             <li>• Tout Essentielle</li>
             <li>• Jusqu’à 5 exploitations</li>
@@ -289,7 +289,7 @@
     {{-- Coopérative --}}
     <div class="abo-m-card abo-m-card--coop">
         <span class="abo-m-badge abo-m-badge--violet">Coopérative</span>
-        <p class="abo-m-price">8 000 <span>FCFA / mois</span></p>
+        <p class="abo-m-price">{{ $tarifs['cooperative'] }} <span>FCFA / mois</span></p>
         <ul class="abo-m-list">
             <li>• Tout Pro</li>
             <li>• Exploitations illimitées</li>
@@ -301,6 +301,35 @@
             <input type="hidden" name="telephone" value="{{ $user->telephone }}">
             <button type="submit" class="abo-m-btn abo-m-btn--violet">Choisir Coopérative</button>
         </form>
+    </div>
+
+    <div class="abo-m-card" style="margin-bottom:16px;">
+        <p class="abo-m-fedapay-title">Ce que chaque formule permet</p>
+        <p class="abo-m-fedapay-text" style="margin-bottom:10px;">Même règles que dans l’app : rapports PDF, nombre d’exploitations, historique et dossier crédit.</p>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; font-size:11px; border-collapse:collapse; color:var(--af-text-secondary);">
+                <thead>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1); text-align:left;">
+                        <th style="padding:6px 4px;">Formule</th>
+                        <th style="padding:6px 4px;">PDF</th>
+                        <th style="padding:6px 4px;">Exploit.</th>
+                        <th style="padding:6px 4px;">Historique</th>
+                        <th style="padding:6px 4px;">Dossier crédit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tableauDroitsPlans as $ligne)
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <td style="padding:8px 4px;">{{ $ligne['plan'] }}</td>
+                        <td style="padding:8px 4px;">{{ $ligne['pdf'] }}</td>
+                        <td style="padding:8px 4px;">{{ $ligne['multi'] }}</td>
+                        <td style="padding:8px 4px;">{{ $ligne['historique'] }}</td>
+                        <td style="padding:8px 4px;">{{ $ligne['dossier'] }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="abo-m-fedapay">
@@ -347,7 +376,7 @@
         <div class="card border-2 border-agro-vert ring-2 ring-agro-vert/20 relative">
             <span class="absolute -top-2 right-3 badge-vert text-[10px]">Populaire</span>
             <p class="badge-vert mb-2">Essentielle</p>
-            <p class="text-2xl font-bold text-gray-900">1 500 <span class="text-sm font-normal">FCFA / mois</span></p>
+            <p class="text-2xl font-bold text-gray-900">{{ $tarifs['mensuel'] }} <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout le gratuit</li>
                 <li>• Rapports PDF avancés</li>
@@ -363,7 +392,7 @@
 
         <div class="card border-2 border-amber-200 bg-amber-50/30">
             <p class="badge-orange mb-2">Pro</p>
-            <p class="text-2xl font-bold text-gray-900">5 000 <span class="text-sm font-normal">FCFA / mois</span></p>
+            <p class="text-2xl font-bold text-gray-900">{{ $tarifs['annuel'] }} <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout Essentielle</li>
                 <li>• Jusqu’à 5 exploitations</li>
@@ -379,7 +408,7 @@
 
         <div class="card border-2 border-violet-200 bg-violet-50/40">
             <p class="mb-2 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-800">Coopérative</p>
-            <p class="text-2xl font-bold text-gray-900">8 000 <span class="text-sm font-normal">FCFA / mois</span></p>
+            <p class="text-2xl font-bold text-gray-900">{{ $tarifs['cooperative'] }} <span class="text-sm font-normal">FCFA / mois</span></p>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
                 <li>• Tout Pro</li>
                 <li>• Exploitations illimitées</li>
@@ -394,6 +423,33 @@
                 </button>
             </form>
         </div>
+    </div>
+
+    <div class="card mb-8 overflow-x-auto">
+        <p class="text-sm font-semibold text-gray-800 mb-2">Ce que chaque formule permet</p>
+        <p class="text-xs text-gray-500 mb-3">Les montants facturés sont ceux affichés sur les cartes ci-dessus (source unique avec le paiement).</p>
+        <table class="w-full text-sm text-left text-gray-600 border-collapse">
+            <thead>
+                <tr class="border-b border-gray-200">
+                    <th class="py-2 pr-2 font-semibold">Formule</th>
+                    <th class="py-2 pr-2 font-semibold">Rapports PDF</th>
+                    <th class="py-2 pr-2 font-semibold">Exploitations</th>
+                    <th class="py-2 pr-2 font-semibold">Historique</th>
+                    <th class="py-2 font-semibold">Dossier crédit</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tableauDroitsPlans as $ligne)
+                <tr class="border-b border-gray-100">
+                    <td class="py-2 pr-2">{{ $ligne['plan'] }}</td>
+                    <td class="py-2 pr-2">{{ $ligne['pdf'] }}</td>
+                    <td class="py-2 pr-2">{{ $ligne['multi'] }}</td>
+                    <td class="py-2 pr-2">{{ $ligne['historique'] }}</td>
+                    <td class="py-2">{{ $ligne['dossier'] }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 
     <div class="card max-w-xl">

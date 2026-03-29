@@ -340,6 +340,8 @@ changement de PIN, monitoring, pentest, export RGPD structuré, WAF.
 
 Elle ne remplace pas un **audit de sécurité** (pentest, revue OWASP complète), ni un **conseil juridique** sur le RGPD ou le droit local applicable au Bénin / à l’Afrique de l’Ouest. Le volet **parcours & écrans** est traité dans `SYNTHESE-SOUTENANCE-PRODUIT-PARCOURS.md` ; les **tests** automatisés peuvent faire l’objet d’un complément ultérieur.
 
+**Implémentation dans le dépôt (sprint S1)** — Pour le **tableau de synthèse** des mesures réellement en place (rate limiting, logs, justificatifs, pages légales, checklist production), voir **`docs/SPRINT-S1-SECURITE-DONNEES.md`**.
+
 ---
 
 ## H. Texte court pour l’oral (environ trente secondes)

@@ -70,7 +70,10 @@ class TransactionController extends Controller
             'typeExploitation',
             'suggestionsByExploitation',
             'activiteVersExploitation'
-        ) + ['nav' => 'saisie']);
+        ) + [
+            'nav' => 'saisie',
+            'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),
+        ]);
     }
 
     public function store(Request $request)
@@ -123,11 +126,25 @@ class TransactionController extends Controller
             }
         }
 
+        if ($request->type === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
+            $request->validate([
+                'intrant_production' => 'required|in:0,1',
+            ]);
+        }
+
+        $intrantProduction = null;
+        if ($request->type === 'depense') {
+            $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
+                ? null
+                : $request->boolean('intrant_production');
+        }
+
         $transaction = Transaction::create([
             'activite_id' => $request->activite_id,
             'type' => $request->type,
             'nature' => $request->type === 'recette' ? null : $request->nature,
             'categorie' => $categorie,
+            'intrant_production' => $intrantProduction,
             'montant' => $request->montant,
             'date_transaction' => $request->date_transaction,
             'note' => $request->note,
@@ -224,7 +241,10 @@ class TransactionController extends Controller
             'categorieLibre',
             'suggestionsByExploitation',
             'activiteVersExploitation'
-        ) + ['nav' => 'saisie']);
+        ) + [
+            'nav' => 'saisie',
+            'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),
+        ]);
     }
 
     public function update(Request $request, int $id)
@@ -288,11 +308,25 @@ class TransactionController extends Controller
             }
         }
 
+        if ($request->type === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
+            $request->validate([
+                'intrant_production' => 'required|in:0,1',
+            ]);
+        }
+
+        $intrantProduction = null;
+        if ($request->type === 'depense') {
+            $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
+                ? null
+                : $request->boolean('intrant_production');
+        }
+
         $transaction->update([
             'activite_id' => $request->activite_id,
             'type' => $request->type,
             'nature' => $request->type === 'recette' ? null : $request->input('nature'),
             'categorie' => $categorie,
+            'intrant_production' => $intrantProduction,
             'montant' => $request->montant,
             'date_transaction' => $request->date_transaction,
             'note' => $request->note,

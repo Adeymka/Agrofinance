@@ -175,4 +175,26 @@ final class TransactionCategories
 
         return array_values(array_unique($slugs));
     }
+
+    /**
+     * Slugs de dépenses comptées dans les « charges intermédiaires » (CI) du moteur d’indicateurs.
+     * Les autres dépenses peuvent être rattachées à la production via le champ {@see \App\Models\Transaction::$intrant_production}.
+     *
+     * @return list<string>
+     */
+    public static function slugsChargesIntermediaires(): array
+    {
+        return [
+            'semences', 'engrais_mineraux', 'engrais_organiques',
+            'pesticides', 'herbicides', 'fongicides', 'vaccins',
+            'medicaments_veterinaires', 'aliments_animaux', 'eau_abreuvement',
+            'energie_transformation', 'emballages', 'matieres_premieres', 'produits_chimiques', 'carburant',
+        ];
+    }
+
+    public static function estSlugChargesIntermediaires(string $categorie): bool
+    {
+        return in_array($categorie, self::slugsChargesIntermediaires(), true);
+    }
 }
+

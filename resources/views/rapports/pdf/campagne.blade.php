@@ -61,6 +61,7 @@
     </style>
 </head>
 <body>
+@php use App\Support\IndicateursLibelles; @endphp
 
     <div class="entete">
         <div class="titre-app">AgroFinance+</div>
@@ -84,41 +85,48 @@
         <tr><td><strong>Statut</strong></td><td>{{ $activite->statut }}</td></tr>
     </table>
 
+    @if(!empty($plancherAbonnementPdf))
+        <p style="font-size:11px;color:#555;">{{ $plancherAbonnementPdf }}</p>
+    @endif
+    @if(!empty($indicateurs['donnees_indicatives']))
+        <p style="font-size:11px;font-style:italic;color:#444;">Peu de données saisies sur cette période : les indicateurs sont indicatifs.</p>
+    @endif
+
     <h2>Indicateurs financiers agricoles</h2>
     <table>
         <tr>
             <td class="kpi-cell">
-                <span class="kpi-label">Produit Brut (PB)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('PB') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['PB'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Marge Brute (MB)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('MB') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['MB'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Revenu Net (RNE)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('RNE') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['RNE'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Rendement Financier</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('RF') }}</span>
                 <span class="kpi-value">{{ $indicateurs['RF'] }}%</span>
             </td>
         </tr>
         <tr>
             <td class="kpi-cell">
-                <span class="kpi-label">Coûts Variables (CV)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('CV') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['CV'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Coûts Fixes (CF)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('CF') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['CF'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Coût Total (CT)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('CT') }}</span>
                 <span class="kpi-value">{{ number_format($indicateurs['CT'], 0, ',', ' ') }} FCFA</span>
             </td>
             <td class="kpi-cell">
-                <span class="kpi-label">Seuil Rentabilité (SR)</span>
+                <span class="kpi-label">{{ IndicateursLibelles::label('SR') }}</span>
                 <span class="kpi-value">
                     {{ $indicateurs['SR'] !== null && $indicateurs['SR'] !== '' ? number_format($indicateurs['SR'], 0, ',', ' ') . ' FCFA' : 'N/A' }}
                 </span>
@@ -127,7 +135,7 @@
     </table>
 
     <p>
-        Statut de rentabilité :
+        Lecture du résultat (rentable ou non) :
         <span class="statut-{{ $indicateurs['statut'] }}">
             @if($indicateurs['statut'] === 'vert') RENTABLE
             @elseif($indicateurs['statut'] === 'orange') ATTENTION

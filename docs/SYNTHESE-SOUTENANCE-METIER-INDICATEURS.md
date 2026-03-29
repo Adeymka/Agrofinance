@@ -385,6 +385,8 @@ avertissement **données insuffisantes** (voir **pistes D6** : seuils, bandeau, 
 
 L’analyse détaillée du code a surtout porté sur le **moteur de calcul** et les **API** associées, pas sur **chaque écran**, **chaque PDF**, ni **tous les tests**. Le volet **sécurité & données** est dans `SYNTHESE-SOUTENANCE-SECURITE-DONNEES.md` ; le **produit & parcours** dans `SYNTHESE-SOUTENANCE-PRODUIT-PARCOURS.md` ; l’**UX / accessibilité** dans `SYNTHESE-SOUTENANCE-UX-ACCESSIBILITE.md` ; l’**architecture & infra** dans `SYNTHESE-SOUTENANCE-ARCHITECTURE-INFRA.md` ; les **paiements & abonnement** dans `SYNTHESE-SOUTENANCE-PAIEMENT-ABONNEMENT.md` ; la **stratégie & positionnement** dans `SYNTHESE-SOUTENANCE-STRATEGIE-POSITIONNEMENT.md`. Un **complément** peut encore détailler les **tests** automatisés au-delà de ces documents.
 
+**Implémentation livrée (sprint S3) :** le compte rendu **`docs/SPRINT-S3-METIER-INDICATEURS.md`** décrit les mesures effectivement présentes dans le dépôt (période, `intrant_production`, `donnees_indicatives`, textes consolidés, PDF/API).
+
 ---
 
 ## H. Texte court pour l’oral (environ trente secondes)
