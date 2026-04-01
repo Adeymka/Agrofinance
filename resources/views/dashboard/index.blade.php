@@ -4,7 +4,7 @@
 @section('page-subtitle', $exploitation->nom)
 
 @section('topbar-actions')
-    @if(($infoAbonnement['plan_metier'] ?? '') === 'cooperative')
+    @if(($infoAbonnement['plan_metier'] ?? '') === 'cooperative' && ($canExportEntreprise ?? false))
     <a href="{{ route('dashboard.export.consolide.csv', ['periode' => ($periodeSelection ?? 'all')]) }}" class="btn-outline text-sm px-4 py-2 inline-flex items-center gap-2">
         <x-icon name="arrow-down-tray" class="w-4 h-4" /> Export CSV entreprise
     </a>

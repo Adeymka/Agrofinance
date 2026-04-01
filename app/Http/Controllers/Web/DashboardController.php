@@ -174,6 +174,8 @@ class DashboardController extends Controller
 
         $apiToken = session('api_token');
         $infoAbonnement = $this->abonnementService->infos($user);
+        $canExportEntreprise = $isCooperative
+            && ((int) $actor->id === (int) $user->id || $this->cooperativeService->canExportEntreprise($actor));
 
         return view('dashboard.index', [
             'user' => $user,
@@ -206,14 +208,21 @@ class DashboardController extends Controller
             'seuilAlerte' => $seuilAlerte,
             'seuilCritique' => $seuilCritique,
             'isCooperative' => $isCooperative,
+            'canExportEntreprise' => $canExportEntreprise,
         ]);
     }
 
     public function exporterConsolideEntrepriseCsv(Request $request): StreamedResponse
     {
-        $user = $this->cooperativeService->resolveOwner(auth()->user());
+        $actor = auth()->user();
+        $user = $this->cooperativeService->resolveOwner($actor);
         if (! $this->abonnementService->estPlanCooperatif($user)) {
             abort(403, "Fonction réservée au plan Coopérative.");
+        }
+        $canExportEntreprise = (int) $actor->id === (int) $user->id
+            || $this->cooperativeService->canExportEntreprise($actor);
+        if (! $canExportEntreprise) {
+            abort(403, "Votre rôle ne permet pas l’export entreprise.");
         }
         $lignes = $this->buildConsolideEntrepriseLignes($user, (string) $request->query('periode', 'all'));
 

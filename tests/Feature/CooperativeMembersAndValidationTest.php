@@ -227,4 +227,81 @@ class CooperativeMembersAndValidationTest extends TestCase
             ])
             ->assertStatus(403);
     }
+
+    public function test_role_permissions_for_export_audit_and_threshold_update(): void
+    {
+        $owner = $this->createOwner();
+        $validator = User::create([
+            'nom' => 'Vali',
+            'prenom' => 'Dateur',
+            'telephone' => '+22967990005',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+        $reader = User::create([
+            'nom' => 'Read',
+            'prenom' => 'Only2',
+            'telephone' => '+22967990006',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        $coop = Cooperative::where('owner_user_id', $owner->id)->firstOrFail();
+        CooperativeMember::create([
+            'cooperative_id' => $coop->id,
+            'user_id' => $validator->id,
+            'invited_phone' => $validator->telephone,
+            'role' => CooperativeMember::ROLE_VALIDATEUR,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+        ]);
+        CooperativeMember::create([
+            'cooperative_id' => $coop->id,
+            'user_id' => $reader->id,
+            'invited_phone' => $reader->telephone,
+            'role' => CooperativeMember::ROLE_LECTURE,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+        ]);
+
+        Exploitation::create([
+            'user_id' => $owner->id,
+            'nom' => 'Ferme Export',
+            'type' => 'mixte',
+            'localisation' => 'Cotonou',
+        ]);
+
+        $this->actingAs($validator)
+            ->get('/dashboard/export/consolide-entreprise-csv')
+            ->assertOk();
+
+        $this->actingAs($reader)
+            ->get('/dashboard/export/consolide-entreprise-csv')
+            ->assertStatus(403);
+
+        $this->actingAs($reader)
+            ->get('/cooperative/membres')
+            ->assertOk()
+            ->assertDontSee('Audit coopérative');
+
+        $this->actingAs($validator)
+            ->get('/cooperative/membres')
+            ->assertOk()
+            ->assertSee('Audit coopérative');
+
+        $this->actingAs($validator)
+            ->post('/cooperative/seuil-validation', [
+                'double_validation_threshold' => 200000,
+            ])->assertStatus(403);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/seuil-validation', [
+                'double_validation_threshold' => 200000,
+            ])->assertRedirect('/cooperative/membres');
+
+        $this->assertDatabaseHas('cooperatives', [
+            'id' => $coop->id,
+            'double_validation_threshold' => 200000,
+        ]);
+    }
 }

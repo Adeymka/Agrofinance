@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\AbonnementService;
 use App\Services\CooperativeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CooperativeController extends Controller
 {
@@ -31,11 +32,14 @@ class CooperativeController extends Controller
             ->with('user:id,nom,prenom,telephone')
             ->orderByDesc('id')
             ->get();
-        $audits = $coop->audits()
-            ->with(['actor:id,nom,prenom,telephone', 'member:id,nom,prenom,telephone', 'transaction:id,categorie,montant'])
-            ->latest('id')
-            ->limit(50)
-            ->get();
+        $canViewAudit = $this->cooperativeService->canViewAudit($actor);
+        $audits = $canViewAudit
+            ? $coop->audits()
+                ->with(['actor:id,nom,prenom,telephone', 'member:id,nom,prenom,telephone', 'transaction:id,categorie,montant'])
+                ->latest('id')
+                ->limit(50)
+                ->get()
+            : new Collection();
 
         return view('cooperative.members', [
             'nav' => 'cooperative',
@@ -44,6 +48,8 @@ class CooperativeController extends Controller
             'members' => $members,
             'audits' => $audits,
             'canManageMembers' => $this->cooperativeService->canManageMembers($actor),
+            'canManageSettings' => $this->cooperativeService->canManageSettings($actor),
+            'canViewAudit' => $canViewAudit,
             'myRole' => $this->cooperativeService->roleFor($actor),
             'roles' => [
                 CooperativeMember::ROLE_ADMIN,
@@ -135,5 +141,32 @@ class CooperativeController extends Controller
         );
 
         return redirect()->route('cooperative.members')->with('success', 'Statut mis à jour.');
+    }
+
+    public function updateThreshold(Request $request)
+    {
+        $actor = auth()->user();
+        if (! $this->cooperativeService->canManageSettings($actor)) {
+            abort(403);
+        }
+
+        $owner = $this->cooperativeService->resolveOwner($actor);
+        $coop = $this->cooperativeService->ensureOwnedCooperative($owner);
+
+        $request->validate([
+            'double_validation_threshold' => 'required|numeric|min:1|max:1000000000',
+        ]);
+
+        $threshold = (float) $request->input('double_validation_threshold');
+        $coop->update(['double_validation_threshold' => $threshold]);
+
+        $this->cooperativeService->log(
+            $coop,
+            $actor,
+            'cooperative.threshold_updated',
+            ['double_validation_threshold' => $threshold]
+        );
+
+        return redirect()->route('cooperative.members')->with('success', 'Seuil de double validation mis à jour.');
     }
 }

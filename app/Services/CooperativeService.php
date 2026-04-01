@@ -62,6 +62,21 @@ class CooperativeService
         return $this->roleFor($actor) === CooperativeMember::ROLE_ADMIN;
     }
 
+    public function canManageSettings(User $actor): bool
+    {
+        return $this->roleFor($actor) === CooperativeMember::ROLE_ADMIN;
+    }
+
+    public function canViewAudit(User $actor): bool
+    {
+        return in_array($this->roleFor($actor), [CooperativeMember::ROLE_ADMIN, CooperativeMember::ROLE_VALIDATEUR], true);
+    }
+
+    public function canExportEntreprise(User $actor): bool
+    {
+        return in_array($this->roleFor($actor), [CooperativeMember::ROLE_ADMIN, CooperativeMember::ROLE_VALIDATEUR], true);
+    }
+
     public function thresholdForDoubleValidation(User $actor): float
     {
         $coop = $this->cooperativeFor($actor);

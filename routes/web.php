@@ -109,6 +109,7 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/cooperative/membres/inviter', [CooperativeController::class, 'invite'])->name('cooperative.members.invite');
     Route::post('/cooperative/membres/{id}/role', [CooperativeController::class, 'updateRole'])->whereNumber('id')->name('cooperative.members.role');
     Route::post('/cooperative/membres/{id}/statut', [CooperativeController::class, 'toggleStatus'])->whereNumber('id')->name('cooperative.members.status');
+    Route::post('/cooperative/seuil-validation', [CooperativeController::class, 'updateThreshold'])->name('cooperative.threshold.update');
 
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');

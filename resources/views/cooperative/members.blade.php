@@ -14,6 +14,15 @@
             Double validation active à partir de
             <strong>{{ number_format((float) $cooperative->double_validation_threshold, 0, ',', ' ') }} FCFA</strong>.
         </p>
+        @if($canManageSettings ?? false)
+            <form method="POST" action="{{ route('cooperative.threshold.update') }}" class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                @csrf
+                <input type="number" step="1" min="1" max="1000000000" name="double_validation_threshold" class="input-field" value="{{ (int) $cooperative->double_validation_threshold }}" required>
+                <div class="md:col-span-2">
+                    <button type="submit" class="btn-outline">Mettre à jour le seuil</button>
+                </div>
+            </form>
+        @endif
     </div>
 
     @if($canManageMembers)
@@ -85,32 +94,34 @@
         </div>
     </div>
 
-    <div class="card p-4">
-        <h2 class="text-sm font-semibold text-gray-800 mb-3">Audit coopérative (50 derniers événements)</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-gray-100">
-                        <th class="text-left px-2 py-2">Date</th>
-                        <th class="text-left px-2 py-2">Action</th>
-                        <th class="text-left px-2 py-2">Acteur</th>
-                        <th class="text-left px-2 py-2">Détails</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($audits as $a)
+    @if($canViewAudit ?? false)
+        <div class="card p-4">
+            <h2 class="text-sm font-semibold text-gray-800 mb-3">Audit coopérative (50 derniers événements)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
                         <tr class="border-b border-gray-100">
-                            <td class="px-2 py-2 whitespace-nowrap">{{ $a->created_at?->format('d/m/Y H:i') }}</td>
-                            <td class="px-2 py-2">{{ $a->action }}</td>
-                            <td class="px-2 py-2">{{ $a->actor ? ($a->actor->prenom.' '.$a->actor->nom) : 'Système' }}</td>
-                            <td class="px-2 py-2 text-xs">{{ json_encode($a->meta ?? [], JSON_UNESCAPED_UNICODE) }}</td>
+                            <th class="text-left px-2 py-2">Date</th>
+                            <th class="text-left px-2 py-2">Action</th>
+                            <th class="text-left px-2 py-2">Acteur</th>
+                            <th class="text-left px-2 py-2">Détails</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="4" class="px-2 py-6 text-center text-gray-500">Aucun événement d’audit.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($audits as $a)
+                            <tr class="border-b border-gray-100">
+                                <td class="px-2 py-2 whitespace-nowrap">{{ $a->created_at?->format('d/m/Y H:i') }}</td>
+                                <td class="px-2 py-2">{{ $a->action }}</td>
+                                <td class="px-2 py-2">{{ $a->actor ? ($a->actor->prenom.' '.$a->actor->nom) : 'Système' }}</td>
+                                <td class="px-2 py-2 text-xs">{{ json_encode($a->meta ?? [], JSON_UNESCAPED_UNICODE) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="px-2 py-6 text-center text-gray-500">Aucun événement d’audit.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    @endif
 </div>
 @endsection
