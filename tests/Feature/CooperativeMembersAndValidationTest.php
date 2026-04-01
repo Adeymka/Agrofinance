@@ -158,4 +158,73 @@ class CooperativeMembersAndValidationTest extends TestCase
 
         $this->assertGreaterThanOrEqual(2, CooperativeAuditLog::query()->where('cooperative_id', $coop->id)->count());
     }
+
+    public function test_read_only_role_cannot_write_transactions_but_can_list(): void
+    {
+        $owner = $this->createOwner();
+        $reader = User::create([
+            'nom' => 'Read',
+            'prenom' => 'Only',
+            'telephone' => '+22967990004',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        $coop = Cooperative::where('owner_user_id', $owner->id)->firstOrFail();
+        CooperativeMember::create([
+            'cooperative_id' => $coop->id,
+            'user_id' => $reader->id,
+            'invited_phone' => $reader->telephone,
+            'role' => CooperativeMember::ROLE_LECTURE,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+        ]);
+
+        $exploitation = Exploitation::create([
+            'user_id' => $owner->id,
+            'nom' => 'Ferme Coop',
+            'type' => 'mixte',
+            'localisation' => 'Parakou',
+        ]);
+        $activite = Activite::create([
+            'exploitation_id' => $exploitation->id,
+            'nom' => 'Campagne',
+            'type' => 'culture',
+            'date_debut' => '2026-01-01',
+            'date_fin' => '2026-12-31',
+            'statut' => 'en_cours',
+            'budget_previsionnel' => 100000,
+        ]);
+
+        $this->actingAs($reader)
+            ->get('/transactions')
+            ->assertOk();
+
+        $this->actingAs($reader)
+            ->post('/transactions', [
+                'activite_id' => $activite->id,
+                'type' => 'depense',
+                'categorie' => 'main_oeuvre',
+                'montant' => 10000,
+                'date_transaction' => '2026-04-01',
+            ])
+            ->assertRedirect('/transactions');
+
+        $this->assertDatabaseMissing('transactions', [
+            'activite_id' => $activite->id,
+            'montant' => 10000,
+        ]);
+
+        $this->actingAs($reader)
+            ->postJson('/api/v1/transactions', [
+                'transactions' => [[
+                    'activite_id' => $activite->id,
+                    'type' => 'depense',
+                    'categorie' => 'main_oeuvre',
+                    'montant' => 10000,
+                    'date_transaction' => '2026-04-01',
+                ]],
+            ])
+            ->assertStatus(403);
+    }
 }

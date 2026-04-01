@@ -47,12 +47,18 @@ class TransactionController extends Controller
         $isCooperative = $this->isCooperativeContext();
 
         $canValidateTransactions = $this->canValidateTransactions();
+        $canWriteTransactions = $this->canWriteTransactions();
 
-        return view('transactions.index', compact('transactions', 'statutValidation', 'isCooperative', 'canValidateTransactions') + ['nav' => 'saisie']);
+        return view('transactions.index', compact('transactions', 'statutValidation', 'isCooperative', 'canValidateTransactions', 'canWriteTransactions') + ['nav' => 'saisie']);
     }
 
     public function create(Request $request)
     {
+        if (! $this->canWriteTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Votre rôle est en lecture seule.');
+        }
+
         $uid = $this->ownerUserId();
 
         $activites = Activite::pourUtilisateur($uid)
@@ -92,6 +98,11 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->canWriteTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Votre rôle est en lecture seule.');
+        }
+
         $uid = $this->ownerUserId();
 
         $rules = [
@@ -229,6 +240,11 @@ class TransactionController extends Controller
 
     public function edit(int $id)
     {
+        if (! $this->canWriteTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Votre rôle est en lecture seule.');
+        }
+
         $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
@@ -287,6 +303,11 @@ class TransactionController extends Controller
 
     public function update(Request $request, int $id)
     {
+        if (! $this->canWriteTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Votre rôle est en lecture seule.');
+        }
+
         $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
@@ -439,6 +460,11 @@ class TransactionController extends Controller
 
     public function destroy(int $id)
     {
+        if (! $this->canWriteTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Votre rôle est en lecture seule.');
+        }
+
         $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
@@ -584,5 +610,17 @@ class TransactionController extends Controller
         }
 
         return $this->cooperativeService->canValidateTransactions($actor);
+    }
+
+    private function canWriteTransactions(): bool
+    {
+        $actor = auth()->user();
+        if ($this->cooperativeService->resolveOwner($actor)->id === $actor->id) {
+            return true;
+        }
+
+        $role = $this->cooperativeService->roleFor($actor);
+
+        return in_array($role, [CooperativeMember::ROLE_ADMIN, CooperativeMember::ROLE_VALIDATEUR, CooperativeMember::ROLE_SAISIE], true);
     }
 }

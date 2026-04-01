@@ -128,7 +128,9 @@
 
 <div class="txli-head">
     <h1 class="txli-title">Transactions</h1>
-    <a href="{{ route('transactions.create') }}" class="txli-btn-saisie">+ Saisie</a>
+    @if($canWriteTransactions ?? true)
+        <a href="{{ route('transactions.create') }}" class="txli-btn-saisie">+ Saisie</a>
+    @endif
 </div>
 
 @if($isCooperative ?? false)
@@ -171,7 +173,9 @@
             · {{ $t->activite->nom ?? '—' }}
         </div>
         <div class="txli-actions">
-            <a href="{{ route('transactions.edit', $t->id) }}">Modifier</a>
+            @if($canWriteTransactions ?? true)
+                <a href="{{ route('transactions.edit', $t->id) }}">Modifier</a>
+            @endif
             @if(($isCooperative ?? false) && ($canValidateTransactions ?? false))
                 @if(($t->statut_validation ?? 'validee') === 'en_attente')
                     <form method="POST" action="{{ route('transactions.valider', $t->id) }}" class="inline">
@@ -189,11 +193,13 @@
                     </form>
                 @endif
             @endif
-            <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer cette transaction ?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit">Supprimer</button>
-            </form>
+            @if($canWriteTransactions ?? true)
+                <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer cette transaction ?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit">Supprimer</button>
+                </form>
+            @endif
         </div>
     </div>
 @empty
@@ -233,7 +239,9 @@
     </style>
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-lg font-bold text-agro-vert">Transactions</h1>
-        <a href="{{ route('transactions.create') }}" class="text-sm font-semibold text-white bg-agro-vert px-3 py-2 rounded-lg">+ Saisie</a>
+        @if($canWriteTransactions ?? true)
+            <a href="{{ route('transactions.create') }}" class="text-sm font-semibold text-white bg-agro-vert px-3 py-2 rounded-lg">+ Saisie</a>
+        @endif
     </div>
 
     @if($isCooperative ?? false)
@@ -282,7 +290,9 @@
                         <td class="px-3 py-2 txd-cell-main">{{ str_replace('_', ' ', $t->categorie) }}</td>
                         <td class="px-3 py-2 text-right txd-cell-amount">{{ number_format($t->montant, 0, ',', ' ') }}</td>
                         <td class="px-3 py-2 text-right whitespace-nowrap">
-                            <a href="{{ route('transactions.edit', $t->id) }}" class="text-agro-vert inline-flex mr-2" title="Modifier"><x-icon name="pencil-square" class="w-4 h-4" /></a>
+                            @if($canWriteTransactions ?? true)
+                                <a href="{{ route('transactions.edit', $t->id) }}" class="text-agro-vert inline-flex mr-2" title="Modifier"><x-icon name="pencil-square" class="w-4 h-4" /></a>
+                            @endif
                             @if(($isCooperative ?? false) && ($canValidateTransactions ?? false))
                                 @if(($t->statut_validation ?? 'validee') === 'en_attente')
                                     <form method="POST" action="{{ route('transactions.valider', $t->id) }}" class="inline">
@@ -298,11 +308,13 @@
                                     </form>
                                 @endif
                             @endif
-                            <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 inline-flex p-0.5" title="Supprimer"><x-icon name="trash" class="w-4 h-4" /></button>
-                            </form>
+                            @if($canWriteTransactions ?? true)
+                                <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 inline-flex p-0.5" title="Supprimer"><x-icon name="trash" class="w-4 h-4" /></button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

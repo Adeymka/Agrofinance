@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\TransactionCategories;
 use App\Http\Controllers\Controller;
 use App\Models\Activite;
+use App\Models\CooperativeMember;
 use App\Models\Transaction;
 use App\Services\AbonnementService;
 use App\Services\CooperativeService;
@@ -68,6 +69,13 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->canWriteTransactions()) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Votre rôle est en lecture seule.',
+            ], 403);
+        }
+
         $request->validate([
             'transactions' => 'required|array|min:1',
             'transactions.*.activite_id' => 'required|integer|exists:activites,id',
@@ -213,6 +221,13 @@ class TransactionController extends Controller
 
     public function update(Request $request, int $id)
     {
+        if (! $this->canWriteTransactions()) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Votre rôle est en lecture seule.',
+            ], 403);
+        }
+
         $ownerId = $this->ownerUserId();
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($ownerId) {
             $q->where('user_id', $ownerId);
@@ -422,6 +437,13 @@ class TransactionController extends Controller
 
     public function destroy(int $id)
     {
+        if (! $this->canWriteTransactions()) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Votre rôle est en lecture seule.',
+            ], 403);
+        }
+
         $ownerId = $this->ownerUserId();
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($ownerId) {
             $q->where('user_id', $ownerId);
@@ -468,5 +490,17 @@ class TransactionController extends Controller
         }
 
         return $this->cooperativeService->canValidateTransactions($actor);
+    }
+
+    private function canWriteTransactions(): bool
+    {
+        $actor = auth()->user();
+        if ($this->cooperativeService->resolveOwner($actor)->id === $actor->id) {
+            return true;
+        }
+
+        $role = $this->cooperativeService->roleFor($actor);
+
+        return in_array($role, [CooperativeMember::ROLE_ADMIN, CooperativeMember::ROLE_VALIDATEUR, CooperativeMember::ROLE_SAISIE], true);
     }
 }
