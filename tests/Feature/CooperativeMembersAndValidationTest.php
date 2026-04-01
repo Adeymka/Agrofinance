@@ -304,4 +304,63 @@ class CooperativeMembersAndValidationTest extends TestCase
             'double_validation_threshold' => 200000,
         ]);
     }
+
+    public function test_invitation_token_acceptance_and_audit_export_filtering(): void
+    {
+        $owner = $this->createOwner();
+        $invited = User::create([
+            'nom' => 'Invite',
+            'prenom' => 'User',
+            'telephone' => '+22967990007',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/membres/inviter', [
+                'telephone' => $invited->telephone,
+                'role' => 'validateur',
+            ])->assertRedirect('/cooperative/membres');
+
+        $member = CooperativeMember::query()->where('cooperative_id', Cooperative::where('owner_user_id', $owner->id)->firstOrFail()->id)
+            ->where('invited_phone', $invited->telephone)
+            ->firstOrFail();
+
+        $member->update([
+            'user_id' => null,
+            'statut' => CooperativeMember::STATUT_INVITED,
+            'joined_at' => null,
+            'accepted_at' => null,
+        ]);
+
+        $this->actingAs($invited)
+            ->get('/cooperative/invitation/'.$member->invitation_token)
+            ->assertOk()
+            ->assertSee('Accepter l’invitation');
+
+        $this->actingAs($invited)
+            ->post('/cooperative/invitation/'.$member->invitation_token.'/accepter')
+            ->assertRedirect('/cooperative/membres');
+
+        $this->assertDatabaseHas('cooperative_members', [
+            'id' => $member->id,
+            'user_id' => $invited->id,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+        ]);
+        $this->assertDatabaseHas('cooperative_audit_logs', [
+            'action' => 'member.invitation_accepted',
+            'actor_user_id' => $invited->id,
+            'member_user_id' => $invited->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get('/cooperative/membres?action=member.invitation_accepted')
+            ->assertOk()
+            ->assertSee('member.invitation_accepted');
+
+        $this->actingAs($owner)
+            ->get('/cooperative/audit/export.csv?action=member.invitation_accepted')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
 }

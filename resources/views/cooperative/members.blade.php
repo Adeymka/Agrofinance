@@ -96,7 +96,36 @@
 
     @if($canViewAudit ?? false)
         <div class="card p-4">
-            <h2 class="text-sm font-semibold text-gray-800 mb-3">Audit coopérative (50 derniers événements)</h2>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <h2 class="text-sm font-semibold text-gray-800">Audit coopérative (50 derniers événements)</h2>
+                <a
+                    href="{{ route('cooperative.audit.export.csv', ['action' => $auditFilters['action'] ?? '', 'member_user_id' => $auditFilters['member_user_id'] ?? 0, 'date_debut' => $auditFilters['date_debut'] ?? '', 'date_fin' => $auditFilters['date_fin'] ?? '']) }}"
+                    class="btn-outline text-xs px-3 py-1.5"
+                >Exporter CSV</a>
+            </div>
+
+            <form method="GET" action="{{ route('cooperative.members') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                <select name="action" class="input-field">
+                    <option value="">Toutes les actions</option>
+                    @foreach(($auditActions ?? collect()) as $act)
+                        <option value="{{ $act }}" @selected(($auditFilters['action'] ?? '') === $act)>{{ $act }}</option>
+                    @endforeach
+                </select>
+                <select name="member_user_id" class="input-field">
+                    <option value="0">Tous les membres</option>
+                    @foreach($members as $m)
+                        @if($m->user)
+                            <option value="{{ $m->user->id }}" @selected((int) ($auditFilters['member_user_id'] ?? 0) === (int) $m->user->id)>
+                                {{ $m->user->prenom }} {{ $m->user->nom }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+                <input type="date" name="date_debut" class="input-field" value="{{ $auditFilters['date_debut'] ?? '' }}">
+                <input type="date" name="date_fin" class="input-field" value="{{ $auditFilters['date_fin'] ?? '' }}">
+                <button type="submit" class="btn-outline">Filtrer</button>
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>

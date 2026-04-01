@@ -24,14 +24,19 @@ class CooperativeMember extends Model
         'cooperative_id',
         'user_id',
         'invited_phone',
+        'invitation_token',
+        'invitation_expires_at',
         'role',
         'statut',
         'invited_by_user_id',
         'joined_at',
+        'accepted_at',
     ];
 
     protected $casts = [
         'joined_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'invitation_expires_at' => 'datetime',
     ];
 
     public function cooperative()

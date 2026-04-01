@@ -9,6 +9,7 @@ use App\Services\AbonnementService;
 use App\Services\CooperativeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CooperativeController extends Controller
 {
@@ -28,6 +29,11 @@ class CooperativeController extends Controller
         }
 
         $coop = $this->cooperativeService->ensureOwnedCooperative($owner);
+        $action = (string) request()->query('action', '');
+        $memberUserId = (int) request()->query('member_user_id', 0);
+        $dateDebut = (string) request()->query('date_debut', '');
+        $dateFin = (string) request()->query('date_fin', '');
+
         $members = $coop->members()
             ->with('user:id,nom,prenom,telephone')
             ->orderByDesc('id')
@@ -36,6 +42,10 @@ class CooperativeController extends Controller
         $audits = $canViewAudit
             ? $coop->audits()
                 ->with(['actor:id,nom,prenom,telephone', 'member:id,nom,prenom,telephone', 'transaction:id,categorie,montant'])
+                ->when($action !== '', fn ($q) => $q->where('action', $action))
+                ->when($memberUserId > 0, fn ($q) => $q->where('member_user_id', $memberUserId))
+                ->when($dateDebut !== '', fn ($q) => $q->whereDate('created_at', '>=', $dateDebut))
+                ->when($dateFin !== '', fn ($q) => $q->whereDate('created_at', '<=', $dateFin))
                 ->latest('id')
                 ->limit(50)
                 ->get()
@@ -50,6 +60,15 @@ class CooperativeController extends Controller
             'canManageMembers' => $this->cooperativeService->canManageMembers($actor),
             'canManageSettings' => $this->cooperativeService->canManageSettings($actor),
             'canViewAudit' => $canViewAudit,
+            'auditFilters' => [
+                'action' => $action,
+                'member_user_id' => $memberUserId,
+                'date_debut' => $dateDebut,
+                'date_fin' => $dateFin,
+            ],
+            'auditActions' => $canViewAudit
+                ? $coop->audits()->select('action')->distinct()->orderBy('action')->pluck('action')->values()
+                : collect(),
             'myRole' => $this->cooperativeService->roleFor($actor),
             'roles' => [
                 CooperativeMember::ROLE_ADMIN,
@@ -77,10 +96,11 @@ class CooperativeController extends Controller
         $phone = trim((string) $request->input('telephone'));
         $role = (string) $request->input('role');
 
-        $this->cooperativeService->inviteMember($owner, $actor, $phone, $role);
+        $member = $this->cooperativeService->inviteMember($owner, $actor, $phone, $role);
+        $acceptUrl = route('cooperative.invitation.show', ['token' => $member->invitation_token]);
 
         return redirect()->route('cooperative.members')
-            ->with('success', 'Invitation enregistrée.');
+            ->with('success', 'Invitation enregistrée. Lien d’acceptation : '.$acceptUrl);
     }
 
     public function updateRole(Request $request, int $id)
@@ -168,5 +188,94 @@ class CooperativeController extends Controller
         );
 
         return redirect()->route('cooperative.members')->with('success', 'Seuil de double validation mis à jour.');
+    }
+
+    public function showInvitation(string $token)
+    {
+        $actor = auth()->user();
+        $invitation = $this->cooperativeService->findInvitationByToken($token);
+        if (! $invitation) {
+            abort(404);
+        }
+
+        $owner = $invitation->cooperative?->owner;
+        if (! $owner || ! $this->abonnementService->estPlanCooperatif($owner)) {
+            abort(403);
+        }
+
+        return view('cooperative.invitation', [
+            'invitation' => $invitation,
+            'actor' => $actor,
+            'isExpired' => $invitation->invitation_expires_at && now()->greaterThan($invitation->invitation_expires_at),
+            'isPhoneMismatch' => (string) $actor->telephone !== (string) $invitation->invited_phone,
+        ]);
+    }
+
+    public function acceptInvitation(string $token)
+    {
+        $actor = auth()->user();
+        $invitation = $this->cooperativeService->findInvitationByToken($token);
+        if (! $invitation) {
+            abort(404);
+        }
+
+        $accepted = $this->cooperativeService->acceptInvitation($actor, $invitation);
+        if (! $accepted) {
+            return redirect()->route('cooperative.invitation.show', ['token' => $token])
+                ->with('error', 'Impossible d’accepter cette invitation (expirée, déjà utilisée ou numéro différent).');
+        }
+
+        return redirect()->route('cooperative.members')
+            ->with('success', 'Invitation acceptée. Vous êtes désormais membre actif.');
+    }
+
+    public function exportAuditCsv(Request $request): StreamedResponse
+    {
+        $actor = auth()->user();
+        if (! $this->cooperativeService->canViewAudit($actor)) {
+            abort(403);
+        }
+
+        $owner = $this->cooperativeService->resolveOwner($actor);
+        $coop = $this->cooperativeService->ensureOwnedCooperative($owner);
+
+        $action = (string) $request->query('action', '');
+        $memberUserId = (int) $request->query('member_user_id', 0);
+        $dateDebut = (string) $request->query('date_debut', '');
+        $dateFin = (string) $request->query('date_fin', '');
+
+        $rows = $coop->audits()
+            ->with(['actor:id,nom,prenom,telephone', 'member:id,nom,prenom,telephone'])
+            ->when($action !== '', fn ($q) => $q->where('action', $action))
+            ->when($memberUserId > 0, fn ($q) => $q->where('member_user_id', $memberUserId))
+            ->when($dateDebut !== '', fn ($q) => $q->whereDate('created_at', '>=', $dateDebut))
+            ->when($dateFin !== '', fn ($q) => $q->whereDate('created_at', '<=', $dateFin))
+            ->latest('id')
+            ->limit(5000)
+            ->get();
+
+        $filename = 'audit_cooperative_'.now()->format('Ymd_His').'.csv';
+
+        return response()->streamDownload(function () use ($rows): void {
+            $handle = fopen('php://output', 'w');
+            if (! $handle) {
+                return;
+            }
+
+            fwrite($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "sep=;\r\n");
+            fputcsv($handle, ['Date', 'Action', 'Acteur', 'Membre cible', 'Meta'], ';');
+
+            foreach ($rows as $row) {
+                fputcsv($handle, [
+                    $row->created_at?->format('d/m/Y H:i:s'),
+                    $row->action,
+                    $row->actor ? trim($row->actor->prenom.' '.$row->actor->nom).' ('.$row->actor->telephone.')' : 'Système',
+                    $row->member ? trim($row->member->prenom.' '.$row->member->nom).' ('.$row->member->telephone.')' : '—',
+                    json_encode($row->meta ?? [], JSON_UNESCAPED_UNICODE),
+                ], ';');
+            }
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

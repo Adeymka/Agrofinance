@@ -64,6 +64,8 @@ Route::get('/partage/{token}', [RapportController::class, 'partager'])
 
 Route::middleware('auth')->group(function () {
     Route::post('/deconnexion', [ConnexionController::class, 'destroy'])->name('deconnexion');
+    Route::get('/cooperative/invitation/{token}', [CooperativeController::class, 'showInvitation'])->name('cooperative.invitation.show');
+    Route::post('/cooperative/invitation/{token}/accepter', [CooperativeController::class, 'acceptInvitation'])->name('cooperative.invitation.accept');
 
     Route::get('/abonnement/callback', [AbonnementController::class, 'callback'])
         ->name('abonnement.callback');
@@ -110,6 +112,7 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/cooperative/membres/{id}/role', [CooperativeController::class, 'updateRole'])->whereNumber('id')->name('cooperative.members.role');
     Route::post('/cooperative/membres/{id}/statut', [CooperativeController::class, 'toggleStatus'])->whereNumber('id')->name('cooperative.members.status');
     Route::post('/cooperative/seuil-validation', [CooperativeController::class, 'updateThreshold'])->name('cooperative.threshold.update');
+    Route::get('/cooperative/audit/export.csv', [CooperativeController::class, 'exportAuditCsv'])->name('cooperative.audit.export.csv');
 
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');

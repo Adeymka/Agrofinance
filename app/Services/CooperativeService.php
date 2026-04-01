@@ -7,6 +7,7 @@ use App\Models\CooperativeAuditLog;
 use App\Models\CooperativeMember;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class CooperativeService
@@ -101,10 +102,14 @@ class CooperativeService
     {
         $coop = $this->ensureOwnedCooperative($owner);
         $invitedUser = User::query()->where('telephone', $phone)->first();
+        $invitationToken = Str::uuid()->toString().Str::random(16);
+        $invitationExpiresAt = now()->addDays(7);
 
         $payload = [
             'cooperative_id' => $coop->id,
             'invited_phone' => $phone,
+            'invitation_token' => $invitationToken,
+            'invitation_expires_at' => $invitationExpiresAt,
             'role' => $role,
             'invited_by_user_id' => $actor->id,
         ];
@@ -113,10 +118,12 @@ class CooperativeService
             $payload['user_id'] = $invitedUser->id;
             $payload['statut'] = CooperativeMember::STATUT_ACTIVE;
             $payload['joined_at'] = now();
+            $payload['accepted_at'] = now();
         } else {
             $payload['user_id'] = null;
             $payload['statut'] = CooperativeMember::STATUT_INVITED;
             $payload['joined_at'] = null;
+            $payload['accepted_at'] = null;
         }
 
         $member = DB::transaction(function () use ($payload, $coop, $invitedUser) {
@@ -141,11 +148,51 @@ class CooperativeService
                 'role' => $role,
                 'invited_phone' => $phone,
                 'linked_user_id' => $invitedUser?->id,
+                'invitation_token' => $member->invitation_token,
+                'invitation_expires_at' => $member->invitation_expires_at?->toIso8601String(),
             ],
             $member->user_id
         );
 
         return $member;
+    }
+
+    public function findInvitationByToken(string $token): ?CooperativeMember
+    {
+        return CooperativeMember::query()
+            ->where('invitation_token', $token)
+            ->with(['cooperative.owner:id,nom,prenom,telephone'])
+            ->first();
+    }
+
+    public function acceptInvitation(User $actor, CooperativeMember $member): bool
+    {
+        if ($member->statut !== CooperativeMember::STATUT_INVITED) {
+            return false;
+        }
+        if ($member->invitation_expires_at && now()->greaterThan($member->invitation_expires_at)) {
+            return false;
+        }
+        if ($member->invited_phone && $member->invited_phone !== $actor->telephone) {
+            return false;
+        }
+
+        $member->update([
+            'user_id' => $actor->id,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+            'accepted_at' => now(),
+        ]);
+
+        $this->log(
+            $member->cooperative,
+            $actor,
+            'member.invitation_accepted',
+            ['member_id' => $member->id, 'role' => $member->role],
+            $actor->id
+        );
+
+        return true;
     }
 
     public function log(
