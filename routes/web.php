@@ -77,6 +77,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/export/consolide-entreprise-csv', [DashboardController::class, 'exporterConsolideEntrepriseCsv'])
+        ->name('dashboard.export.consolide.csv');
 
     Route::get('/exploitations', [ExploitationController::class, 'index'])->name('exploitations.index');
     Route::get('/exploitations/creer', [ExploitationController::class, 'create'])->name('exploitations.create');
@@ -98,6 +100,8 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/transactions/{id}/justificatif', [TransactionController::class, 'telechargerJustificatif'])->whereNumber('id')->name('transactions.justificatif');
     Route::get('/transactions/{id}/modifier', [TransactionController::class, 'edit'])->whereNumber('id')->name('transactions.edit');
     Route::put('/transactions/{id}', [TransactionController::class, 'update'])->whereNumber('id')->name('transactions.update');
+    Route::post('/transactions/{id}/valider', [TransactionController::class, 'valider'])->whereNumber('id')->name('transactions.valider');
+    Route::post('/transactions/{id}/remettre-en-attente', [TransactionController::class, 'remettreEnAttente'])->whereNumber('id')->name('transactions.remettre-en-attente');
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->whereNumber('id')->name('transactions.destroy');
 
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');

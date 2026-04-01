@@ -196,5 +196,90 @@ final class TransactionCategories
     {
         return in_array($categorie, self::slugsChargesIntermediaires(), true);
     }
+
+    /**
+     * Slugs de dépenses considérés comme charges fixes (loyer, amortissement, abonnements, etc.).
+     *
+     * @return list<string>
+     */
+    public static function slugsDepensesFixes(): array
+    {
+        return [
+            'location_terrain',
+            'amortissement',
+            'connexion',
+            'frais_financiers',
+        ];
+    }
+
+    /**
+     * Nature comptable pour une dépense du référentiel (slug connu).
+     */
+    public static function natureDepensePourSlug(string $slug): string
+    {
+        return in_array($slug, self::slugsDepensesFixes(), true)
+            ? 'fixe'
+            : 'variable';
+    }
+
+    /**
+     * Intrant de production pour une dépense du référentiel : null si slug CI (déjà pris en compte comme tel),
+     * sinon booléen par défaut (main-d'œuvre liée à la production = oui, charges générales = non).
+     */
+    public static function intrantProductionPourSlugDepense(string $slug): ?bool
+    {
+        if (self::estSlugChargesIntermediaires($slug)) {
+            return null;
+        }
+
+        return $slug === 'main_oeuvre';
+    }
+
+    /**
+     * Méta pour combobox (recherche, nature et intrant implicites pour les slugs).
+     *
+     * @return array{depenses: list<array{slug: string, label: string, label_search: string, groupe: string, nature: string, ci: bool, intrant: bool|null}>, recettes: list<array{slug: string, label: string, label_search: string, groupe: string}>}
+     */
+    public static function metaJsonPourCombobox(string $typeExploitation): array
+    {
+        $tree = self::getByType($typeExploitation);
+        $depenses = [];
+        foreach ($tree['depenses'] ?? [] as $groupe => $items) {
+            foreach ($items as $slug => $label) {
+                $depenses[] = [
+                    'slug' => $slug,
+                    'label' => $label,
+                    'label_search' => self::normaliserLibellePourRecherche($label),
+                    'groupe' => $groupe,
+                    'nature' => self::natureDepensePourSlug($slug),
+                    'ci' => self::estSlugChargesIntermediaires($slug),
+                    'intrant' => self::intrantProductionPourSlugDepense($slug),
+                ];
+            }
+        }
+        $recettes = [];
+        foreach ($tree['recettes'] ?? [] as $groupe => $items) {
+            foreach ($items as $slug => $label) {
+                $recettes[] = [
+                    'slug' => $slug,
+                    'label' => $label,
+                    'label_search' => self::normaliserLibellePourRecherche($label),
+                    'groupe' => $groupe,
+                ];
+            }
+        }
+
+        return [
+            'depenses' => $depenses,
+            'recettes' => $recettes,
+        ];
+    }
+
+    private static function normaliserLibellePourRecherche(string $label): string
+    {
+        $sansEmoji = preg_replace('/[\x{1F300}-\x{1F9FF}]|[\x{2600}-\x{26FF}]/u', '', $label);
+
+        return mb_strtolower(trim((string) $sansEmoji));
+    }
 }
 

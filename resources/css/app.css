@@ -467,6 +467,89 @@ body {
     color: rgba(255, 255, 255, 0.9);
 }
 
+/* Surfaces desktop globales: dark glass au lieu de cartes blanches */
+#mainContent main .bg-white,
+#mainContent main [class*=" bg-white"],
+#mainContent main [class^="bg-white"] {
+    background: rgba(255, 255, 255, 0.07) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+#mainContent main .shadow-sm,
+#mainContent main .shadow,
+#mainContent main .shadow-md {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22) !important;
+}
+
+#mainContent main [class*="bg-gray-50"] {
+    background: rgba(18, 45, 24, 0.58) !important;
+}
+
+#mainContent main .border-gray-50,
+#mainContent main .border-gray-100,
+#mainContent main .border-gray-200,
+#mainContent main .border-gray-300 {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+#mainContent main .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+#mainContent main .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+#mainContent main .ring-gray-100,
+#mainContent main .ring-gray-200,
+#mainContent main .ring-gray-300 {
+    --tw-ring-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+#mainContent main .text-black {
+    color: rgba(240, 253, 244, 0.96) !important;
+}
+
+/* Finitions UX desktop (cohérence inter-pages) */
+#mainContent main .btn-outline {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: rgba(236, 253, 245, 0.95) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#mainContent main .btn-outline:hover {
+    border-color: rgba(74, 222, 128, 0.45) !important;
+    background: rgba(21, 128, 61, 0.24) !important;
+    color: #ffffff !important;
+}
+
+#mainContent main .input-field,
+#mainContent main .input-glass,
+#mainContent main select.input-field,
+#mainContent main select.input-glass,
+#mainContent main textarea.input-field {
+    min-height: 44px;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    color: rgba(236, 253, 245, 0.95) !important;
+}
+
+#mainContent main .input-field::placeholder,
+#mainContent main .input-glass::placeholder {
+    color: rgba(209, 250, 229, 0.52) !important;
+}
+
+#mainContent main .input-field:focus,
+#mainContent main .input-glass:focus {
+    border-color: rgba(74, 222, 128, 0.42) !important;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.16) !important;
+}
+
+#mainContent main table thead th {
+    color: rgba(167, 243, 208, 0.9) !important;
+    letter-spacing: 0.06em;
+}
+
 #mainContent main .text-gray-900,
 #mainContent main .text-gray-800 {
     color: rgba(255, 255, 255, 0.96) !important;

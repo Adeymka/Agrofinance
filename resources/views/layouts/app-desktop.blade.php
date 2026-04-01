@@ -82,16 +82,10 @@
                class="sidebar-logo flex items-center gap-3 pl-4 pr-12 py-5 overflow-hidden hover:bg-white/5 transition-colors"
                style="border-bottom: 1px solid rgba(255,255,255,0.08);"
                title="Aller au tableau de bord">
-                <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
+                <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
                      style="background: rgba(34,197,94,0.25);
                             border: 1px solid rgba(34,197,94,0.35);">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"
-                         fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a10 10 0 0 1 10 10"/>
-                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10"/>
-                        <path d="M12 8v8M8 12h8"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
+                    <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" style="width:30px; height:30px; object-fit:contain; border-radius:8px;">
                 </div>
                 <div id="logoText"
                      class="overflow-hidden whitespace-nowrap transition-all duration-300"

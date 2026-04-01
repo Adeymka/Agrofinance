@@ -27,15 +27,23 @@ class TransactionController extends Controller
     public function index()
     {
         $uid = (int) auth()->user()->id;
+        $statutValidation = (string) request()->query('statut_validation', 'all');
 
         $transactions = Transaction::query()
             ->whereHas('activite.exploitation', fn ($q) => $q->where('user_id', $uid))
+            ->when(
+                in_array($statutValidation, [Transaction::STATUT_VALIDATION_EN_ATTENTE, Transaction::STATUT_VALIDATION_VALIDEE], true),
+                fn ($q) => $q->where('statut_validation', $statutValidation)
+            )
             ->with(['activite:id,nom'])
             ->orderByDesc('date_transaction')
             ->orderByDesc('id')
             ->paginate(20);
+        $transactions->appends(['statut_validation' => $statutValidation]);
 
-        return view('transactions.index', compact('transactions') + ['nav' => 'saisie']);
+        $isCooperative = $this->abonnementService->estPlanCooperatif(auth()->user());
+
+        return view('transactions.index', compact('transactions', 'statutValidation', 'isCooperative') + ['nav' => 'saisie']);
     }
 
     public function create(Request $request)
@@ -73,6 +81,7 @@ class TransactionController extends Controller
         ) + [
             'nav' => 'saisie',
             'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),
+            'txCatMeta' => TransactionCategories::metaJsonPourCombobox($typeExploitation),
         ]);
     }
 
@@ -91,7 +100,8 @@ class TransactionController extends Controller
             'est_imprevue' => 'boolean',
         ];
 
-        if ($request->type === 'depense') {
+        $librePreview = trim((string) $request->input('categorie_libre', ''));
+        if ($request->type === 'depense' && $librePreview !== '') {
             $rules['nature'] = 'required|in:fixe,variable';
         }
 
@@ -126,23 +136,32 @@ class TransactionController extends Controller
             }
         }
 
-        if ($request->type === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
+        if ($request->type === 'depense' && $libre !== '' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
             $request->validate([
                 'intrant_production' => 'required|in:0,1',
             ]);
         }
 
         $intrantProduction = null;
+        $natureDepense = null;
         if ($request->type === 'depense') {
-            $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
-                ? null
-                : $request->boolean('intrant_production');
+            if ($libre === '') {
+                $natureDepense = TransactionCategories::natureDepensePourSlug($categorie);
+                $intrantProduction = TransactionCategories::intrantProductionPourSlugDepense($categorie);
+            } else {
+                $natureDepense = $request->input('nature');
+                $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
+                    ? null
+                    : $request->boolean('intrant_production');
+            }
         }
+
+        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
 
         $transaction = Transaction::create([
             'activite_id' => $request->activite_id,
             'type' => $request->type,
-            'nature' => $request->type === 'recette' ? null : $request->nature,
+            'nature' => $request->type === 'recette' ? null : $natureDepense,
             'categorie' => $categorie,
             'intrant_production' => $intrantProduction,
             'montant' => $request->montant,
@@ -150,6 +169,15 @@ class TransactionController extends Controller
             'note' => $request->note,
             'est_imprevue' => $request->boolean('est_imprevue'),
             'synced' => true,
+            'statut_validation' => $estCoop
+                ? Transaction::STATUT_VALIDATION_EN_ATTENTE
+                : Transaction::STATUT_VALIDATION_VALIDEE,
+            'validee_par_user_id' => $estCoop
+                ? null
+                : (int) auth()->user()->id,
+            'validee_le' => $estCoop
+                ? null
+                : now(),
         ]);
 
         if ($request->hasFile('justificatif')) {
@@ -244,6 +272,7 @@ class TransactionController extends Controller
         ) + [
             'nav' => 'saisie',
             'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),
+            'txCatMeta' => TransactionCategories::metaJsonPourCombobox($typeExploitation),
         ]);
     }
 
@@ -267,7 +296,8 @@ class TransactionController extends Controller
             'supprimer_justificatif' => 'boolean',
         ];
 
-        if ($request->type === 'depense') {
+        $librePreviewUpd = trim((string) $request->input('categorie_libre', ''));
+        if ($request->type === 'depense' && $librePreviewUpd !== '') {
             $rules['nature'] = 'required|in:fixe,variable';
         }
 
@@ -308,29 +338,47 @@ class TransactionController extends Controller
             }
         }
 
-        if ($request->type === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
+        if ($request->type === 'depense' && $libre !== '' && ! TransactionCategories::estSlugChargesIntermediaires($categorie)) {
             $request->validate([
                 'intrant_production' => 'required|in:0,1',
             ]);
         }
 
         $intrantProduction = null;
+        $natureDepense = null;
         if ($request->type === 'depense') {
-            $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
-                ? null
-                : $request->boolean('intrant_production');
+            if ($libre === '') {
+                $natureDepense = TransactionCategories::natureDepensePourSlug($categorie);
+                $intrantProduction = TransactionCategories::intrantProductionPourSlugDepense($categorie);
+            } else {
+                $natureDepense = $request->input('nature');
+                $intrantProduction = TransactionCategories::estSlugChargesIntermediaires($categorie)
+                    ? null
+                    : $request->boolean('intrant_production');
+            }
         }
+
+        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
 
         $transaction->update([
             'activite_id' => $request->activite_id,
             'type' => $request->type,
-            'nature' => $request->type === 'recette' ? null : $request->input('nature'),
+            'nature' => $request->type === 'recette' ? null : $natureDepense,
             'categorie' => $categorie,
             'intrant_production' => $intrantProduction,
             'montant' => $request->montant,
             'date_transaction' => $request->date_transaction,
             'note' => $request->note,
             'est_imprevue' => $request->boolean('est_imprevue'),
+            'statut_validation' => $estCoop
+                ? Transaction::STATUT_VALIDATION_EN_ATTENTE
+                : Transaction::STATUT_VALIDATION_VALIDEE,
+            'validee_par_user_id' => $estCoop
+                ? null
+                : (int) auth()->user()->id,
+            'validee_le' => $estCoop
+                ? null
+                : now(),
         ]);
 
         if ($request->boolean('supprimer_justificatif')) {
@@ -395,5 +443,49 @@ class TransactionController extends Controller
 
         return redirect()->route('activites.show', $activiteId)
             ->with('success', 'Transaction supprimée.');
+    }
+
+    public function valider(int $id)
+    {
+        $uid = (int) auth()->user()->id;
+        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Validation manuelle disponible uniquement en plan Coopérative.');
+        }
+
+        $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
+            $q->where('user_id', $uid);
+        })->with('activite')->findOrFail($id);
+
+        $transaction->update([
+            'statut_validation' => Transaction::STATUT_VALIDATION_VALIDEE,
+            'validee_par_user_id' => $uid,
+            'validee_le' => now(),
+        ]);
+
+        return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
+            ->with('success', 'Transaction validée.');
+    }
+
+    public function remettreEnAttente(int $id)
+    {
+        $uid = (int) auth()->user()->id;
+        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Action disponible uniquement en plan Coopérative.');
+        }
+
+        $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
+            $q->where('user_id', $uid);
+        })->with('activite')->findOrFail($id);
+
+        $transaction->update([
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validee_par_user_id' => null,
+            'validee_le' => null,
+        ]);
+
+        return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
+            ->with('success', 'Transaction remise en attente.');
     }
 }

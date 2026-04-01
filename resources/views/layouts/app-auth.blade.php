@@ -406,7 +406,9 @@
     {{-- Top bar --}}
     <div class="auth-mobile-topbar">
         <a href="{{ route('accueil') }}" class="auth-mobile-logo">
-            <div class="auth-mobile-logo-icon">🌱</div>
+            <div class="auth-mobile-logo-icon">
+                <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" style="width:28px; height:28px; object-fit:contain; border-radius:6px;">
+            </div>
             <span class="auth-mobile-logo-text">AgroFinance<span>+</span></span>
         </a>
     </div>

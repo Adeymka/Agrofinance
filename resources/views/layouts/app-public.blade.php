@@ -34,16 +34,8 @@
         <div style="width:36px; height:36px; border-radius:10px;
                     background:rgba(74,222,128,0.20);
                     border:1px solid rgba(74,222,128,0.35);
-                    display:flex; align-items:center; justify-content:center;">
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;"
-               fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477
-                     3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253
-                     m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477
-                     4.5 1.253v13C19.832 18.477 18.247 18 16.5 18
-                     c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
+                    display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" style="width:28px; height:28px; object-fit:contain; border-radius:6px;">
         </div>
         <span style="font-family:'Space Grotesk',sans-serif; font-size:16px;
                      font-weight:700; color:white; letter-spacing:-0.02em;">
@@ -121,7 +113,9 @@
                         background:rgba(74,222,128,0.15);
                         border:1px solid rgba(74,222,128,0.25);
                         display:flex; align-items:center; justify-content:center;
-                        font-size:16px;">🌱</div>
+                        overflow:hidden;">
+              <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" style="width:24px; height:24px; object-fit:contain; border-radius:5px;">
+            </div>
             <span style="font-family:'Space Grotesk',sans-serif; font-size:15px;
                          font-weight:700; color:white;">
               AgroFinance<span style="color:#4ade80;">+</span>

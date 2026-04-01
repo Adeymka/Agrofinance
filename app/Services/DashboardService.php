@@ -109,17 +109,24 @@ class DashboardService
      * @param  array<int, array<string, mixed>>  $activitesCards
      * @return array{alertesBudget: array<int, array<string, mixed>>, bannerBudgetCritique: bool}
      */
-    public function alertesDepuisCartes(array $activitesCards): array
+    public function alertesDepuisCartes(
+        array $activitesCards,
+        float $seuilAlerte = 85.0,
+        float $seuilCritique = 100.0
+    ): array
     {
-        $alertesBudget = array_values(array_filter($activitesCards, function (array $c) {
+        $seuilAlerte = max(1.0, min(100.0, $seuilAlerte));
+        $seuilCritique = max($seuilAlerte, min(200.0, $seuilCritique));
+
+        $alertesBudget = array_values(array_filter($activitesCards, function (array $c) use ($seuilAlerte) {
             $pct = $c['budget_pct'] ?? null;
             $prev = $c['budget_prev'] ?? 0;
 
-            return $prev > 0 && $pct !== null && $pct >= 85;
+            return $prev > 0 && $pct !== null && $pct >= $seuilAlerte;
         }));
         usort($alertesBudget, fn (array $a, array $b) => ($b['budget_pct'] ?? 0) <=> ($a['budget_pct'] ?? 0));
 
-        $bannerBudgetCritique = collect($alertesBudget)->contains(fn ($c) => ($c['budget_pct'] ?? 0) >= 100);
+        $bannerBudgetCritique = collect($alertesBudget)->contains(fn ($c) => ($c['budget_pct'] ?? 0) >= $seuilCritique);
 
         return [
             'alertesBudget' => $alertesBudget,

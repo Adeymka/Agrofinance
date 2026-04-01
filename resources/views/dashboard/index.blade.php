@@ -4,6 +4,11 @@
 @section('page-subtitle', $exploitation->nom)
 
 @section('topbar-actions')
+    @if(($infoAbonnement['plan_metier'] ?? '') === 'cooperative')
+    <a href="{{ route('dashboard.export.consolide.csv', ['periode' => ($periodeSelection ?? 'all')]) }}" class="btn-outline text-sm px-4 py-2 inline-flex items-center gap-2">
+        <x-icon name="arrow-down-tray" class="w-4 h-4" /> Export CSV entreprise
+    </a>
+    @endif
     <a href="{{ route('transactions.create') }}" class="btn-primary text-sm px-4 py-2 inline-flex items-center gap-2">
         <x-icon name="plus" class="w-4 h-4" /> Nouvelle saisie
     </a>
@@ -37,6 +42,12 @@
         ? (($heroInd['type'] ?? '') ? str_replace('_', ' ', ucfirst($heroInd['type'])) . ' · ' : '') . 'Indicateurs sur la période autorisée'
         : 'Vue consolidée de toutes les campagnes actives';
     $transactionsRecentes = $dernieresTransactions->take(5);
+    $entreprise = $entrepriseConsolide ?? ['PB' => 0, 'CT' => 0, 'MB' => 0, 'RNE' => 0, 'RF' => 0, 'statut' => 'rouge', 'nb_exploitations' => 0, 'nb_campagnes_actives' => 0];
+    $statutEntrepriseConfig = match ($entreprise['statut'] ?? 'rouge') {
+        'vert'   => ['label' => 'RENTABLE', 'color' => 'var(--af-color-accent)', 'bg' => 'var(--af-stat-vert-bg)', 'border' => 'var(--af-stat-vert-border)'],
+        'orange' => ['label' => 'À SURVEILLER', 'color' => 'var(--af-color-warning)', 'bg' => 'var(--af-stat-orange-bg)', 'border' => 'var(--af-stat-orange-border)'],
+        default  => ['label' => 'DÉFICITAIRE', 'color' => 'var(--af-color-danger)', 'bg' => 'var(--af-stat-rouge-bg)', 'border' => 'var(--af-stat-rouge-border)'],
+    };
 
     $typeEmojis = [];
     $pbCons = $resultats['consolide']['PB'] ?? 0;
@@ -657,16 +668,113 @@
     @endif
 </section>
 
+{{-- ── Entreprise (global) ── --}}
+<div class="dash-hero" style="border-color:{{ $statutEntrepriseConfig['border'] }};">
+    <div class="dash-hero-badge"
+         style="background:{{ $statutEntrepriseConfig['bg'] }}; border:1px solid {{ $statutEntrepriseConfig['border'] }}; color:{{ $statutEntrepriseConfig['color'] }};">
+        <span class="dash-hero-badge-dot"></span>
+        Entreprise · {{ $statutEntrepriseConfig['label'] }}
+    </div>
+    <p class="dash-hero-label">Rentabilité globale</p>
+    <div class="dash-hero-rne" style="color:{{ ($entreprise['RNE'] ?? 0) >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">
+        {{ ($entreprise['RNE'] ?? 0) >= 0 ? '+' : '−' }}{{ number_format(abs($entreprise['RNE'] ?? 0), 0, ',', ' ') }}
+        <span class="dash-hero-rne-unit">FCFA</span>
+    </div>
+    <p class="dash-hero-campagne-name">
+        {{ (int) ($entreprise['nb_exploitations'] ?? 0) }} exploitation(s) ·
+        {{ (int) ($entreprise['nb_campagnes_actives'] ?? 0) }} campagne(s) active(s)
+    </p>
+    <div class="dash-mini-metrics">
+        <div class="dash-mini-cell"><div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('PB') }}</div><div class="dash-mini-val" style="color:var(--af-color-accent);">{{ number_format(($entreprise['PB'] ?? 0) / 1000, 1, ',', ' ') }}K</div></div>
+        <div class="dash-mini-cell"><div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('MB') }}</div><div class="dash-mini-val" style="color:{{ ($entreprise['MB'] ?? 0) >= 0 ? 'var(--af-color-accent)' : 'var(--af-color-danger)' }};">{{ ($entreprise['MB'] ?? 0) >= 0 ? '+' : '' }}{{ number_format(($entreprise['MB'] ?? 0) / 1000, 1, ',', ' ') }}K</div></div>
+        <div class="dash-mini-cell"><div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('CT') }}</div><div class="dash-mini-val" style="color:var(--af-color-danger);">{{ number_format(($entreprise['CT'] ?? 0) / 1000, 1, ',', ' ') }}K</div></div>
+        <div class="dash-mini-cell"><div class="dash-mini-lbl">{{ IndicateursLibelles::labelCourt('RF') }}</div><div class="dash-mini-val">{{ number_format($entreprise['RF'] ?? 0, 1, ',', ' ') }}%</div></div>
+    </div>
+</div>
+
+{{-- ── Exploitations (choix du contexte) ── --}}
+<div class="dash-consol-intro">
+    <div class="dash-section-hd" style="margin-bottom:4px;">
+        <span class="dash-section-title">Rentabilité par exploitation</span>
+    </div>
+    <p class="dash-consol-sub">Choisissez une exploitation pour afficher ses campagnes.</p>
+</div>
+<div class="mb-2">
+    <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
+        <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+        <input type="hidden" name="tri_exploitations" value="{{ $triExploitations ?? 'rne_desc' }}">
+        <input type="hidden" name="seuil_alerte" value="{{ $seuilAlerte ?? 85 }}">
+        <input type="hidden" name="seuil_critique" value="{{ $seuilCritique ?? 100 }}">
+        @if($heroActiviteId)
+            <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+        @endif
+        <label for="periode-mobile" class="text-[11px] text-white/55">Période</label>
+        <select id="periode-mobile" name="periode" onchange="this.form.submit()"
+                class="input-glass text-xs py-1.5 min-w-[170px]">
+            <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
+            <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
+            <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
+            <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
+        </select>
+    </form>
+</div>
+<div class="mb-2">
+    <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
+        <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+        <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
+        <input type="hidden" name="seuil_alerte" value="{{ $seuilAlerte ?? 85 }}">
+        <input type="hidden" name="seuil_critique" value="{{ $seuilCritique ?? 100 }}">
+        @if($heroActiviteId)
+            <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+        @endif
+        <label for="tri-exploitations-mobile" class="text-[11px] text-white/55">Tri</label>
+        <select id="tri-exploitations-mobile" name="tri_exploitations" onchange="this.form.submit()"
+                class="input-glass text-xs py-1.5 min-w-[170px]">
+            <option value="rne_desc" @selected(($triExploitations ?? 'rne_desc') === 'rne_desc')>RNE (du plus élevé)</option>
+            <option value="rf_desc" @selected(($triExploitations ?? 'rne_desc') === 'rf_desc')>RF (du plus élevé)</option>
+            <option value="mb_desc" @selected(($triExploitations ?? 'rne_desc') === 'mb_desc')>MB (du plus élevé)</option>
+            <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
+        </select>
+    </form>
+</div>
+<div class="dash-chips">
+    @foreach($exploitationsResume as $exp)
+        <a href="{{ route('dashboard', ['exploitation_id' => $exp['id'], 'tri_exploitations' => ($triExploitations ?? 'rne_desc'), 'periode' => ($periodeSelection ?? 'all'), 'seuil_alerte' => ($seuilAlerte ?? 85), 'seuil_critique' => ($seuilCritique ?? 100)]) }}"
+           class="dash-chip {{ $exp['active'] ? 'active' : '' }}">
+            {{ $exp['nom'] }} · {{ number_format($exp['RNE'], 0, ',', ' ') }}
+        </a>
+    @endforeach
+</div>
+
 {{-- ── Sélecteur campagne (chips scrollables) ── --}}
 @if(count($activitesCards) > 1)
     <div class="dash-chips">
         @foreach($activitesCards as $c)
-            <a href="{{ route('dashboard', ['campagne' => $c['id']]) }}"
+            <a href="{{ route('dashboard', ['exploitation_id' => $exploitation->id, 'campagne' => $c['id'], 'tri_exploitations' => ($triExploitations ?? 'rne_desc'), 'periode' => ($periodeSelection ?? 'all'), 'seuil_alerte' => ($seuilAlerte ?? 85), 'seuil_critique' => ($seuilCritique ?? 100)]) }}"
                class="dash-chip {{ $heroActiviteId == $c['id'] ? 'active' : '' }}">
                 {{ $c['nom'] }}
             </a>
         @endforeach
     </div>
+@endif
+
+@if($isCooperative ?? false)
+<div class="mb-3">
+    <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2 flex-wrap">
+        <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+        <input type="hidden" name="tri_exploitations" value="{{ $triExploitations ?? 'rne_desc' }}">
+        <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
+        @if($heroActiviteId)
+            <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+        @endif
+        <span class="text-[11px] text-white/55">Seuils alertes</span>
+        <label class="text-[11px] text-white/50">Alerte</label>
+        <input type="number" min="1" max="100" step="1" name="seuil_alerte" value="{{ (int) ($seuilAlerte ?? 85) }}" class="input-glass text-xs py-1.5 w-16">
+        <label class="text-[11px] text-white/50">Critique</label>
+        <input type="number" min="1" max="200" step="1" name="seuil_critique" value="{{ (int) ($seuilCritique ?? 100) }}" class="input-glass text-xs py-1.5 w-16">
+        <button type="submit" class="btn-outline text-xs px-3 py-1.5">Appliquer</button>
+    </form>
+</div>
 @endif
 
 {{-- ── Alerte budget ── --}}
@@ -1003,6 +1111,101 @@
 
     <p class="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3" id="dash-desktop-overview">Vue d’ensemble</p>
 
+    <div class="card mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="section-subtitle">Entreprise</p>
+                <h2 class="section-title mb-1">Rentabilité globale</h2>
+                <p class="section-subtitle">
+                    {{ (int) ($entreprise['nb_exploitations'] ?? 0) }} exploitation(s) ·
+                    {{ (int) ($entreprise['nb_campagnes_actives'] ?? 0) }} campagne(s) active(s)
+                </p>
+            </div>
+            <span class="font-ui text-xs px-3 py-1.5 rounded-full"
+                  style="background:{{ $statutEntrepriseConfig['bg'] }};border:1px solid {{ $statutEntrepriseConfig['border'] }};color:{{ $statutEntrepriseConfig['color'] }};">
+                {{ $statutEntrepriseConfig['label'] }}
+            </span>
+        </div>
+        <div class="dashboard-mini-metrics mt-4">
+            <div class="dashboard-mini-metrics__cell"><span class="dashboard-mini-metrics__label">{{ IndicateursLibelles::labelCourt('RNE') }}</span><span class="dashboard-mini-metrics__val {{ ($entreprise['RNE'] ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ ($entreprise['RNE'] ?? 0) >= 0 ? '+' : '−' }}{{ number_format(abs($entreprise['RNE'] ?? 0), 0, ',', ' ') }}</span></div>
+            <div class="dashboard-mini-metrics__cell"><span class="dashboard-mini-metrics__label">{{ IndicateursLibelles::labelCourt('PB') }}</span><span class="dashboard-mini-metrics__val text-emerald-400">{{ number_format(($entreprise['PB'] ?? 0) / 1000, 1, ',', ' ') }}K</span></div>
+            <div class="dashboard-mini-metrics__cell"><span class="dashboard-mini-metrics__label">{{ IndicateursLibelles::labelCourt('MB') }}</span><span class="dashboard-mini-metrics__val {{ ($entreprise['MB'] ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ ($entreprise['MB'] ?? 0) >= 0 ? '+' : '' }}{{ number_format(($entreprise['MB'] ?? 0) / 1000, 1, ',', ' ') }}K</span></div>
+            <div class="dashboard-mini-metrics__cell"><span class="dashboard-mini-metrics__label">{{ IndicateursLibelles::labelCourt('RF') }}</span><span class="dashboard-mini-metrics__val text-white/90">{{ number_format($entreprise['RF'] ?? 0, 1, ',', ' ') }}%</span></div>
+        </div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h2 class="section-title">Rentabilité par exploitation</h2>
+            <p class="section-subtitle">Sélection actuelle : <strong>{{ $exploitation->nom }}</strong></p>
+        </div>
+        <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2">
+            <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+            <input type="hidden" name="tri_exploitations" value="{{ $triExploitations ?? 'rne_desc' }}">
+            <input type="hidden" name="seuil_alerte" value="{{ $seuilAlerte ?? 85 }}">
+            <input type="hidden" name="seuil_critique" value="{{ $seuilCritique ?? 100 }}">
+            @if($heroActiviteId)
+                <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+            @endif
+            <label for="periode-desktop" class="section-subtitle whitespace-nowrap">Période</label>
+            <select id="periode-desktop" name="periode" onchange="this.form.submit()"
+                    class="input-glass text-sm py-1.5 min-w-[210px]">
+                <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
+                <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
+                <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
+                <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
+            </select>
+        </form>
+        <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2">
+            <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+            <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
+            <input type="hidden" name="seuil_alerte" value="{{ $seuilAlerte ?? 85 }}">
+            <input type="hidden" name="seuil_critique" value="{{ $seuilCritique ?? 100 }}">
+            @if($heroActiviteId)
+                <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+            @endif
+            <label for="tri-exploitations-desktop" class="section-subtitle whitespace-nowrap">Tri des exploitations</label>
+            <select id="tri-exploitations-desktop" name="tri_exploitations" onchange="this.form.submit()"
+                    class="input-glass text-sm py-1.5 min-w-[230px]">
+                <option value="rne_desc" @selected(($triExploitations ?? 'rne_desc') === 'rne_desc')>RNE (du plus élevé)</option>
+                <option value="rf_desc" @selected(($triExploitations ?? 'rne_desc') === 'rf_desc')>RF (du plus élevé)</option>
+                <option value="mb_desc" @selected(($triExploitations ?? 'rne_desc') === 'mb_desc')>MB (du plus élevé)</option>
+                <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
+            </select>
+        </form>
+        @if($isCooperative ?? false)
+        <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2 flex-wrap">
+            <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+            <input type="hidden" name="tri_exploitations" value="{{ $triExploitations ?? 'rne_desc' }}">
+            <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
+            @if($heroActiviteId)
+                <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
+            @endif
+            <label class="section-subtitle whitespace-nowrap">Seuil alerte</label>
+            <input type="number" min="1" max="100" step="1" name="seuil_alerte" value="{{ (int) ($seuilAlerte ?? 85) }}" class="input-glass text-sm py-1.5 w-24">
+            <label class="section-subtitle whitespace-nowrap">Seuil critique</label>
+            <input type="number" min="1" max="200" step="1" name="seuil_critique" value="{{ (int) ($seuilCritique ?? 100) }}" class="input-glass text-sm py-1.5 w-24">
+            <button type="submit" class="btn-outline text-sm px-4 py-2">Appliquer</button>
+        </form>
+        @endif
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+            @foreach($exploitationsResume as $exp)
+                <a href="{{ route('dashboard', ['exploitation_id' => $exp['id'], 'tri_exploitations' => ($triExploitations ?? 'rne_desc'), 'periode' => ($periodeSelection ?? 'all'), 'seuil_alerte' => ($seuilAlerte ?? 85), 'seuil_critique' => ($seuilCritique ?? 100)]) }}"
+                   class="rounded-xl border px-4 py-3 transition {{ $exp['active'] ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-white/15 bg-white/5 hover:bg-white/10' }}">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-ui text-sm font-semibold text-white/90">{{ $exp['nom'] }}</p>
+                        <span class="text-xs {{ ($exp['RNE'] ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300' }}">
+                            RNE {{ ($exp['RNE'] ?? 0) >= 0 ? '+' : '−' }}{{ number_format(abs($exp['RNE'] ?? 0), 0, ',', ' ') }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs text-white/60">
+                        {{ (int) ($exp['nb_campagnes_actives'] ?? 0) }} campagne(s) · RF {{ number_format($exp['RF'] ?? 0, 1, ',', ' ') }}%
+                    </p>
+                </a>
+            @endforeach
+        </div>
+    </div>
+
     <!-- Carte résumé (focus campagne ou exploitation) -->
     <div class="dashboard-hero glass mb-8" aria-labelledby="dash-desktop-overview">
         <div class="dashboard-hero__top">
@@ -1014,6 +1217,11 @@
                         </span>
                         @if(count($activitesCards) > 1)
                             <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
+                                <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
+                                <input type="hidden" name="tri_exploitations" value="{{ $triExploitations ?? 'rne_desc' }}">
+                                <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
+                                <input type="hidden" name="seuil_alerte" value="{{ $seuilAlerte ?? 85 }}">
+                                <input type="hidden" name="seuil_critique" value="{{ $seuilCritique ?? 100 }}">
                                 <label for="dash-campagne" class="section-subtitle whitespace-nowrap">Campagne</label>
                                 <select id="dash-campagne" name="campagne" onchange="this.form.submit()"
                                         class="input-glass text-sm py-1.5 min-w-[180px]">

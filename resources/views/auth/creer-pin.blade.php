@@ -71,7 +71,9 @@
 <div style="display:flex; align-items:center; gap:12px; margin-bottom:48px;">
     <div style="width:42px; height:42px; border-radius:12px;
                 background:rgba(74,222,128,0.20); border:1px solid rgba(74,222,128,0.35);
-                display:flex; align-items:center; justify-content:center; font-size:20px;">🌱</div>
+                display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" style="width:32px; height:32px; object-fit:contain; border-radius:8px;">
+    </div>
     <div>
         <div style="font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:white;">AgroFinance<span style="color:#4ade80;">+</span></div>
         <div style="font-family:'Inter',sans-serif; font-size:10px; color:rgba(255,255,255,0.30); text-transform:uppercase; letter-spacing:0.12em;">Gestion agricole</div>

@@ -382,9 +382,136 @@
 }
 .txm-btn-next.dep { background: var(--af-tx-btn-dep); color: #fff; }
 .txm-btn-next.rec { background: var(--af-tx-btn-rec); color: #fff; }
-.txm-label--nature { margin-top: 14px; margin-bottom: 6px; }
 .txm-textarea-noresize { resize: none; }
 .txm-wrap-suggestions { margin-bottom: 10px; }
+.txm-combo-wrap { position: relative; }
+.txm-combo-input {
+    width: 100%;
+    background: var(--af-glass-05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 14px;
+    color: var(--af-text-body-strong);
+    outline: none;
+    box-sizing: border-box;
+}
+.txm-combo-input:focus { border-color: var(--af-chip-active-border); }
+/* Liste déroulante : fond opaque (évite glass sur glass = texte illisible) */
+.txm-combo-dd {
+    display: none;
+    position: absolute;
+    left: 0; right: 0;
+    top: calc(100% + 6px);
+    max-height: min(45vh, 280px);
+    overflow-y: auto;
+    z-index: 300;
+    isolation: isolate;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 32%),
+        rgba(13, 31, 13, 0.97);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: var(--af-radius-md);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    -webkit-overflow-scrolling: touch;
+}
+.txm-combo-dd.open { display: block; }
+.txm-combo-item {
+    padding: 12px 14px;
+    font-family: var(--font-ui), sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--af-text-body-strong);
+    cursor: pointer;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    text-align: left;
+    width: 100%;
+    background: transparent;
+    transition: background 0.12s ease;
+}
+.txm-combo-item:last-child { border-bottom: none; }
+.txm-combo-item:active, .txm-combo-item:hover {
+    background: var(--af-green-tint-bg);
+    color: var(--af-text-heading-soft);
+}
+.txm-combo-groupe {
+    font-family: var(--font-ui), sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--af-color-accent);
+    opacity: 0.85;
+    padding: 10px 14px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.15);
+}
+.txm-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(13, 31, 13, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.txm-modal-overlay.open { display: flex; }
+.txm-modal {
+    width: 100%;
+    max-width: 380px;
+    background: var(--af-mobile-surface-hero);
+    border: 1px solid var(--af-mobile-border-strong);
+    border-radius: var(--af-radius-lg);
+    padding: 22px 20px 20px;
+    backdrop-filter: blur(var(--af-blur-hero-mobile));
+    -webkit-backdrop-filter: blur(var(--af-blur-hero-mobile));
+    box-shadow: var(--af-shadow-hero-mobile);
+}
+.txm-modal h3 {
+    font-family: var(--font-display), sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--af-text-high);
+    margin-bottom: 8px;
+}
+.txm-modal p.hint { font-family: var(--font-ui), sans-serif; font-size: 12px; color: var(--af-text-muted); line-height: 1.5; margin-bottom: 16px; }
+.txm-modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.txm-modal-actions button {
+    flex: 1;
+    min-height: var(--af-touch-min);
+    border-radius: var(--af-radius-sm);
+    font-weight: 600;
+    font-size: 14px;
+    font-family: var(--font-ui), sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--af-border-glass-soft);
+    background: var(--af-glass-06);
+    color: var(--af-text-secondary);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.txm-modal-actions button:first-child:hover {
+    background: var(--af-glass-10);
+    border-color: var(--af-border-glass-mid);
+}
+.txm-modal-actions .txm-modal-ok {
+    background: linear-gradient(180deg, var(--af-color-accent-mid) 0%, var(--af-color-accent-dark) 100%);
+    border: 1px solid rgba(74, 222, 128, 0.45);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+}
+.txm-modal-actions .txm-modal-ok:active {
+    opacity: 0.92;
+}
 </style>
 @endpush
 
@@ -403,10 +530,14 @@
         'transformation' => 'Transformation',
         'mixte' => 'Mixte',
     ];
-    $categorieModeInitial = old('categorie_mode', 'liste');
 @endphp
 
 <div class="txm-content-pad">
+    <div class="mb-3 flex justify-end">
+        <a href="{{ route('transactions.index') }}" class="inline-flex items-center rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80">
+            Voir la liste des transactions
+        </a>
+    </div>
     <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" enctype="multipart/form-data">
         @csrf
         @if ($errors->any())
@@ -420,9 +551,7 @@
             </div>
         @endif
         <input type="hidden" name="type" id="inputType" value="depense">
-        <input type="hidden" name="categorie_mode" id="inputCategorieMode" value="{{ $categorieModeInitial }}">
-
-        {{-- ── ÉTAPE 1 : Type + Campagne + Nature ── --}}
+        {{-- ── ÉTAPE 1 : Type + Campagne ── --}}
         <div class="txm-step active" id="step1">
 
             {{-- Titre étape --}}
@@ -439,16 +568,6 @@
                 <div class="txm-type-row">
                     <button type="button" id="btnDep" class="txm-type-btn dep-on">Dépense</button>
                     <button type="button" id="btnRec" class="txm-type-btn">Recette</button>
-                </div>
-                <div id="blocNature">
-                    <div class="txm-label txm-label--nature">Nature de la dépense</div>
-                    <div class="txm-nature-row">
-                        <div class="txm-nature-pill selected" id="pillVar" onclick="selectNature('variable')">Variable</div>
-                        <div class="txm-nature-pill" id="pillFix" onclick="selectNature('fixe')">Fixe</div>
-                    </div>
-                    <input type="radio" name="nature" value="variable" id="natVar" checked class="hidden">
-                    <input type="radio" name="nature" value="fixe" id="natFix" class="hidden">
-                    <p class="text-[11px] text-white/50 leading-relaxed mt-2 px-0.5">Le « reste avant charges fixes » suit surtout les dépenses liées au volume ; le gain ou la perte finale compte toutes les dépenses.</p>
                 </div>
             </div>
 
@@ -509,87 +628,57 @@
                 </div>
             </div>
 
-            {{-- Catégorie --}}
+            {{-- Catégorie (combobox) --}}
             <div class="txm-block">
                 <div class="txm-label">Catégorie — {{ $labelsType[$typeExploitation] ?? $typeExploitation }}</div>
+                <p class="text-[11px] text-white/48 mb-3 leading-relaxed">Tapez pour filtrer ou choisissez dans la liste. Si votre libellé n’existe pas, complétez la saisie : nous vous demanderons deux précisions.</p>
 
-                {{-- Mode toggle --}}
-                <div class="txm-mode-row">
-                    <button type="button" id="btnModeListe" class="txm-mode-btn active" onclick="setModeListe()">Référentiel</button>
-                    <button type="button" id="btnModeLibre" class="txm-mode-btn" onclick="setModeLibre()">Saisie libre</button>
-                </div>
+                <input type="hidden" name="categorie" id="mob_cat_slug" value="{{ old('categorie') }}" disabled>
+                <input type="hidden" name="categorie_libre" id="mob_cat_libre" value="{{ old('categorie_libre') }}" disabled>
+                <input type="hidden" name="nature" id="mob_nature" value="{{ old('nature', 'variable') }}" disabled>
+                <input type="hidden" name="intrant_production" id="mob_intrant" value="1" disabled>
 
-                {{-- Mes suggestions --}}
                 <div id="wrapSuggestions" class="hidden txm-wrap-suggestions">
-                    <p class="txm-suggestions-label">Mes libellés</p>
+                    <p class="txm-suggestions-label">Mes libellés récents</p>
                     <div id="pillsSuggestions" class="txm-suggestions"></div>
                 </div>
 
-                {{-- Mode liste : pills groupées par rubrique --}}
-                <div id="zoneListe">
+                <div class="txm-combo-wrap">
                     @error('categorie')
                         <p class="txm-error txm-error--block">{{ $message }}</p>
                     @enderror
-                    <div id="catDepenses" class="txm-cat-list">
-                        @foreach ($categories['depenses'] as $groupe => $cats)
-                            <span class="txm-cat-group-label">{{ $groupe }}</span>
-                            <div class="txm-cat-group-pills">
-                                @foreach ($cats as $val => $label)
-                                    <div class="txm-cat-pill">
-                                        <input type="radio" name="categorie" value="{{ $val }}" id="dep_{{ $val }}" class="cat-radio-std">
-                                        <label for="dep_{{ $val }}">{{ $label }}</label>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endforeach
-                    </div>
-                    <div id="catRecettes" class="txm-cat-list hidden">
-                        @foreach ($categories['recettes'] as $groupe => $cats)
-                            <span class="txm-cat-group-label">{{ $groupe }}</span>
-                            <div class="txm-cat-group-pills">
-                                @foreach ($cats as $val => $label)
-                                    <div class="txm-cat-pill">
-                                        <input type="radio" name="categorie_recette" value="{{ $val }}" id="rec_{{ $val }}" class="cat-radio-std">
-                                        <label for="rec_{{ $val }}">{{ $label }}</label>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Mode libre --}}
-                <div id="zoneLibre" class="hidden">
-                    <input type="text"
-                           name="categorie_libre"
-                           id="inputCategorieLibre"
-                           value="{{ old('categorie_libre') }}"
-                           placeholder="Ex : Location tracteur, Prime récolte…"
-                           class="txm-input"
-                           maxlength="100"
-                           autocomplete="off"
-                           disabled>
-                </div>
-                <div id="txmBlocIntrant" class="hidden txm-block mt-3 border border-amber-500/30 bg-amber-500/[0.07]">
-                    <p class="text-[12px] text-white/75 leading-snug">Indiquez si l’achat sert la production (pour les indicateurs « valeur ajoutée »).</p>
-                    <div class="txm-label" style="margin-top:10px;">Cet achat sert la production ?</div>
-                    <div class="txm-nature-row" style="margin-top:8px;">
-                        <label class="flex items-center justify-center gap-2 txm-input" style="cursor:pointer;">
-                            <input type="radio" name="intrant_production" value="1" class="rounded border-white/30" @checked(old('intrant_production') === null || old('intrant_production') === true || old('intrant_production') === '1' || old('intrant_production') === 1)>
-                            <span>Oui</span>
-                        </label>
-                        <label class="flex items-center justify-center gap-2 txm-input" style="cursor:pointer;">
-                            <input type="radio" name="intrant_production" value="0" class="rounded border-white/30" @checked(old('intrant_production') === false || old('intrant_production') === '0' || old('intrant_production') === 0)>
-                            <span>Non</span>
-                        </label>
-                    </div>
-                    @error('intrant_production')<p class="text-sm text-red-400 mt-2">{{ $message }}</p>@enderror
+                    @error('nature')<p class="txm-error txm-error--block">{{ $message }}</p>@enderror
+                    @error('intrant_production')<p class="txm-error txm-error--block">{{ $message }}</p>@enderror
+                    <input type="text" id="catComboMob" class="txm-combo-input" placeholder="Rechercher ou saisir…" maxlength="100" autocomplete="off" value="{{ old('categorie_libre') ?: '' }}">
+                    <div id="catDropdownMob" class="txm-combo-dd" role="listbox" aria-label="Suggestions"></div>
                 </div>
             </div>
 
         </div>
 
     </form>
+</div>
+
+<div id="txmModalCustom" class="txm-modal-overlay" aria-hidden="true">
+    <div class="txm-modal" role="dialog" aria-modal="true" aria-labelledby="txmModalTitle">
+        <h3 id="txmModalTitle">Précisez cette dépense</h3>
+        <p class="hint">Vous avez saisi un libellé personnalisé. Pour calculer correctement vos indicateurs, répondez aux deux questions ci-dessous.</p>
+        <div class="txm-label" style="margin-bottom:6px;">1. Cette charge varie selon ce que vous produisez ou vendez ?</div>
+        <div class="txm-nature-row" style="margin-bottom:14px;">
+            <button type="button" class="txm-nature-pill selected" id="modalMobNatVar" data-val="variable">Oui → variable</button>
+            <button type="button" class="txm-nature-pill" id="modalMobNatFix" data-val="fixe">Non → fixe</button>
+        </div>
+        <p class="text-[10px] text-white/45 mb-3 px-0.5">Ex. : les semences suivent le volume cultivé (variable) ; le loyer du terrain reste le même (fixe).</p>
+        <div class="txm-label" style="margin-bottom:6px;">2. Cet achat sert directement la production de cette campagne ?</div>
+        <div class="txm-nature-row">
+            <button type="button" class="txm-nature-pill selected" id="modalMobIntOui" data-val="1">Oui</button>
+            <button type="button" class="txm-nature-pill" id="modalMobIntNon" data-val="0">Non</button>
+        </div>
+        <div class="txm-modal-actions">
+            <button type="button" id="modalMobCancel">Annuler</button>
+            <button type="button" class="txm-modal-ok" id="modalMobOk">Valider</button>
+        </div>
+    </div>
 </div>
 
 {{-- ── Footer fixe ── --}}
@@ -603,34 +692,36 @@
 <script>
 (function () {
     var CI_SLUGS_MOB = @json($slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires());
-    function updateTxmIntrant() {
-        var dep = document.getElementById('inputType').value === 'depense';
-        var mode = document.getElementById('inputCategorieMode').value;
-        var cat = '';
-        if (mode === 'libre') {
-            cat = (document.getElementById('inputCategorieLibre') && document.getElementById('inputCategorieLibre').value || '').trim();
-        } else {
-            var cr = document.querySelector('#formTransaction input[name="categorie"]:checked');
-            cat = cr ? cr.value : '';
-        }
-        var need = dep && cat && CI_SLUGS_MOB.indexOf(cat) === -1;
-        var bloc = document.getElementById('txmBlocIntrant');
-        if (bloc) bloc.classList.toggle('hidden', !need);
-    }
+    var TX_CAT = @json($txCatMeta ?? ['depenses' => [], 'recettes' => []]);
     var suggestionsPayload = @json($suggestionsByExploitation);
     var activiteVersExploitation = @json($activiteVersExploitation);
 
     var currentStep = 1;
     var currentType = 'depense';
+    var selectedSlug = null;
+    var selectedLabel = '';
     var inputType = document.getElementById('inputType');
-    var inputCategorieMode = document.getElementById('inputCategorieMode');
-    var inputCategorieLibre = document.getElementById('inputCategorieLibre');
     var selectActivite = document.getElementById('selectActivite');
-    var catD = document.getElementById('catDepenses');
-    var catR = document.getElementById('catRecettes');
+    var catCombo = document.getElementById('catComboMob');
+    var catDd = document.getElementById('catDropdownMob');
+    var mobSlug = document.getElementById('mob_cat_slug');
+    var mobLibre = document.getElementById('mob_cat_libre');
+    var mobNat = document.getElementById('mob_nature');
+    var mobInt = document.getElementById('mob_intrant');
     var inputMontant = document.getElementById('inputMontant');
     var btnNext = document.getElementById('btnNext');
     var btnBack = document.getElementById('btnBack');
+    var modal = document.getElementById('txmModalCustom');
+    var pendingLibre = null;
+    var modalForOffline = false;
+
+    function currentList() {
+        return currentType === 'depense' ? TX_CAT.depenses : TX_CAT.recettes;
+    }
+
+    function norm(s) {
+        return String(s || '').trim().toLowerCase();
+    }
 
     function currentExploitationId() {
         var opt = selectActivite.options[selectActivite.selectedIndex];
@@ -654,78 +745,194 @@
             b.className = 'txm-suggestion-pill';
             b.textContent = item.label;
             b.addEventListener('click', function () {
-                setModeLibre();
-                inputCategorieLibre.value = item.label;
-                clearFsaRadios();
+                selectedSlug = null;
+                selectedLabel = '';
+                catCombo.value = item.label;
             });
             pills.appendChild(b);
         });
     }
 
-    function clearFsaRadios() {
-        document.querySelectorAll('.cat-radio-std').forEach(function (i) { i.checked = false; });
+    function renderDropdown(filter) {
+        var q = norm(filter);
+        var list = currentList();
+        var groups = {};
+        list.forEach(function (row) {
+            if (q && row.label_search.indexOf(q) === -1 && row.slug.indexOf(q) === -1) {
+                return;
+            }
+            if (!groups[row.groupe]) {
+                groups[row.groupe] = [];
+            }
+            groups[row.groupe].push(row);
+        });
+        catDd.innerHTML = '';
+        Object.keys(groups).forEach(function (g) {
+            var h = document.createElement('div');
+            h.className = 'txm-combo-groupe';
+            h.textContent = g;
+            catDd.appendChild(h);
+            groups[g].forEach(function (row) {
+                var el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'txm-combo-item';
+                el.textContent = row.label;
+                el.addEventListener('click', function () {
+                    selectedSlug = row.slug;
+                    selectedLabel = row.label;
+                    catCombo.value = row.label;
+                    catDd.classList.remove('open');
+                });
+                catDd.appendChild(el);
+            });
+        });
     }
 
-    window.setModeListe = function () {
-        inputCategorieMode.value = 'liste';
-        document.getElementById('zoneListe').classList.remove('hidden');
-        document.getElementById('zoneLibre').classList.add('hidden');
-        inputCategorieLibre.disabled = true;
-        inputCategorieLibre.value = '';
-        document.getElementById('btnModeListe').classList.add('active');
-        document.getElementById('btnModeLibre').classList.remove('active');
-        if (currentType === 'depense') {
-            catD.querySelectorAll('input').forEach(function (i) { i.name = 'categorie'; i.disabled = false; });
-            catR.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
-        } else {
-            catR.querySelectorAll('input').forEach(function (i) { i.name = 'categorie'; i.disabled = false; });
-            catD.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
+    catCombo.addEventListener('focus', function () {
+        renderDropdown(catCombo.value);
+        catDd.classList.add('open');
+    });
+    catCombo.addEventListener('input', function () {
+        if (selectedLabel && catCombo.value !== selectedLabel) {
+            selectedSlug = null;
+            selectedLabel = '';
         }
-        updateTxmIntrant();
-    };
+        renderDropdown(catCombo.value);
+        catDd.classList.add('open');
+    });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.txm-combo-wrap')) {
+            catDd.classList.remove('open');
+        }
+    });
 
-    window.setModeLibre = function () {
-        inputCategorieMode.value = 'libre';
-        document.getElementById('zoneListe').classList.add('hidden');
-        document.getElementById('zoneLibre').classList.remove('hidden');
-        inputCategorieLibre.disabled = false;
-        clearFsaRadios();
-        catD.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
-        catR.querySelectorAll('input').forEach(function (i) { i.removeAttribute('name'); i.disabled = true; });
-        document.getElementById('btnModeLibre').classList.add('active');
-        document.getElementById('btnModeListe').classList.remove('active');
-        updateTxmIntrant();
-    };
+    function resolveCategory() {
+        var txt = (catCombo.value || '').trim();
+        if (!txt) {
+            return { err: 'Indiquez une catégorie ou choisissez dans la liste.' };
+        }
+        var list = currentList();
+        var slug = null;
+        if (selectedSlug && txt === selectedLabel) {
+            slug = selectedSlug;
+        } else {
+            var t = txt.toLowerCase();
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].slug === t) {
+                    slug = list[i].slug;
+                    break;
+                }
+            }
+            if (!slug) {
+                for (var j = 0; j < list.length; j++) {
+                    if (list[j].label_search.indexOf(norm(txt)) !== -1 || norm(list[j].label) === norm(txt)) {
+                        slug = list[j].slug;
+                        break;
+                    }
+                }
+            }
+        }
+        if (slug) {
+            return { slug: slug, custom: false };
+        }
+        if (currentType === 'recette') {
+            return { custom: true, libre: txt, needModal: false };
+        }
+        if (CI_SLUGS_MOB.indexOf(txt) !== -1) {
+            return { slug: txt, custom: false };
+        }
+        return { custom: true, libre: txt, needModal: true };
+    }
+
+    function applyHidden(r) {
+        mobSlug.disabled = true;
+        mobLibre.disabled = true;
+        mobNat.disabled = true;
+        mobInt.disabled = true;
+        mobSlug.value = '';
+        mobLibre.value = '';
+        mobNat.value = 'variable';
+        mobInt.value = '1';
+        if (r.slug) {
+            mobSlug.disabled = false;
+            mobSlug.value = r.slug;
+            return;
+        }
+        mobLibre.disabled = false;
+        mobLibre.value = r.libre;
+        if (currentType !== 'depense') {
+            return;
+        }
+        mobNat.disabled = false;
+        mobNat.value = r.nature || 'variable';
+        if (CI_SLUGS_MOB.indexOf(r.libre) === -1) {
+            mobInt.disabled = false;
+            mobInt.value = (r.intrant === false || r.intrant === '0') ? '0' : '1';
+        }
+    }
+
+    var modalNat = 'variable';
+    var modalInt = true;
+    function syncModalUi() {
+        document.getElementById('modalMobNatVar').classList.toggle('selected', modalNat === 'variable');
+        document.getElementById('modalMobNatFix').classList.toggle('selected', modalNat === 'fixe');
+        document.getElementById('modalMobIntOui').classList.toggle('selected', modalInt === true);
+        document.getElementById('modalMobIntNon').classList.toggle('selected', modalInt === false);
+    }
+    document.getElementById('modalMobNatVar').addEventListener('click', function () { modalNat = 'variable'; syncModalUi(); });
+    document.getElementById('modalMobNatFix').addEventListener('click', function () { modalNat = 'fixe'; syncModalUi(); });
+    document.getElementById('modalMobIntOui').addEventListener('click', function () { modalInt = true; syncModalUi(); });
+    document.getElementById('modalMobIntNon').addEventListener('click', function () { modalInt = false; syncModalUi(); });
+    document.getElementById('modalMobCancel').addEventListener('click', function () {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        pendingLibre = null;
+        modalForOffline = false;
+    });
+    document.getElementById('modalMobOk').addEventListener('click', function () {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        if (pendingLibre === null) {
+            return;
+        }
+        applyHidden({
+            custom: true,
+            libre: pendingLibre,
+            nature: modalNat,
+            intrant: modalInt,
+        });
+        pendingLibre = null;
+        if (modalForOffline) {
+            modalForOffline = false;
+            var p = window.__AF_buildMobileTxPayloadAfterHidden();
+            if (!p) {
+                return;
+            }
+            window.__AF_enqueueOfflineTransaction(p).then(function () {
+                alert('Enregistré hors ligne. Synchronisation à la reconnexion.');
+                window.location.href = @json(route('dashboard'));
+            }).catch(function (err) {
+                alert('Erreur : ' + ((err && err.message) ? err.message : 'inconnue'));
+            });
+            return;
+        }
+        document.getElementById('formTransaction').submit();
+    });
 
     function setType(type) {
         currentType = type;
         inputType.value = type;
-        var dep = type === 'depense';
-        catD.classList.toggle('hidden', !dep);
-        catR.classList.toggle('hidden', dep);
-        document.getElementById('blocNature').style.display = dep ? '' : 'none';
-        document.querySelectorAll('input[name="nature"]').forEach(function (i) { i.disabled = !dep; });
-
         btnNext.classList.remove('dep', 'rec');
-        btnNext.classList.add(dep ? 'dep' : 'rec');
-        inputMontant.className = 'txm-amount-input' + (dep ? ' dep' : '');
-
-        document.getElementById('btnDep').className = 'txm-type-btn' + (dep ? ' dep-on' : '');
-        document.getElementById('btnRec').className = 'txm-type-btn' + (!dep ? ' rec-on' : '');
-
-        if (inputCategorieMode.value === 'liste') {
-            setModeListe();
-        }
+        btnNext.classList.add(type === 'depense' ? 'dep' : 'rec');
+        inputMontant.className = 'txm-amount-input' + (type === 'depense' ? ' dep' : '');
+        document.getElementById('btnDep').className = 'txm-type-btn' + (type === 'depense' ? ' dep-on' : '');
+        document.getElementById('btnRec').className = 'txm-type-btn' + (type === 'recette' ? ' rec-on' : '');
+        catCombo.value = '';
+        selectedSlug = null;
+        selectedLabel = '';
         renderSuggestions();
-        updateTxmIntrant();
+        renderDropdown('');
     }
-
-    window.selectNature = function (val) {
-        document.getElementById('pillVar').classList.toggle('selected', val === 'variable');
-        document.getElementById('pillFix').classList.toggle('selected', val === 'fixe');
-        document.getElementById('natVar').checked = val === 'variable';
-        document.getElementById('natFix').checked = val === 'fixe';
-    };
 
     window.goStep = function (step) {
         currentStep = step;
@@ -741,14 +948,35 @@
         if (step === 2) {
             btnNext.textContent = 'Enregistrer';
             renderSuggestions();
-            if (inputCategorieMode.value === 'liste') { setModeListe(); } else { setModeLibre(); }
-            updateTxmIntrant();
         } else {
             btnNext.textContent = 'Suivant →';
         }
     };
 
-    window.__AF_buildMobileTxPayload = function () {
+    function trySubmitOnline() {
+        var r = resolveCategory();
+        if (r.err) {
+            alert(r.err);
+            return;
+        }
+        if (r.custom && r.needModal) {
+            pendingLibre = r.libre;
+            modalNat = 'variable';
+            modalInt = true;
+            syncModalUi();
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            return;
+        }
+        if (r.custom && !r.needModal) {
+            applyHidden({ custom: true, libre: r.libre });
+        } else {
+            applyHidden({ slug: r.slug });
+        }
+        document.getElementById('formTransaction').submit();
+    }
+
+    window.__AF_buildMobileTxPayloadAfterHidden = function () {
         var type = document.getElementById('inputType').value;
         var activite_id = parseInt(document.getElementById('selectActivite').value, 10);
         var montant = parseFloat(String(document.getElementById('inputMontant').value), 10);
@@ -758,22 +986,6 @@
         var note = noteEl ? noteEl.value.trim() : '';
         var cb = document.querySelector('#formTransaction input[name="est_imprevue"]');
         var est_imprevue = cb ? cb.checked : false;
-
-        var nature = null;
-        if (type === 'depense') {
-            var nr = document.querySelector('#formTransaction input[name="nature"]:checked');
-            nature = nr ? nr.value : 'variable';
-        }
-
-        var categorie = '';
-        var mode = document.getElementById('inputCategorieMode').value;
-        if (mode === 'libre') {
-            categorie = (document.getElementById('inputCategorieLibre') && document.getElementById('inputCategorieLibre').value || '').trim();
-        } else {
-            var cr = document.querySelector('#formTransaction input[name="categorie"]:checked');
-            categorie = cr ? cr.value : '';
-        }
-
         if (!activite_id || !date_transaction) {
             alert('Vérifiez la campagne et la date.');
             return null;
@@ -782,30 +994,53 @@
             alert('Indiquez un montant valide (minimum 1 FCFA).');
             return null;
         }
+        var categorie = !mobSlug.disabled && mobSlug.value ? mobSlug.value : mobLibre.value;
         if (!categorie) {
-            alert('Choisissez une catégorie ou saisissez-la en libre.');
+            alert('Choisissez une catégorie.');
             return null;
         }
-
         var out = {
             activite_id: activite_id,
             type: type,
-            nature: nature,
             categorie: categorie,
             montant: montant,
             date_transaction: date_transaction,
             note: note || null,
             est_imprevue: !!est_imprevue,
         };
-        if (type === 'depense' && categorie && CI_SLUGS_MOB.indexOf(categorie) === -1) {
-            var ir = document.querySelector('#formTransaction input[name="intrant_production"]:checked');
-            if (!ir) {
-                alert('Indiquez si cet achat sert la production de la campagne (Oui / Non).');
-                return null;
+        if (type === 'depense') {
+            if (!mobLibre.disabled && mobLibre.value) {
+                out.nature = mobNat.value;
+                if (CI_SLUGS_MOB.indexOf(categorie) === -1) {
+                    out.intrant_production = mobInt.value === '1';
+                }
             }
-            out.intrant_production = ir.value === '1';
         }
         return out;
+    };
+
+    window.__AF_buildMobileTxPayload = function () {
+        var r = resolveCategory();
+        if (r.err) {
+            alert(r.err);
+            return null;
+        }
+        if (r.custom && r.needModal) {
+            pendingLibre = r.libre;
+            modalNat = 'variable';
+            modalInt = true;
+            syncModalUi();
+            modalForOffline = true;
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            return null;
+        }
+        if (r.custom && !r.needModal) {
+            applyHidden({ custom: true, libre: r.libre });
+        } else {
+            applyHidden({ slug: r.slug });
+        }
+        return window.__AF_buildMobileTxPayloadAfterHidden();
     };
 
     window.handleNext = function () {
@@ -829,20 +1064,31 @@
                 });
                 return;
             }
-            document.getElementById('formTransaction').submit();
+            trySubmitOnline();
         }
     };
 
     document.getElementById('btnDep').addEventListener('click', function () { setType('depense'); });
     document.getElementById('btnRec').addEventListener('click', function () { setType('recette'); });
-    catD.addEventListener('change', updateTxmIntrant);
-    catR.addEventListener('change', updateTxmIntrant);
-    if (inputCategorieLibre) inputCategorieLibre.addEventListener('input', updateTxmIntrant);
 
     setType('depense');
     goStep(1);
-    @if($categorieModeInitial === 'libre')
-        setModeLibre();
+    syncModalUi();
+
+    @if(old('categorie') && !old('categorie_libre'))
+        (function () {
+            var os = @json(old('categorie'));
+            var list = TX_CAT.depenses.concat(TX_CAT.recettes);
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].slug === os) {
+                    selectedSlug = list[i].slug;
+                    selectedLabel = list[i].label;
+                    catCombo.value = list[i].label;
+                    currentType = document.getElementById('inputType').value;
+                    break;
+                }
+            }
+        })();
     @endif
 })();
 </script>
@@ -862,13 +1108,145 @@
                 'transformation' => 'Transformation',
                 'mixte' => 'Mixte',
             ];
-            $categorieModeInitial = old('categorie_mode', 'liste');
         @endphp
 
+        <style>
+            /* Même principe que mobile : panneau lisible, pas de superposition glass / glass */
+            .txn-desk-combo-dd {
+                display: none;
+                position: absolute;
+                left: 0; right: 0;
+                top: calc(100% + 6px);
+                max-height: min(50vh, 320px);
+                overflow-y: auto;
+                z-index: 300;
+                isolation: isolate;
+                background:
+                    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 30%),
+                    rgba(13, 31, 13, 0.97);
+                border: 1px solid rgba(74, 222, 128, 0.22);
+                border-radius: var(--af-radius-md);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                box-shadow:
+                    0 16px 48px rgba(0, 0, 0, 0.5),
+                    0 0 0 1px rgba(255, 255, 255, 0.07);
+                -webkit-overflow-scrolling: touch;
+            }
+            .txn-desk-combo-dd.open { display: block; }
+            .txn-desk-combo-item {
+                display: block;
+                width: 100%;
+                text-align: left;
+                padding: 11px 14px;
+                font-family: var(--font-ui), sans-serif;
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--af-text-body-strong);
+                border: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+                background: transparent;
+                cursor: pointer;
+                transition: background 0.12s ease;
+            }
+            .txn-desk-combo-item:hover {
+                background: var(--af-green-tint-bg);
+                color: var(--af-text-heading-soft);
+            }
+            .txn-desk-combo-groupe {
+                font-family: var(--font-ui), sans-serif;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--af-color-accent);
+                opacity: 0.88;
+                padding: 10px 14px 6px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                background: rgba(0, 0, 0, 0.12);
+            }
+            .txn-desk-modal {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 200;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+                background: rgba(13, 31, 13, 0.72);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            .txn-desk-modal.open { display: flex; }
+            .txn-desk-modal-card {
+                width: 100%;
+                max-width: 400px;
+                background: var(--af-glass-05);
+                border: 1px solid var(--af-border-glass-mid);
+                border-radius: var(--af-radius-lg);
+                padding: 22px 22px 20px;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                box-shadow: var(--af-shadow-card-lg);
+            }
+            .txn-desk-modal-card h3 {
+                font-family: var(--font-display), sans-serif;
+                font-size: 1.125rem;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                color: var(--af-text-high);
+                margin-bottom: 0.5rem;
+            }
+            .txn-desk-modal-card .txn-desk-modal-hint {
+                font-family: var(--font-ui), sans-serif;
+                font-size: 12px;
+                color: var(--af-text-muted);
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+            .txn-desk-modal-card .txn-desk-q {
+                font-family: var(--font-ui), sans-serif;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--af-text-label);
+                margin-bottom: 0.5rem;
+            }
+            .af-desk-pill {
+                font-family: var(--font-ui), sans-serif;
+                min-height: var(--af-touch-min);
+                border: 1px solid var(--af-border-glass-soft);
+                background: var(--af-glass-06);
+                color: var(--af-text-secondary);
+                border-radius: var(--af-radius-sm);
+                transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+            }
+            .af-desk-pill:hover {
+                border-color: var(--af-border-glass-mid);
+                background: var(--af-glass-08);
+            }
+            .af-desk-pill.af-desk-pill--active {
+                border-color: var(--af-chip-active-border);
+                background: var(--af-chip-active-bg);
+                color: var(--af-color-accent);
+                box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.2);
+            }
+            .txn-desk-modal-card .txn-desk-modal-micro {
+                font-family: var(--font-ui), sans-serif;
+                font-size: 11px;
+                line-height: 1.45;
+                color: var(--af-text-caption);
+                margin-bottom: 0.75rem;
+            }
+        </style>
+
+        <div class="max-w-2xl mx-auto mb-3 flex justify-end">
+            <a href="{{ route('transactions.index') }}" class="btn-outline text-sm px-3 py-2">Voir la liste des transactions</a>
+        </div>
         <form id="formTransaction" method="POST" action="{{ route('transactions.store') }}" enctype="multipart/form-data" class="max-w-2xl mx-auto space-y-6">
             @csrf
             <input type="hidden" name="type" id="inputType" value="depense">
-            <input type="hidden" name="categorie_mode" id="inputCategorieMode" value="{{ $categorieModeInitial }}">
 
             <div class="card space-y-5">
                 <h2 class="text-sm font-semibold text-gray-800 font-display">Informations générales</h2>
@@ -890,76 +1268,36 @@
                         <button type="button" id="btnRecette" class="txn-type-btn txn-type-btn--inactive">Recette</button>
                     </div>
                 </div>
-                <div id="blocNature" class="space-y-2">
-                    <p class="text-xs font-medium text-gray-600">Nature (dépense)</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="cursor-pointer"><input type="radio" name="nature" value="variable" class="peer sr-only" checked><div class="txn-nature-pill p-3 text-center text-sm">Variable</div></label>
-                        <label class="cursor-pointer"><input type="radio" name="nature" value="fixe" class="peer sr-only"><div class="txn-nature-pill p-3 text-center text-sm">Fixe</div></label>
-                    </div>
-                    <p class="text-[11px] text-white/45 leading-relaxed">Le reste avant charges fixes suit surtout les dépenses liées au volume ; le résultat final (gain ou perte) prend en compte fixe et variable.</p>
-                </div>
             </div>
 
-            <div class="card space-y-4">
+            <div class="card space-y-4 relative z-20 overflow-visible">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <h2 class="text-sm font-semibold text-gray-800 font-display">Catégorie</h2>
-                    <p class="text-xs text-gray-500 max-w-sm">Référentiel — {{ $labelsType[$typeExploitation] ?? $typeExploitation }}</p>
+                    <p class="text-xs text-gray-500 max-w-sm">{{ $labelsType[$typeExploitation] ?? $typeExploitation }} — recherchez ou saisissez un libellé.</p>
                 </div>
-                <div class="flex rounded-xl border border-white/15 p-1 gap-1 bg-white/[0.03]">
-                    <button type="button" id="btnModeListe" class="txn-cat-mode-btn txn-cat-mode-btn--active flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors">Liste (standard + mes libellés)</button>
-                    <button type="button" id="btnModeLibre" class="txn-cat-mode-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors text-white/60">Saisie libre</button>
+                <p class="text-[11px] text-white/50">Pour un libellé du référentiel, la nature (fixe / variable) et l’intrant sont appliqués automatiquement. Sinon, une fenêtre vous posera deux questions.</p>
+
+                <input type="hidden" name="categorie" id="desk_cat_slug" value="{{ old('categorie') }}" disabled>
+                <input type="hidden" name="categorie_libre" id="desk_cat_libre" value="{{ old('categorie_libre') }}" disabled>
+                <input type="hidden" name="nature" id="desk_nature" value="{{ old('nature', 'variable') }}" disabled>
+                <input type="hidden" name="intrant_production" id="desk_intrant" value="1" disabled>
+
+                <div id="wrapMesCategories" class="hidden rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 space-y-2">
+                    <p class="text-xs font-semibold text-emerald-300/90 uppercase tracking-wide">Mes libellés récents</p>
+                    <div id="mesCategoriesPills" class="flex flex-wrap gap-2"></div>
                 </div>
-                <div id="zoneListe" class="space-y-4">
-                    <div id="wrapMesCategories" class="hidden rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 space-y-2">
-                        <p class="text-xs font-semibold text-emerald-300/90 uppercase tracking-wide">Mes catégories (cette exploitation)</p>
-                        <p class="text-[11px] text-white/45">Libellés déjà utilisés — clic pour remplir la saisie libre.</p>
-                        <div id="mesCategoriesPills" class="flex flex-wrap gap-2"></div>
-                    </div>
-                    <div id="catDepenses" class="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-                        @foreach ($categories['depenses'] as $groupe => $cats)
-                            <details class="group border border-white/10 rounded-xl bg-white/[0.03] open:bg-white/[0.06]" open>
-                                <summary class="cursor-pointer px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wide list-none flex justify-between items-center">{{ $groupe }}<span class="text-gray-400 group-open:rotate-180 transition">▼</span></summary>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 pt-0">
-                                    @foreach ($cats as $val => $label)
-                                        <label class="block"><input type="radio" name="categorie" value="{{ $val }}" class="peer sr-only cat-radio-std"><div class="txn-cat-pill p-2.5 text-sm">{{ $label }}</div></label>
-                                    @endforeach
-                                </div>
-                            </details>
-                        @endforeach
-                    </div>
-                    <div id="catRecettes" class="hidden space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-                        @foreach ($categories['recettes'] as $groupe => $cats)
-                            <details class="group border border-white/10 rounded-xl bg-white/[0.03] open:bg-white/[0.06]" open>
-                                <summary class="cursor-pointer px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wide list-none flex justify-between items-center">{{ $groupe }}<span class="text-gray-400">▼</span></summary>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 pt-0">
-                                    @foreach ($cats as $val => $label)
-                                        <label class="block"><input type="radio" name="categorie_recette" value="{{ $val }}" class="peer sr-only cat-radio-std"><div class="txn-cat-pill p-2.5 text-sm">{{ $label }}</div></label>
-                                    @endforeach
-                                </div>
-                            </details>
-                        @endforeach
-                    </div>
-                    <p class="text-[11px] text-white/52">En « Liste », choisissez un libellé du référentiel ci-dessus ou un de vos libellés en haut. Passez en « Saisie libre » pour tout taper.</p>
+
+                <div class="relative">
+                    @error('categorie')<p class="text-sm text-red-400 mb-2">{{ $message }}</p>@enderror
+                    @error('nature')<p class="text-sm text-red-400 mb-2">{{ $message }}</p>@enderror
+                    @error('intrant_production')<p class="text-sm text-red-400 mb-2">{{ $message }}</p>@enderror
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Catégorie</label>
+                    <input type="text" id="catComboDesk" class="input-field" placeholder="Rechercher ou saisir…" maxlength="100" autocomplete="off" value="{{ old('categorie_libre') ?: '' }}">
+                    <div id="catDropdownDesk" class="txn-desk-combo-dd" role="listbox"></div>
                 </div>
-                <div id="zoneLibre" class="hidden space-y-2">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Libellé de catégorie</label>
-                    <input type="text" name="categorie_libre" id="inputCategorieLibre" value="{{ old('categorie_libre') }}" placeholder="Ex : Location tracteur, Prime récolte, Tontine…" class="input-field" maxlength="100" autocomplete="off" @if($categorieModeInitial === 'liste') disabled @endif>
-                </div>
-                @error('categorie')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
             </div>
 
-            @php $slugsCi = $slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires(); @endphp
-            <div id="blocIntrantProduction" class="card hidden border-amber-500/25 bg-amber-500/[0.06] space-y-3">
-                <p class="text-xs text-white/75">Cette catégorie n’est pas un intrant « standard » pour les indicateurs (valeur ajoutée). Indiquez si l’achat sert la production de cette campagne.</p>
-                <p class="text-xs font-medium text-white/90">Cet achat sert la production de cette campagne ?</p>
-                <div class="flex flex-wrap gap-6">
-                    <label class="flex items-center gap-2 text-sm text-white/90"><input type="radio" name="intrant_production" value="1" class="rounded border-white/30" @checked(old('intrant_production') === null || old('intrant_production') === true || old('intrant_production') === '1' || old('intrant_production') === 1)> Oui</label>
-                    <label class="flex items-center gap-2 text-sm text-white/90"><input type="radio" name="intrant_production" value="0" class="rounded border-white/30" @checked(old('intrant_production') === false || old('intrant_production') === '0' || old('intrant_production') === 0)> Non</label>
-                </div>
-                @error('intrant_production')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
-            </div>
-
-            <div class="card space-y-5">
+            <div class="card space-y-5 relative z-10">
                 <h2 class="text-sm font-semibold text-gray-800 font-display sr-only">Montant et détails</h2>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1 text-center">Montant (FCFA)</label>
@@ -976,74 +1314,291 @@
                 @error('justificatif')<p class="text-sm text-red-400">{{ $message }}</p>@enderror
             </div>
             <div class="flex justify-end">
-                <button type="submit" id="btnValider" class="btn-primary px-8 py-3 w-full sm:w-auto">Enregistrer la transaction</button>
+                <button type="button" id="btnValider" class="btn-primary px-8 py-3 w-full sm:w-auto">Enregistrer la transaction</button>
             </div>
         </form>
+
+        <div id="deskModalCustom" class="txn-desk-modal" aria-hidden="true">
+            <div class="txn-desk-modal-card" role="dialog" aria-modal="true" aria-labelledby="deskModalTitle">
+                <h3 id="deskModalTitle">Précisez cette dépense</h3>
+                <p class="txn-desk-modal-hint">Libellé personnalisé : deux questions pour calculer correctement vos indicateurs.</p>
+                <p class="txn-desk-q">1. Charge variable ou fixe ?</p>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button type="button" class="af-desk-pill desk-mod-nat af-desk-pill--active px-3 py-2.5 text-sm" data-nat="variable">Oui → variable</button>
+                    <button type="button" class="af-desk-pill desk-mod-nat px-3 py-2.5 text-sm" data-nat="fixe">Non → fixe</button>
+                </div>
+                <p class="txn-desk-modal-micro">Variable : liée au volume produit ou vendu. Fixe : montant qui reste le même (loyer, abonnement…).</p>
+                <p class="txn-desk-q">2. Intrant de production ?</p>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button type="button" class="af-desk-pill desk-mod-int af-desk-pill--active px-3 py-2.5 text-sm" data-int="1">Oui</button>
+                    <button type="button" class="af-desk-pill desk-mod-int px-3 py-2.5 text-sm" data-int="0">Non</button>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" id="deskModalCancel" class="btn-outline flex-1 justify-center">Annuler</button>
+                    <button type="button" id="deskModalOk" class="btn-primary flex-1 justify-center">Valider</button>
+                </div>
+            </div>
+        </div>
 
         <script>
             (function () {
                 var CI_SLUGS = @json($slugsCi ?? \App\Helpers\TransactionCategories::slugsChargesIntermediaires());
-                function categorieCouranteDesktop() {
-                    if (inputCategorieMode.value === 'libre') {
-                        return (inputCategorieLibre.value || '').trim();
-                    }
-                    var cr = document.querySelector('#catDepenses input[name="categorie"]:checked, #catRecettes input[name="categorie"]:checked');
-                    return cr ? cr.value : '';
-                }
-                function updateIntrantBlocDesktop() {
-                    var dep = inputType.value === 'depense';
-                    var cat = categorieCouranteDesktop();
-                    var need = dep && cat && CI_SLUGS.indexOf(cat) === -1;
-                    var bloc = document.getElementById('blocIntrantProduction');
-                    if (bloc) bloc.classList.toggle('hidden', !need);
-                }
+                var TX_CAT = @json($txCatMeta ?? ['depenses' => [], 'recettes' => []]);
                 var suggestionsPayload = @json($suggestionsByExploitation);
-                var activiteVersExploitation = @json($activiteVersExploitation);
                 var inputType = document.getElementById('inputType');
-                var catD = document.getElementById('catDepenses');
-                var catR = document.getElementById('catRecettes');
-                var blocNat = document.getElementById('blocNature');
-                var btnD = document.getElementById('btnDepense');
-                var btnR = document.getElementById('btnRecette');
-                var btnValider = document.getElementById('btnValider');
-                var btnModeListe = document.getElementById('btnModeListe');
-                var btnModeLibre = document.getElementById('btnModeLibre');
-                var zoneListe = document.getElementById('zoneListe');
-                var zoneLibre = document.getElementById('zoneLibre');
-                var inputCategorieMode = document.getElementById('inputCategorieMode');
-                var inputCategorieLibre = document.getElementById('inputCategorieLibre');
+                var catCombo = document.getElementById('catComboDesk');
+                var catDd = document.getElementById('catDropdownDesk');
+                var deskSlug = document.getElementById('desk_cat_slug');
+                var deskLibre = document.getElementById('desk_cat_libre');
+                var deskNat = document.getElementById('desk_nature');
+                var deskInt = document.getElementById('desk_intrant');
                 var selectActivite = document.getElementById('selectActivite');
                 var wrapMes = document.getElementById('wrapMesCategories');
                 var mesPills = document.getElementById('mesCategoriesPills');
-                function currentExploitationId() { var opt = selectActivite.options[selectActivite.selectedIndex]; return opt ? String(opt.getAttribute('data-exploitation-id')) : null; }
+                var btnValider = document.getElementById('btnValider');
+                var btnD = document.getElementById('btnDepense');
+                var btnR = document.getElementById('btnRecette');
+                var currentTypeDesk = 'depense';
+                var selSlug = null;
+                var selLabel = '';
+                var pendingLibreDesk = null;
+                var modalNatDesk = 'variable';
+                var modalIntDesk = true;
+
+                function norm(s) { return String(s || '').trim().toLowerCase(); }
+                function currentListDesk() {
+                    return currentTypeDesk === 'depense' ? TX_CAT.depenses : TX_CAT.recettes;
+                }
+                function currentExploitationId() {
+                    var opt = selectActivite.options[selectActivite.selectedIndex];
+                    return opt ? String(opt.getAttribute('data-exploitation-id')) : null;
+                }
                 function renderMesCategories() {
-                    var eid = currentExploitationId(); var t = inputType.value === 'depense' ? 'depense' : 'recette'; mesPills.innerHTML = '';
-                    if (!eid || !suggestionsPayload[eid] || !suggestionsPayload[eid][t] || !suggestionsPayload[eid][t].length) { wrapMes.classList.add('hidden'); return; }
+                    var eid = currentExploitationId();
+                    var t = currentTypeDesk === 'depense' ? 'depense' : 'recette';
+                    mesPills.innerHTML = '';
+                    if (!eid || !suggestionsPayload[eid] || !suggestionsPayload[eid][t] || !suggestionsPayload[eid][t].length) {
+                        wrapMes.classList.add('hidden');
+                        return;
+                    }
                     wrapMes.classList.remove('hidden');
-                    suggestionsPayload[eid][t].forEach(function (item) { var b = document.createElement('button'); b.type='button'; b.className='rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-200 hover:bg-emerald-500/20 transition-colors'; b.textContent=item.label; b.setAttribute('data-label',item.label); b.addEventListener('click',function(){setModeLibre();inputCategorieLibre.value=item.label;inputCategorieLibre.focus();clearFsaRadios();}); mesPills.appendChild(b); });
+                    suggestionsPayload[eid][t].forEach(function (item) {
+                        var b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-200';
+                        b.textContent = item.label;
+                        b.addEventListener('click', function () {
+                            selSlug = null;
+                            selLabel = '';
+                            catCombo.value = item.label;
+                        });
+                        mesPills.appendChild(b);
+                    });
                 }
-                function clearFsaRadios() { document.querySelectorAll('.cat-radio-std').forEach(function(i){i.checked=false;}); }
-                function clearLibre() { inputCategorieLibre.value=''; }
-                function setModeListe() { inputCategorieMode.value='liste'; zoneListe.classList.remove('hidden'); zoneLibre.classList.add('hidden'); inputCategorieLibre.disabled=true; clearLibre(); btnModeListe.classList.add('txn-cat-mode-btn--active'); btnModeListe.classList.remove('text-white/60'); btnModeLibre.classList.remove('txn-cat-mode-btn--active'); btnModeLibre.classList.add('text-white/60'); updateIntrantBlocDesktop(); }
-                function setModeLibre() { inputCategorieMode.value='libre'; zoneListe.classList.add('hidden'); zoneLibre.classList.remove('hidden'); inputCategorieLibre.disabled=false; clearFsaRadios(); btnModeLibre.classList.add('txn-cat-mode-btn--active'); btnModeLibre.classList.remove('text-white/60'); btnModeListe.classList.remove('txn-cat-mode-btn--active'); btnModeListe.classList.add('text-white/60'); catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); updateIntrantBlocDesktop(); }
-                function setType(type) {
-                    inputType.value=type; var dep=type==='depense'; catD.classList.toggle('hidden',!dep); catR.classList.toggle('hidden',dep); blocNat.classList.toggle('hidden',!dep); blocNat.querySelectorAll('input[name="nature"]').forEach(function(i){i.disabled=!dep;});
-                    if(inputCategorieMode.value==='libre'){catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto '+(dep?'bg-red-600 hover:bg-red-700':'bg-green-700 hover:bg-green-800'); renderMesCategories(); updateIntrantBlocDesktop(); return;}
-                    if(dep){catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.setAttribute('name','categorie');i.disabled=false;}); catR.querySelectorAll('input').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); btnD.className='txn-type-btn txn-type-btn--depense-on'; btnR.className='txn-type-btn txn-type-btn--inactive'; btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto bg-red-600 hover:bg-red-700';}
-                    else{catD.querySelectorAll('input[type="radio"]').forEach(function(i){i.removeAttribute('name');i.disabled=true;}); catR.querySelectorAll('input[type="radio"]').forEach(function(i){i.setAttribute('name','categorie');i.disabled=false;}); btnR.className='txn-type-btn txn-type-btn--recette-on'; btnD.className='txn-type-btn txn-type-btn--inactive'; btnValider.className='btn-primary px-8 py-3 w-full sm:w-auto bg-green-700 hover:bg-green-800';}
+                function renderDdDesk(filter) {
+                    var q = norm(filter);
+                    var list = currentListDesk();
+                    var groups = {};
+                    list.forEach(function (row) {
+                        if (q && row.label_search.indexOf(q) === -1 && row.slug.indexOf(q) === -1) {
+                            return;
+                        }
+                        if (!groups[row.groupe]) {
+                            groups[row.groupe] = [];
+                        }
+                        groups[row.groupe].push(row);
+                    });
+                    catDd.innerHTML = '';
+                    Object.keys(groups).forEach(function (g) {
+                        var h = document.createElement('div');
+                        h.className = 'txn-desk-combo-groupe';
+                        h.textContent = g;
+                        catDd.appendChild(h);
+                        groups[g].forEach(function (row) {
+                            var el = document.createElement('button');
+                            el.type = 'button';
+                            el.className = 'txn-desk-combo-item';
+                            el.textContent = row.label;
+                            el.addEventListener('click', function () {
+                                selSlug = row.slug;
+                                selLabel = row.label;
+                                catCombo.value = row.label;
+                                catDd.classList.remove('open');
+                            });
+                            catDd.appendChild(el);
+                        });
+                    });
+                }
+                function resolveDesk() {
+                    var txt = (catCombo.value || '').trim();
+                    if (!txt) {
+                        return { err: 'Indiquez une catégorie.' };
+                    }
+                    var list = currentListDesk();
+                    var slug = null;
+                    if (selSlug && txt === selLabel) {
+                        slug = selSlug;
+                    } else {
+                        var t = txt.toLowerCase();
+                        for (var i = 0; i < list.length; i++) {
+                            if (list[i].slug === t) {
+                                slug = list[i].slug;
+                                break;
+                            }
+                        }
+                        if (!slug) {
+                            for (var j = 0; j < list.length; j++) {
+                                if (list[j].label_search.indexOf(norm(txt)) !== -1 || norm(list[j].label) === norm(txt)) {
+                                    slug = list[j].slug;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (slug) {
+                        return { slug: slug };
+                    }
+                    if (currentTypeDesk === 'recette') {
+                        return { custom: true, libre: txt, needModal: false };
+                    }
+                    if (CI_SLUGS.indexOf(txt) !== -1) {
+                        return { slug: txt };
+                    }
+                    return { custom: true, libre: txt, needModal: true };
+                }
+                function applyDesk(r) {
+                    deskSlug.disabled = true;
+                    deskLibre.disabled = true;
+                    deskNat.disabled = true;
+                    deskInt.disabled = true;
+                    deskSlug.value = '';
+                    deskLibre.value = '';
+                    deskNat.value = 'variable';
+                    deskInt.value = '1';
+                    if (r.slug) {
+                        deskSlug.disabled = false;
+                        deskSlug.value = r.slug;
+                        return;
+                    }
+                    deskLibre.disabled = false;
+                    deskLibre.value = r.libre;
+                    if (currentTypeDesk !== 'depense') {
+                        return;
+                    }
+                    deskNat.disabled = false;
+                    deskNat.value = r.nature || 'variable';
+                    if (CI_SLUGS.indexOf(r.libre) === -1) {
+                        deskInt.disabled = false;
+                        deskInt.value = (r.intrant === false) ? '0' : '1';
+                    }
+                }
+                function syncDeskModal() {
+                    document.querySelectorAll('.desk-mod-nat').forEach(function (b) {
+                        b.classList.toggle('af-desk-pill--active', b.getAttribute('data-nat') === modalNatDesk);
+                    });
+                    document.querySelectorAll('.desk-mod-int').forEach(function (b) {
+                        var isOui = b.getAttribute('data-int') === '1';
+                        b.classList.toggle('af-desk-pill--active', isOui === modalIntDesk);
+                    });
+                }
+                document.querySelectorAll('.desk-mod-nat').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        modalNatDesk = b.getAttribute('data-nat');
+                        syncDeskModal();
+                    });
+                });
+                document.querySelectorAll('.desk-mod-int').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        modalIntDesk = b.getAttribute('data-int') === '1';
+                        syncDeskModal();
+                    });
+                });
+                document.getElementById('deskModalCancel').addEventListener('click', function () {
+                    document.getElementById('deskModalCustom').classList.remove('open');
+                    pendingLibreDesk = null;
+                });
+                document.getElementById('deskModalOk').addEventListener('click', function () {
+                    document.getElementById('deskModalCustom').classList.remove('open');
+                    if (pendingLibreDesk === null) {
+                        return;
+                    }
+                    applyDesk({ custom: true, libre: pendingLibreDesk, nature: modalNatDesk, intrant: modalIntDesk });
+                    pendingLibreDesk = null;
+                    document.getElementById('formTransaction').submit();
+                });
+                catCombo.addEventListener('focus', function () {
+                    renderDdDesk(catCombo.value);
+                    catDd.classList.add('open');
+                });
+                catCombo.addEventListener('input', function () {
+                    if (selLabel && catCombo.value !== selLabel) {
+                        selSlug = null;
+                        selLabel = '';
+                    }
+                    renderDdDesk(catCombo.value);
+                    catDd.classList.add('open');
+                });
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.relative')) {
+                        catDd.classList.remove('open');
+                    }
+                });
+                function setTypeDesk(type) {
+                    currentTypeDesk = type;
+                    inputType.value = type;
+                    catCombo.value = '';
+                    selSlug = null;
+                    selLabel = '';
+                    btnD.className = 'txn-type-btn ' + (type === 'depense' ? 'txn-type-btn--depense-on' : 'txn-type-btn--inactive');
+                    btnR.className = 'txn-type-btn ' + (type === 'recette' ? 'txn-type-btn--recette-on' : 'txn-type-btn--inactive');
+                    btnValider.className = 'btn-primary px-8 py-3 w-full sm:w-auto ' + (type === 'depense' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-700 hover:bg-green-800');
                     renderMesCategories();
-                    updateIntrantBlocDesktop();
+                    renderDdDesk('');
                 }
-                zoneListe.addEventListener('change',function(e){if(e.target&&e.target.classList.contains('cat-radio-std')&&e.target.checked){clearLibre();} updateIntrantBlocDesktop();});
-                if (inputCategorieLibre) inputCategorieLibre.addEventListener('input', updateIntrantBlocDesktop);
-                document.getElementById('btnDepense').addEventListener('click',function(){setType('depense');});
-                document.getElementById('btnRecette').addEventListener('click',function(){setType('recette');});
-                btnModeListe.addEventListener('click',function(){setModeListe();setType(inputType.value);});
-                btnModeLibre.addEventListener('click',function(){setModeLibre();setType(inputType.value);});
-                selectActivite.addEventListener('change',function(){var url=new URL(window.location.href);url.searchParams.set('activite_id',selectActivite.value);window.location.href=url.toString();});
-                if(inputCategorieMode.value==='libre'){setModeLibre();}else{setModeListe();}
-                setType(inputType.value);
-                updateIntrantBlocDesktop();
+                btnD.addEventListener('click', function () { setTypeDesk('depense'); });
+                btnR.addEventListener('click', function () { setTypeDesk('recette'); });
+                selectActivite.addEventListener('change', function () {
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('activite_id', selectActivite.value);
+                    window.location.href = url.toString();
+                });
+                btnValider.addEventListener('click', function () {
+                    var r = resolveDesk();
+                    if (r.err) {
+                        alert(r.err);
+                        return;
+                    }
+                    if (r.custom && r.needModal) {
+                        pendingLibreDesk = r.libre;
+                        modalNatDesk = 'variable';
+                        modalIntDesk = true;
+                        syncDeskModal();
+                        document.getElementById('deskModalCustom').classList.add('open');
+                        return;
+                    }
+                    if (r.custom && !r.needModal) {
+                        applyDesk({ custom: true, libre: r.libre });
+                    } else {
+                        applyDesk({ slug: r.slug });
+                    }
+                    document.getElementById('formTransaction').submit();
+                });
+                setTypeDesk('depense');
+                syncDeskModal();
+                @if(old('categorie') && !old('categorie_libre'))
+                    (function () {
+                        var os = @json(old('categorie'));
+                        var list = TX_CAT.depenses.concat(TX_CAT.recettes);
+                        for (var i = 0; i < list.length; i++) {
+                            if (list[i].slug === os) {
+                                selSlug = list[i].slug;
+                                selLabel = list[i].label;
+                                catCombo.value = list[i].label;
+                                break;
+                            }
+                        }
+                    })();
+                @endif
             })();
         </script>
     @endif

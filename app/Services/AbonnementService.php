@@ -36,7 +36,7 @@ class AbonnementService
      */
     public function normaliserPlan(?string $planBrut): string
     {
-        $p = strtolower(trim((string) ($planBrut ?? '')));
+        $p = Str::ascii(Str::lower(trim((string) ($planBrut ?? ''))));
 
         return match ($p) {
             'gratuit', 'essentielle', 'pro', 'cooperative' => $p,
@@ -45,6 +45,25 @@ class AbonnementService
             'essai' => 'gratuit',
             default => 'aucun',
         };
+    }
+
+    /**
+     * Plan Coopérative (validation des transactions, filtres) : aligné sur planActuel,
+     * avec repli si une ligne d’abonnement valide a bien plan = cooperative en base
+     * (ex. variante d’encodage) alors que la normalisation seule renverrait « aucun ».
+     */
+    public function estPlanCooperatif(User $user): bool
+    {
+        if ($this->planActuel($user) === 'cooperative') {
+            return true;
+        }
+
+        return Abonnement::query()
+            ->where('user_id', $user->id)
+            ->whereIn('statut', ['actif', 'essai'])
+            ->where('date_fin', '>=', now()->startOfDay())
+            ->where('plan', 'cooperative')
+            ->exists();
     }
 
     /**
@@ -180,9 +199,14 @@ class AbonnementService
             }
         }
 
+        $planMetier = $this->planActuel($user);
+        if ($this->estPlanCooperatif($user)) {
+            $planMetier = 'cooperative';
+        }
+
         return [
             'plan' => $abonnement?->plan ?? 'aucun',
-            'plan_metier' => $this->planActuel($user),
+            'plan_metier' => $planMetier,
             'statut' => $abonnement?->statut ?? 'expire',
             'date_fin' => $abonnement?->date_fin,
             'jours_restants' => $joursRestants,

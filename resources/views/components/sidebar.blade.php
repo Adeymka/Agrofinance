@@ -4,7 +4,8 @@
     class="w-64 shrink-0 min-h-screen border-r border-white/10 bg-[#0a1810]/90 backdrop-blur-xl text-[#E3EED4] flex flex-col"
 >
     <div class="p-6 border-b border-white/10">
-        <a href="{{ route('dashboard') }}" class="font-serif text-xl font-bold text-[#F0A83A] tracking-tight">
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 font-serif text-xl font-bold text-[#F0A83A] tracking-tight">
+            <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" class="w-7 h-7 rounded-md object-contain" />
             AgroFinance+
         </a>
         <p class="text-xs text-[#6B9071] mt-1">Pilotage agricole</p>

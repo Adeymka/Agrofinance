@@ -38,6 +38,12 @@ class TransactionController extends Controller
         if ($request->categorie) {
             $query->where('categorie', $request->categorie);
         }
+        if (in_array((string) $request->statut_validation, [
+            Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            Transaction::STATUT_VALIDATION_VALIDEE,
+        ], true)) {
+            $query->where('statut_validation', (string) $request->statut_validation);
+        }
         $dateDebutEffective = $request->date_debut;
         if ($floorStr) {
             $dateDebutEffective = $dateDebutEffective
@@ -74,6 +80,7 @@ class TransactionController extends Controller
 
         foreach ($request->transactions as $i => $data) {
             $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+                ->with('exploitation:id,type')
                 ->findOrFail($data['activite_id']);
 
             if ($activite->statut !== Activite::STATUT_EN_COURS) {
@@ -83,7 +90,15 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
+            $slugConnu = in_array(
+                $data['categorie'],
+                TransactionCategories::flatSlugsForTransactionType($typeExploitation, $data['type']),
+                true
+            );
+
             if (($data['type'] ?? '') === 'depense'
+                && ! $slugConnu
                 && ! TransactionCategories::estSlugChargesIntermediaires($data['categorie'])) {
                 if (! array_key_exists('intrant_production', $data)) {
                     return response()->json([
@@ -96,9 +111,15 @@ class TransactionController extends Controller
 
         $creees = [];
         $userId = auth()->user()->id;
+        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
+        $statutValidationParDefaut = $estCoop
+            ? Transaction::STATUT_VALIDATION_EN_ATTENTE
+            : Transaction::STATUT_VALIDATION_VALIDEE;
 
         foreach ($request->transactions as $data) {
-            $activite = Activite::pourUtilisateur((int) $userId)->findOrFail($data['activite_id']);
+            $activite = Activite::pourUtilisateur((int) $userId)
+                ->with('exploitation:id,type')
+                ->findOrFail($data['activite_id']);
 
             if (! empty($data['client_uuid'])) {
                 $existante = Transaction::query()
@@ -115,21 +136,32 @@ class TransactionController extends Controller
                 }
             }
 
+            $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
+            $slugConnu = in_array(
+                $data['categorie'],
+                TransactionCategories::flatSlugsForTransactionType($typeExploitation, $data['type']),
+                true
+            );
+
+            $nature = null;
             $intrant = null;
             if ($data['type'] === 'depense') {
-                $intrant = TransactionCategories::estSlugChargesIntermediaires($data['categorie'])
-                    ? null
-                    : (bool) ($data['intrant_production'] ?? false);
+                if ($slugConnu) {
+                    $nature = TransactionCategories::natureDepensePourSlug($data['categorie']);
+                    $intrant = TransactionCategories::intrantProductionPourSlugDepense($data['categorie']);
+                } else {
+                    $nature = $data['nature'] ?? 'variable';
+                    $intrant = TransactionCategories::estSlugChargesIntermediaires($data['categorie'])
+                        ? null
+                        : (bool) ($data['intrant_production'] ?? false);
+                }
             }
 
             $creees[] = Transaction::create([
                 'client_uuid' => $data['client_uuid'] ?? null,
                 'activite_id' => $activite->id,
                 'type' => $data['type'],
-                // Les recettes n'ont pas de nature
-                'nature' => $data['type'] === 'recette'
-                                        ? null
-                                        : ($data['nature'] ?? 'variable'),
+                'nature' => $data['type'] === 'recette' ? null : $nature,
                 'categorie' => $data['categorie'],
                 'intrant_production' => $intrant,
                 'montant' => $data['montant'],
@@ -137,6 +169,9 @@ class TransactionController extends Controller
                 'note' => $data['note'] ?? null,
                 'est_imprevue' => $data['est_imprevue'] ?? false,
                 'synced' => true,
+                'statut_validation' => $statutValidationParDefaut,
+                'validee_par_user_id' => $statutValidationParDefaut === Transaction::STATUT_VALIDATION_VALIDEE ? (int) $userId : null,
+                'validee_le' => $statutValidationParDefaut === Transaction::STATUT_VALIDATION_VALIDEE ? now() : null,
             ]);
         }
 
@@ -172,7 +207,7 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) {
             $q->where('user_id', auth()->user()->id);
-        })->findOrFail($id);
+        })->with('activite.exploitation:id,type')->findOrFail($id);
 
         $request->validate([
             'type' => 'sometimes|in:depense,recette',
@@ -189,19 +224,47 @@ class TransactionController extends Controller
             'type', 'nature', 'categorie', 'montant',
             'date_transaction', 'note', 'est_imprevue',
         ]);
+        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
+        $statutValidationParDefaut = $estCoop
+            ? Transaction::STATUT_VALIDATION_EN_ATTENTE
+            : Transaction::STATUT_VALIDATION_VALIDEE;
 
         $cat = $request->input('categorie', $transaction->categorie);
         $typeEff = $request->input('type', $transaction->type);
-        if ($typeEff === 'depense' && ! TransactionCategories::estSlugChargesIntermediaires($cat)) {
-            $request->validate(['intrant_production' => 'required|boolean']);
-            $payload['intrant_production'] = $request->boolean('intrant_production');
-        } elseif ($typeEff === 'depense' && TransactionCategories::estSlugChargesIntermediaires($cat)) {
-            $payload['intrant_production'] = null;
+        $typeExploitation = $transaction->activite->exploitation?->type ?? 'cultures_vivrieres';
+        $slugConnu = in_array(
+            $cat,
+            TransactionCategories::flatSlugsForTransactionType($typeExploitation, $typeEff),
+            true
+        );
+
+        if ($typeEff === 'depense') {
+            if ($slugConnu) {
+                $payload['nature'] = TransactionCategories::natureDepensePourSlug($cat);
+                $payload['intrant_production'] = TransactionCategories::intrantProductionPourSlugDepense($cat);
+            } elseif (! TransactionCategories::estSlugChargesIntermediaires($cat)) {
+                $request->validate(['intrant_production' => 'required|boolean']);
+                $payload['nature'] = $request->input('nature', $transaction->nature) ?? 'variable';
+                $payload['intrant_production'] = $request->boolean('intrant_production');
+            } else {
+                $payload['nature'] = $request->input('nature', $transaction->nature) ?? 'variable';
+                $payload['intrant_production'] = null;
+            }
         } else {
+            $payload['nature'] = null;
             $payload['intrant_production'] = null;
         }
 
         $transaction->update($payload);
+        $transaction->update([
+            'statut_validation' => $statutValidationParDefaut,
+            'validee_par_user_id' => $statutValidationParDefaut === Transaction::STATUT_VALIDATION_VALIDEE
+                ? (int) auth()->user()->id
+                : null,
+            'validee_le' => $statutValidationParDefaut === Transaction::STATUT_VALIDATION_VALIDEE
+                ? now()
+                : null,
+        ]);
 
         if ($transaction->type === 'recette') {
             $transaction->update(['nature' => null, 'intrant_production' => null]);
@@ -215,6 +278,58 @@ class TransactionController extends Controller
             'message' => 'Transaction mise à jour.',
             'data' => $transaction->fresh(),
             'indicateurs' => $indicateurs,
+        ]);
+    }
+
+    public function valider(int $id)
+    {
+        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Validation manuelle disponible uniquement en plan Coopérative.',
+            ], 403);
+        }
+
+        $transaction = Transaction::whereHas('activite.exploitation', function ($q) {
+            $q->where('user_id', auth()->user()->id);
+        })->findOrFail($id);
+
+        $transaction->update([
+            'statut_validation' => Transaction::STATUT_VALIDATION_VALIDEE,
+            'validee_par_user_id' => (int) auth()->user()->id,
+            'validee_le' => now(),
+        ]);
+
+        return response()->json([
+            'succes' => true,
+            'message' => 'Transaction validée.',
+            'data' => $transaction->fresh(),
+        ]);
+    }
+
+    public function remettreEnAttente(int $id)
+    {
+        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+            return response()->json([
+                'succes' => false,
+                'message' => 'Action disponible uniquement en plan Coopérative.',
+            ], 403);
+        }
+
+        $transaction = Transaction::whereHas('activite.exploitation', function ($q) {
+            $q->where('user_id', auth()->user()->id);
+        })->findOrFail($id);
+
+        $transaction->update([
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validee_par_user_id' => null,
+            'validee_le' => null,
+        ]);
+
+        return response()->json([
+            'succes' => true,
+            'message' => 'Transaction remise en attente.',
+            'data' => $transaction->fresh(),
         ]);
     }
 

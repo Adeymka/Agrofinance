@@ -92,16 +92,22 @@
 
     /* Logo centré */
     .mobile-logo {
+        text-decoration: none;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .mobile-logo img { width: 28px; height: 28px; object-fit: contain; border-radius: 7px;  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.18); }
+    .mobile-logo-label {
         font-family: var(--font-display), sans-serif;
         font-size: 16px;
         font-weight: 700;
         color: var(--af-text-high);
         letter-spacing: -0.025em;
-        text-decoration: none;
-        flex: 1;
-        text-align: center;
     }
-    .mobile-logo span { color: var(--af-color-accent); }
+    .mobile-logo-label span { color: var(--af-color-accent); }
 
     /* Cloche alertes */
     .mobile-notif-btn {
@@ -321,7 +327,7 @@
     $currentRoute = request()->route()?->getName() ?? '';
     $nav = match(true) {
         str_starts_with($currentRoute, 'dashboard')    => 'dashboard',
-        str_starts_with($currentRoute, 'exploitations') => 'dashboard',
+        str_starts_with($currentRoute, 'exploitations') => 'exploitations',
         str_starts_with($currentRoute, 'activites')    => 'activites',
         str_starts_with($currentRoute, 'transactions') => 'activites',
         str_starts_with($currentRoute, 'rapports')     => 'rapports',
@@ -370,7 +376,10 @@
             @endauth
 
             {{-- Logo centré --}}
-            <span class="mobile-logo">AgroFinance<span>+</span></span>
+            <a href="{{ route('dashboard') }}" class="mobile-logo" title="AgroFinance+">
+                <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+">
+                <span class="mobile-logo-label">AgroFinance<span>+</span></span>
+            </a>
 
             {{-- Cloche → abonnement / statut compte --}}
             @auth
@@ -465,13 +474,13 @@
                 Accueil
             </a>
 
-            <a href="{{ route('activites.index') }}"
-               class="dock-item {{ $nav === 'activites' ? 'active' : '' }}"
-               aria-label="Activités">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="{{ $nav === 'activites' ? '2.2' : '1.8' }}">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            <a href="{{ route('exploitations.index') }}"
+               class="dock-item {{ $nav === 'exploitations' ? 'active' : '' }}"
+               aria-label="Exploitations">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="{{ $nav === 'exploitations' ? '2.2' : '1.8' }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-4h6v4M9 10h.01M15 10h.01M9 14h.01M15 14h.01"/>
                 </svg>
-                Activités
+                Exploit.
             </a>
 
             {{-- FAB Saisie (bouton central surélevé) --}}

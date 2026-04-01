@@ -62,6 +62,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/transactions', [TransactionController::class, 'store']);
         Route::get('/transactions/{id}', [TransactionController::class, 'show']);
         Route::put('/transactions/{id}', [TransactionController::class, 'update']);
+        Route::post('/transactions/{id}/valider', [TransactionController::class, 'valider']);
+        Route::post('/transactions/{id}/remettre-en-attente', [TransactionController::class, 'remettreEnAttente']);
         Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
         Route::post('/transactions/{id}/justificatif', [TransactionJustificatifController::class, 'store']);

@@ -111,11 +111,13 @@ class FinancialIndicatorsService
     /**
      * Agrège les indicateurs par activité active d’une exploitation et produit une ligne consolidée.
      *
-     * Chaque activité est calculée sur tout l’historique autorisé : seul {@see $dateDebutMin} limite le passé
-     * (pas de fenêtre `debut`/`fin` explicite par activité).
+     * Chaque activité est calculée sur la fenêtre demandée (`$debut`/`$fin`) et l’historique autorisé
+     * (`$dateDebutMin`) qui agit comme plancher absolu.
      *
      * @param  int  $exploitationId  Identifiant de l’exploitation.
      * @param  string|null  $dateDebutMin  Plancher d’historique (abonnement), passé à {@see calculer} pour chaque activité.
+     * @param  string|null  $debut  Début de période (inclus), ou null pour tout l’historique autorisé.
+     * @param  string|null  $fin  Fin de période (inclus), ou null pour aujourd’hui / non borné.
      * @return array{
      *     par_activite: array<int, array{
      *         nom: string,
@@ -149,7 +151,12 @@ class FinancialIndicatorsService
      *     }
      * }
      */
-    public function calculerExploitation(int $exploitationId, ?string $dateDebutMin = null): array
+    public function calculerExploitation(
+        int $exploitationId,
+        ?string $dateDebutMin = null,
+        ?string $debut = null,
+        ?string $fin = null
+    ): array
     {
         $exploitation = Exploitation::with('activitesActives.transactions')
             ->findOrFail($exploitationId);
@@ -158,7 +165,7 @@ class FinancialIndicatorsService
         foreach ($exploitation->activitesActives as $activite) {
             $parActivite[$activite->id] = array_merge(
                 ['nom' => $activite->nom, 'type' => $activite->type],
-                $this->calculer($activite->id, null, null, $dateDebutMin)
+                $this->calculer($activite->id, $debut, $fin, $dateDebutMin)
             );
         }
 

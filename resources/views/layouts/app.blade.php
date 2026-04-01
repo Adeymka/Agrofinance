@@ -24,7 +24,8 @@
     </div>
 
     <header class="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
-        <div class="px-4 py-3 flex items-center justify-center">
+        <div class="px-4 py-3 flex items-center justify-center gap-2">
+            <img src="{{ asset('images/logo-agrofinanceplus.png') }}" alt="Logo AgroFinance+" class="w-7 h-7 rounded-md object-contain" />
             <span class="text-agro-vert font-bold text-lg tracking-tight">AgroFinance+</span>
         </div>
     </header>

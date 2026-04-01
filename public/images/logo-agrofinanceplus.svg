@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Logo AgroFinance+</title>
+  <desc id="desc">Logo vectoriel avec feuille, barres de croissance, courbe montante et mot-symbole AgroFinance+.</desc>
+  <defs>
+    <style>
+      .ink-fill { fill: #224650; }
+      .ink-stroke { stroke: #224650; fill: none; }
+      .mint { fill: #7ea06b; }
+      .white-cut { fill: #e6e7e8; }
+      .word {
+        fill: #224650;
+        font-family: "Poppins", "Montserrat", "Inter", Arial, sans-serif;
+        font-size: 104px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+    </style>
+  </defs>
+
+  <g transform="translate(512 375)">
+    <!-- histogram bars -->
+    <rect class="mint" x="-130" y="38" width="44" height="20" rx="4"/>
+    <path class="mint" d="M-72 38h50v49c-18-12-35-19-50-25z"/>
+    <rect class="mint" x="0" y="12" width="46" height="86" rx="6"/>
+    <path class="mint" d="M58 34h48v31c-16 7-33 15-48 28z"/>
+    <rect class="mint" x="120" y="-3" width="46" height="61" rx="4"/>
+
+    <!-- trendline and arrow -->
+    <path class="ink-stroke" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"
+          d="M-132 24l42-20l34 6l52-38l54 29l78-70"/>
+    <circle class="ink-fill" cx="-56" cy="10" r="14"/>
+    <circle class="ink-fill" cx="23" cy="-28" r="14"/>
+    <circle class="ink-fill" cx="82" cy="1" r="14"/>
+    <path class="ink-stroke" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"
+          d="M160-70h34v34"/>
+
+    <!-- dark leaves -->
+    <path class="ink-fill" d="M-170 65c57-8 104-2 135 27c-13 56-52 100-115 111c-35-20-58-74-59-129z"/>
+    <path class="ink-fill" d="M170 65c-57-8-104-2-135 27c13 56 52 100 115 111c35-20 58-74 59-129z"/>
+
+    <!-- trunk -->
+    <path class="ink-fill" d="M-8 88h16c0 59 0 94 4 132h-24c4-38 4-73 4-132z"/>
+
+    <!-- white vein cut -->
+    <path class="white-cut"
+          d="M0 101c-27-34-64-59-104-71c31 18 58 41 72 70c-23-2-46-10-66-24c15 30 42 48 72 50
+             c8 14 16 28 26 40c10-12 18-26 26-40c30-2 57-20 72-50c-20 14-43 22-66 24c14-29 41-52 72-70
+             c-40 12-77 37-104 71z"/>
+
+    <!-- base -->
+    <ellipse class="ink-fill" cx="0" cy="230" rx="122" ry="10"/>
+  </g>
+
+  <text class="word" x="512" y="715" text-anchor="middle">AgroFinance+</text>
+</svg>

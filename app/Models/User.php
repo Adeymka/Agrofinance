@@ -43,7 +43,7 @@ class User extends Authenticatable
     {
         return $this->hasOne(Abonnement::class)
             ->whereIn('statut', ['actif', 'essai'])
-            ->where('date_fin', '>=', now())
+            ->where('date_fin', '>=', now()->startOfDay())
             ->latest();
     }
 
