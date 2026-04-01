@@ -138,8 +138,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(data.title ?? 'AgroFinance+', {
             body: data.body ?? '',
-            icon: '/icons/icon-192x192.png',
-            badge: '/icons/icon-72x72.png',
+            icon: BASE + '/icons/icon-192x192.png',
+            badge: BASE + '/icons/icon-72x72.png',
         })
     );
 });

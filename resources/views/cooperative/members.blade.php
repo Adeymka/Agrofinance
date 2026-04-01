@@ -18,8 +18,26 @@
             <form method="POST" action="{{ route('cooperative.threshold.update') }}" class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 @csrf
                 <input type="number" step="1" min="1" max="1000000000" name="double_validation_threshold" class="input-field" value="{{ (int) $cooperative->double_validation_threshold }}" required>
-                <div class="md:col-span-2">
-                    <button type="submit" class="btn-outline">Mettre à jour le seuil</button>
+                <input
+                    type="text"
+                    name="categories_always_double"
+                    class="input-field md:col-span-2"
+                    placeholder="Catégories toujours en double validation (ex: engrais,main_oeuvre)"
+                    value="{{ implode(',', (array) (($cooperative->validation_rules['categories_always_double'] ?? []))) }}"
+                >
+                <select name="period_rule" class="input-field">
+                    @php($periodRule = (string) (($cooperative->validation_rules['period_rule'] ?? 'none')))
+                    <option value="none" @selected($periodRule === 'none')>Période: aucune</option>
+                    <option value="month_start" @selected($periodRule === 'month_start')>Période: début du mois (1-5)</option>
+                    <option value="month_end" @selected($periodRule === 'month_end')>Période: fin du mois (5 derniers jours)</option>
+                    <option value="month_start_end" @selected($periodRule === 'month_start_end')>Période: début + fin du mois</option>
+                    <option value="weekend" @selected($periodRule === 'weekend')>Période: week-end</option>
+                </select>
+                <div class="md:col-span-2 text-xs text-gray-500">
+                    Saisir les catégories avec des virgules. Si une règle correspond (montant, catégorie ou période), la double validation est exigée.
+                </div>
+                <div class="md:col-span-3">
+                    <button type="submit" class="btn-outline">Mettre à jour les règles</button>
                 </div>
             </form>
         @endif
@@ -79,6 +97,20 @@
                                             {{ $m->statut === 'active' ? 'Désactiver' : 'Activer' }}
                                         </button>
                                     </form>
+                                    @if($m->statut === 'invited')
+                                        <form method="POST" action="{{ route('cooperative.members.invitation.rotate', $m->id) }}" class="inline-flex ml-2">
+                                            @csrf
+                                            <button type="submit" class="btn-outline text-xs px-2 py-1">
+                                                Régénérer le lien
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ route('cooperative.members.invitation.revoke', $m->id) }}" class="inline-flex ml-2">
+                                            @csrf
+                                            <button type="submit" class="btn-outline text-xs px-2 py-1">
+                                                Révoquer
+                                            </button>
+                                        </form>
+                                    @endif
                                 @else
                                     <span class="text-xs text-gray-500">Lecture seule</span>
                                 @endif
@@ -97,7 +129,7 @@
     @if($canViewAudit ?? false)
         <div class="card p-4">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <h2 class="text-sm font-semibold text-gray-800">Audit coopérative (50 derniers événements)</h2>
+                <h2 class="text-sm font-semibold text-gray-800">Audit coopérative (paginé)</h2>
                 <a
                     href="{{ route('cooperative.audit.export.csv', ['action' => $auditFilters['action'] ?? '', 'member_user_id' => $auditFilters['member_user_id'] ?? 0, 'date_debut' => $auditFilters['date_debut'] ?? '', 'date_fin' => $auditFilters['date_fin'] ?? '']) }}"
                     class="btn-outline text-xs px-3 py-1.5"
@@ -150,6 +182,11 @@
                     </tbody>
                 </table>
             </div>
+            @if(is_object($audits) && method_exists($audits, 'links'))
+                <div class="mt-4">
+                    {{ $audits->links() }}
+                </div>
+            @endif
         </div>
     @endif
 </div>

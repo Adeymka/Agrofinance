@@ -111,6 +111,8 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/cooperative/membres/inviter', [CooperativeController::class, 'invite'])->name('cooperative.members.invite');
     Route::post('/cooperative/membres/{id}/role', [CooperativeController::class, 'updateRole'])->whereNumber('id')->name('cooperative.members.role');
     Route::post('/cooperative/membres/{id}/statut', [CooperativeController::class, 'toggleStatus'])->whereNumber('id')->name('cooperative.members.status');
+    Route::post('/cooperative/membres/{id}/invitation/rotate', [CooperativeController::class, 'rotateInvitation'])->whereNumber('id')->name('cooperative.members.invitation.rotate');
+    Route::post('/cooperative/membres/{id}/invitation/revoke', [CooperativeController::class, 'revokeInvitation'])->whereNumber('id')->name('cooperative.members.invitation.revoke');
     Route::post('/cooperative/seuil-validation', [CooperativeController::class, 'updateThreshold'])->name('cooperative.threshold.update');
     Route::get('/cooperative/audit/export.csv', [CooperativeController::class, 'exportAuditCsv'])->name('cooperative.audit.export.csv');
 

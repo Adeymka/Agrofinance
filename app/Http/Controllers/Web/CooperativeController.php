@@ -7,6 +7,7 @@ use App\Models\CooperativeMember;
 use App\Models\User;
 use App\Services\AbonnementService;
 use App\Services\CooperativeService;
+use App\Services\CooperativeInvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,7 +16,8 @@ class CooperativeController extends Controller
 {
     public function __construct(
         private AbonnementService $abonnementService,
-        private CooperativeService $cooperativeService
+        private CooperativeService $cooperativeService,
+        private CooperativeInvitationService $cooperativeInvitationService
     ) {
     }
 
@@ -47,8 +49,8 @@ class CooperativeController extends Controller
                 ->when($dateDebut !== '', fn ($q) => $q->whereDate('created_at', '>=', $dateDebut))
                 ->when($dateFin !== '', fn ($q) => $q->whereDate('created_at', '<=', $dateFin))
                 ->latest('id')
-                ->limit(50)
-                ->get()
+                ->paginate(25)
+                ->withQueryString()
             : new Collection();
 
         return view('cooperative.members', [
@@ -97,10 +99,15 @@ class CooperativeController extends Controller
         $role = (string) $request->input('role');
 
         $member = $this->cooperativeService->inviteMember($owner, $actor, $phone, $role);
+        $result = $this->cooperativeInvitationService->sendInvitation($member->fresh(['user', 'cooperative.owner']));
         $acceptUrl = route('cooperative.invitation.show', ['token' => $member->invitation_token]);
 
+        $feedback = $result['sent']
+            ? 'Invitation envoyée via '.$result['channel'].'.'
+            : 'Invitation créée, envoi automatique non disponible.';
+
         return redirect()->route('cooperative.members')
-            ->with('success', 'Invitation enregistrée. Lien d’acceptation : '.$acceptUrl);
+            ->with('success', $feedback.' Lien d’acceptation : '.$acceptUrl);
     }
 
     public function updateRole(Request $request, int $id)
@@ -129,6 +136,43 @@ class CooperativeController extends Controller
         );
 
         return redirect()->route('cooperative.members')->with('success', 'Rôle mis à jour.');
+    }
+
+    public function rotateInvitation(int $id)
+    {
+        $actor = auth()->user();
+        if (! $this->cooperativeService->canManageMembers($actor)) {
+            abort(403);
+        }
+
+        $owner = $this->cooperativeService->resolveOwner($actor);
+        $coop = $this->cooperativeService->ensureOwnedCooperative($owner);
+        $member = $coop->members()->findOrFail($id);
+
+        $member = $this->cooperativeService->rotateInvitationToken($owner, $actor, $member);
+        $result = $this->cooperativeInvitationService->sendInvitation($member->fresh(['user', 'cooperative.owner']));
+
+        $feedback = $result['sent']
+            ? 'Token régénéré et invitation renvoyée via '.$result['channel'].'.'
+            : 'Token régénéré, mais envoi automatique non disponible.';
+
+        return redirect()->route('cooperative.members')->with('success', $feedback);
+    }
+
+    public function revokeInvitation(int $id)
+    {
+        $actor = auth()->user();
+        if (! $this->cooperativeService->canManageMembers($actor)) {
+            abort(403);
+        }
+
+        $owner = $this->cooperativeService->resolveOwner($actor);
+        $coop = $this->cooperativeService->ensureOwnedCooperative($owner);
+        $member = $coop->members()->findOrFail($id);
+
+        $this->cooperativeService->revokeInvitationToken($owner, $actor, $member);
+
+        return redirect()->route('cooperative.members')->with('success', 'Invitation révoquée. Le lien précédent est invalide.');
     }
 
     public function toggleStatus(Request $request, int $id)
@@ -175,19 +219,24 @@ class CooperativeController extends Controller
 
         $request->validate([
             'double_validation_threshold' => 'required|numeric|min:1|max:1000000000',
+            'categories_always_double' => 'nullable|string|max:2000',
+            'period_rule' => 'nullable|in:none,month_start,month_end,month_start_end,weekend',
         ]);
 
         $threshold = (float) $request->input('double_validation_threshold');
-        $coop->update(['double_validation_threshold' => $threshold]);
+        $categoriesRaw = (string) $request->input('categories_always_double', '');
+        $categories = array_values(array_filter(array_map('trim', explode(',', $categoriesRaw)), fn ($v) => $v !== ''));
+        $periodRule = (string) $request->input('period_rule', 'none');
 
-        $this->cooperativeService->log(
-            $coop,
+        $this->cooperativeService->updateAdvancedValidationRules(
+            $owner,
             $actor,
-            'cooperative.threshold_updated',
-            ['double_validation_threshold' => $threshold]
+            $threshold,
+            $categories,
+            $periodRule
         );
 
-        return redirect()->route('cooperative.members')->with('success', 'Seuil de double validation mis à jour.');
+        return redirect()->route('cooperative.members')->with('success', 'Règles de validation mises à jour.');
     }
 
     public function showInvitation(string $token)

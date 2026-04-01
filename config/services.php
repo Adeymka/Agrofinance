@@ -31,6 +31,12 @@ return [
         ],
     ],
 
+    'vonage' => [
+        'api_key' => env('VONAGE_API_KEY'),
+        'api_secret' => env('VONAGE_API_SECRET'),
+        'sms_from' => env('VONAGE_SMS_FROM', 'AgroFinance+'),
+    ],
+
     'fedapay' => [
         'secret_key'  => env('FEDAPAY_SECRET_KEY'),
         'public_key'  => env('FEDAPAY_PUBLIC_KEY'),

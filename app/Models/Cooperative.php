@@ -10,10 +10,12 @@ class Cooperative extends Model
         'owner_user_id',
         'nom',
         'double_validation_threshold',
+        'validation_rules',
     ];
 
     protected $casts = [
         'double_validation_threshold' => 'decimal:2',
+        'validation_rules' => 'array',
     ];
 
     public function owner()

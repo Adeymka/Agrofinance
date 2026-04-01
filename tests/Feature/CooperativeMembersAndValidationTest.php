@@ -363,4 +363,224 @@ class CooperativeMembersAndValidationTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_admin_can_rotate_and_revoke_invitation_token(): void
+    {
+        $owner = $this->createOwner();
+
+        $this->actingAs($owner)
+            ->post('/cooperative/membres/inviter', [
+                'telephone' => '+22967990123',
+                'role' => 'saisie',
+            ])->assertRedirect('/cooperative/membres');
+
+        $coop = Cooperative::where('owner_user_id', $owner->id)->firstOrFail();
+        $member = CooperativeMember::query()
+            ->where('cooperative_id', $coop->id)
+            ->where('invited_phone', '+22967990123')
+            ->firstOrFail();
+
+        $oldToken = (string) $member->invitation_token;
+        $this->assertNotEmpty($oldToken);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/membres/'.$member->id.'/invitation/rotate')
+            ->assertRedirect('/cooperative/membres');
+
+        $member->refresh();
+        $this->assertNotSame($oldToken, (string) $member->invitation_token);
+        $this->assertNotNull($member->invitation_expires_at);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/membres/'.$member->id.'/invitation/revoke')
+            ->assertRedirect('/cooperative/membres');
+
+        $member->refresh();
+        $this->assertNull($member->invitation_token);
+        $this->assertNotNull($member->invitation_expires_at);
+
+        $this->assertDatabaseHas('cooperative_audit_logs', [
+            'cooperative_id' => $coop->id,
+            'action' => 'member.invitation_rotated',
+            'actor_user_id' => $owner->id,
+        ]);
+        $this->assertDatabaseHas('cooperative_audit_logs', [
+            'cooperative_id' => $coop->id,
+            'action' => 'member.invitation_revoked',
+            'actor_user_id' => $owner->id,
+        ]);
+    }
+
+    public function test_advanced_validation_rules_apply_for_category_and_period(): void
+    {
+        $owner = $this->createOwner();
+        $validator = User::create([
+            'nom' => 'Deuxieme',
+            'prenom' => 'Validateur',
+            'telephone' => '+22967990111',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        $coop = Cooperative::where('owner_user_id', $owner->id)->firstOrFail();
+        CooperativeMember::create([
+            'cooperative_id' => $coop->id,
+            'user_id' => $validator->id,
+            'invited_phone' => $validator->telephone,
+            'role' => CooperativeMember::ROLE_VALIDATEUR,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/seuil-validation', [
+                'double_validation_threshold' => 999999999,
+                'categories_always_double' => 'main_oeuvre',
+                'period_rule' => 'month_end',
+            ])
+            ->assertRedirect('/cooperative/membres');
+
+        $exploitation = Exploitation::create([
+            'user_id' => $owner->id,
+            'nom' => 'Ferme Regles',
+            'type' => 'mixte',
+            'localisation' => 'Abomey',
+        ]);
+        $activite = Activite::create([
+            'exploitation_id' => $exploitation->id,
+            'nom' => 'Campagne Regles',
+            'type' => 'culture',
+            'date_debut' => '2026-01-01',
+            'date_fin' => '2026-12-31',
+            'statut' => 'en_cours',
+            'budget_previsionnel' => 200000,
+        ]);
+
+        // Catégorie forcée en double validation, même avec faible montant.
+        $txCategorie = Transaction::create([
+            'activite_id' => $activite->id,
+            'type' => 'depense',
+            'nature' => 'variable',
+            'categorie' => 'main_oeuvre',
+            'montant' => 1000,
+            'date_transaction' => '2026-04-10',
+            'synced' => true,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validation_niveau' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/transactions/'.$txCategorie->id.'/valider')
+            ->assertRedirect('/transactions?statut_validation=all');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $txCategorie->id,
+            'validation_niveau' => 1,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validee_niveau1_par_user_id' => $owner->id,
+        ]);
+
+        // Période fin de mois forcée en double validation.
+        $txPeriode = Transaction::create([
+            'activite_id' => $activite->id,
+            'type' => 'depense',
+            'nature' => 'variable',
+            'categorie' => 'transport',
+            'montant' => 1000,
+            'date_transaction' => '2026-04-30',
+            'synced' => true,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validation_niveau' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/transactions/'.$txPeriode->id.'/valider')
+            ->assertRedirect('/transactions?statut_validation=all');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $txPeriode->id,
+            'validation_niveau' => 1,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+        ]);
+
+        $this->actingAs($validator)
+            ->post('/transactions/'.$txPeriode->id.'/valider')
+            ->assertRedirect('/transactions?statut_validation=all');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $txPeriode->id,
+            'validation_niveau' => 2,
+            'statut_validation' => Transaction::STATUT_VALIDATION_VALIDEE,
+            'validee_par_user_id' => $validator->id,
+        ]);
+    }
+
+    public function test_advanced_validation_category_rule_handles_plural_variants(): void
+    {
+        $owner = $this->createOwner();
+        $validator = User::create([
+            'nom' => 'Vali',
+            'prenom' => 'Plural',
+            'telephone' => '+22967990112',
+            'type_exploitation' => 'mixte',
+            'pin_hash' => bcrypt('1234'),
+        ]);
+
+        $coop = Cooperative::where('owner_user_id', $owner->id)->firstOrFail();
+        CooperativeMember::create([
+            'cooperative_id' => $coop->id,
+            'user_id' => $validator->id,
+            'invited_phone' => $validator->telephone,
+            'role' => CooperativeMember::ROLE_VALIDATEUR,
+            'statut' => CooperativeMember::STATUT_ACTIVE,
+            'joined_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/cooperative/seuil-validation', [
+                'double_validation_threshold' => 999999999,
+                'categories_always_double' => "Mains d'oeuvre",
+                'period_rule' => 'none',
+            ])
+            ->assertRedirect('/cooperative/membres');
+
+        $exploitation = Exploitation::create([
+            'user_id' => $owner->id,
+            'nom' => 'Ferme Variantes',
+            'type' => 'mixte',
+            'localisation' => 'Porto-Novo',
+        ]);
+        $activite = Activite::create([
+            'exploitation_id' => $exploitation->id,
+            'nom' => 'Campagne Variantes',
+            'type' => 'culture',
+            'date_debut' => '2026-01-01',
+            'date_fin' => '2026-12-31',
+            'statut' => 'en_cours',
+            'budget_previsionnel' => 120000,
+        ]);
+
+        $tx = Transaction::create([
+            'activite_id' => $activite->id,
+            'type' => 'depense',
+            'nature' => 'fixe',
+            'categorie' => "MAIN D'oeuvre",
+            'montant' => 4998,
+            'date_transaction' => '2026-04-01',
+            'synced' => true,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validation_niveau' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/transactions/'.$tx->id.'/valider')
+            ->assertRedirect('/transactions?statut_validation=all');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $tx->id,
+            'validation_niveau' => 1,
+            'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validee_niveau1_par_user_id' => $owner->id,
+        ]);
+    }
 }
