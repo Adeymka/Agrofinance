@@ -7,6 +7,7 @@ use App\Models\Activite;
 use App\Models\Exploitation;
 use App\Models\Transaction;
 use App\Services\AbonnementService;
+use App\Services\CooperativeService;
 use App\Services\DashboardService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
@@ -17,12 +18,14 @@ class DashboardController extends Controller
     public function __construct(
         private FinancialIndicatorsService $service,
         private AbonnementService $abonnementService,
+        private CooperativeService $cooperativeService,
         private DashboardService $dashboardService
     ) {}
 
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $actor = auth()->user();
+        $user = $this->cooperativeService->resolveOwner($actor);
         $uid = (int) $user->id;
 
         $exploitationId = (int) $request->query('exploitation_id', 0);
@@ -208,7 +211,7 @@ class DashboardController extends Controller
 
     public function exporterConsolideEntrepriseCsv(Request $request): StreamedResponse
     {
-        $user = auth()->user();
+        $user = $this->cooperativeService->resolveOwner(auth()->user());
         if (! $this->abonnementService->estPlanCooperatif($user)) {
             abort(403, "Fonction réservée au plan Coopérative.");
         }

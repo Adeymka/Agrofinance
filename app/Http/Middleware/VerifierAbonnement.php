@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\AbonnementService;
+use App\Services\CooperativeService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class VerifierAbonnement
 {
     public function __construct(
-        private AbonnementService $abonnementService
+        private AbonnementService $abonnementService,
+        private CooperativeService $cooperativeService
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -39,12 +41,15 @@ class VerifierAbonnement
             return $next($request);
         }
 
-        if (! $this->abonnementService->estActif($user)) {
+        $owner = $this->cooperativeService->resolveOwner($user);
+        $estActifContexte = $this->abonnementService->estActif($owner);
+
+        if (! $estActifContexte) {
             $isApi = $request->expectsJson()
                 || $request->is('api/*')
                 || in_array('api', $request->segments(), true);
 
-            $aDejaEteAbonne = $this->abonnementService->aHistoriqueAbonnement($user);
+            $aDejaEteAbonne = $this->abonnementService->aHistoriqueAbonnement($owner);
 
             if ($isApi) {
                 if ($aDejaEteAbonne) {

@@ -158,7 +158,13 @@
             @if($isCooperative ?? false)
                 ·
                 <span class="txli-type-pill {{ ($t->statut_validation ?? 'validee') === 'validee' ? 'txli-type-pill--rec' : 'txli-type-pill--dep' }}">
-                    {{ ($t->statut_validation ?? 'validee') === 'validee' ? 'Validée' : 'En attente' }}
+                    @if(($t->statut_validation ?? 'validee') === 'validee')
+                        Validée
+                    @elseif((int) ($t->validation_niveau ?? 0) >= 1)
+                        En attente N2
+                    @else
+                        En attente
+                    @endif
                 </span>
             @endif
             · {{ $t->date_transaction->format('d/m/Y') }}
@@ -166,12 +172,14 @@
         </div>
         <div class="txli-actions">
             <a href="{{ route('transactions.edit', $t->id) }}">Modifier</a>
-            @if($isCooperative ?? false)
+            @if(($isCooperative ?? false) && ($canValidateTransactions ?? false))
                 @if(($t->statut_validation ?? 'validee') === 'en_attente')
                     <form method="POST" action="{{ route('transactions.valider', $t->id) }}" class="inline">
                         @csrf
                         <input type="hidden" name="statut_validation" value="{{ $statutValidation ?? 'all' }}">
-                        <button type="submit" style="color:var(--af-color-accent);">Valider</button>
+                        <button type="submit" style="color:var(--af-color-accent);">
+                            {{ ((int) ($t->validation_niveau ?? 0) >= 1) ? 'Valider N2' : 'Valider N1' }}
+                        </button>
                     </form>
                 @else
                     <form method="POST" action="{{ route('transactions.remettre-en-attente', $t->id) }}" class="inline">
@@ -265,7 +273,9 @@
                             @if(($t->statut_validation ?? 'validee') === 'validee')
                                 <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">Validée</span>
                             @else
-                                <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">En attente</span>
+                                <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                                    {{ ((int) ($t->validation_niveau ?? 0) >= 1) ? 'En attente N2' : 'En attente' }}
+                                </span>
                             @endif
                         </td>
                         @endif
@@ -273,12 +283,12 @@
                         <td class="px-3 py-2 text-right txd-cell-amount">{{ number_format($t->montant, 0, ',', ' ') }}</td>
                         <td class="px-3 py-2 text-right whitespace-nowrap">
                             <a href="{{ route('transactions.edit', $t->id) }}" class="text-agro-vert inline-flex mr-2" title="Modifier"><x-icon name="pencil-square" class="w-4 h-4" /></a>
-                            @if($isCooperative ?? false)
+                            @if(($isCooperative ?? false) && ($canValidateTransactions ?? false))
                                 @if(($t->statut_validation ?? 'validee') === 'en_attente')
                                     <form method="POST" action="{{ route('transactions.valider', $t->id) }}" class="inline">
                                         @csrf
                                         <input type="hidden" name="statut_validation" value="{{ $statutValidation ?? 'all' }}">
-                                        <button type="submit" class="text-emerald-600 inline-flex p-0.5 mr-2" title="Valider"><x-icon name="check-circle" class="w-4 h-4" /></button>
+                                        <button type="submit" class="text-emerald-600 inline-flex p-0.5 mr-2" title="{{ ((int) ($t->validation_niveau ?? 0) >= 1) ? 'Valider niveau 2' : 'Valider niveau 1' }}"><x-icon name="check-circle" class="w-4 h-4" /></button>
                                     </form>
                                 @else
                                     <form method="POST" action="{{ route('transactions.remettre-en-attente', $t->id) }}" class="inline">

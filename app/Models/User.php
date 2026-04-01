@@ -39,6 +39,16 @@ class User extends Authenticatable
         return $this->hasMany(Abonnement::class);
     }
 
+    public function cooperativeOwned()
+    {
+        return $this->hasOne(Cooperative::class, 'owner_user_id');
+    }
+
+    public function cooperativeMemberships()
+    {
+        return $this->hasMany(CooperativeMember::class);
+    }
+
     public function abonnementActif()
     {
         return $this->hasOne(Abonnement::class)

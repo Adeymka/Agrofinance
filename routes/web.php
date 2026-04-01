@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\Auth\PinController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\ExploitationController;
 use App\Http\Controllers\Web\HelpController;
+use App\Http\Controllers\Web\CooperativeController;
 use App\Http\Controllers\Web\ProfilController;
 use App\Http\Controllers\Web\PublicController;
 use App\Http\Controllers\Web\RapportController;
@@ -103,6 +104,11 @@ Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::post('/transactions/{id}/valider', [TransactionController::class, 'valider'])->whereNumber('id')->name('transactions.valider');
     Route::post('/transactions/{id}/remettre-en-attente', [TransactionController::class, 'remettreEnAttente'])->whereNumber('id')->name('transactions.remettre-en-attente');
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->whereNumber('id')->name('transactions.destroy');
+
+    Route::get('/cooperative/membres', [CooperativeController::class, 'members'])->name('cooperative.members');
+    Route::post('/cooperative/membres/inviter', [CooperativeController::class, 'invite'])->name('cooperative.members.invite');
+    Route::post('/cooperative/membres/{id}/role', [CooperativeController::class, 'updateRole'])->whereNumber('id')->name('cooperative.members.role');
+    Route::post('/cooperative/membres/{id}/statut', [CooperativeController::class, 'toggleStatus'])->whereNumber('id')->name('cooperative.members.status');
 
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::post('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');

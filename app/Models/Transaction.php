@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
+    public const STATUT_VALIDATION_BROUILLON = 'brouillon';
+
     public const STATUT_VALIDATION_EN_ATTENTE = 'en_attente';
 
     public const STATUT_VALIDATION_VALIDEE = 'validee';
@@ -15,7 +17,9 @@ class Transaction extends Model
         'intrant_production',
         'montant', 'date_transaction', 'note',
         'est_imprevue', 'synced', 'photo_justificatif',
-        'statut_validation', 'validee_par_user_id', 'validee_le',
+        'statut_validation', 'validation_niveau',
+        'validee_niveau1_par_user_id', 'validee_niveau1_le',
+        'validee_par_user_id', 'validee_le',
     ];
 
     protected $hidden = [
@@ -32,6 +36,8 @@ class Transaction extends Model
         'est_imprevue'         => 'boolean',
         'intrant_production'   => 'boolean',
         'synced'               => 'boolean',
+        'validation_niveau'    => 'integer',
+        'validee_niveau1_le'   => 'datetime',
         'validee_le'           => 'datetime',
     ];
 
@@ -48,6 +54,11 @@ class Transaction extends Model
     public function validateur()
     {
         return $this->belongsTo(User::class, 'validee_par_user_id');
+    }
+
+    public function validateurNiveau1()
+    {
+        return $this->belongsTo(User::class, 'validee_niveau1_par_user_id');
     }
 }
 

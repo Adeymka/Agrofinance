@@ -6,8 +6,10 @@ use App\Helpers\TransactionCategories;
 use App\Http\Controllers\Controller;
 use App\Models\Activite;
 use App\Models\Exploitation;
+use App\Models\CooperativeMember;
 use App\Models\Transaction;
 use App\Services\AbonnementService;
+use App\Services\CooperativeService;
 use App\Services\ExploitationCategorieSuggestionService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\TransactionJustificatifService;
@@ -20,13 +22,14 @@ class TransactionController extends Controller
     public function __construct(
         private FinancialIndicatorsService $fsa,
         private AbonnementService $abonnementService,
+        private CooperativeService $cooperativeService,
         private ExploitationCategorieSuggestionService $categorieSuggestionService,
         private TransactionJustificatifService $justificatifService
     ) {}
 
     public function index()
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
         $statutValidation = (string) request()->query('statut_validation', 'all');
 
         $transactions = Transaction::query()
@@ -41,14 +44,16 @@ class TransactionController extends Controller
             ->paginate(20);
         $transactions->appends(['statut_validation' => $statutValidation]);
 
-        $isCooperative = $this->abonnementService->estPlanCooperatif(auth()->user());
+        $isCooperative = $this->isCooperativeContext();
 
-        return view('transactions.index', compact('transactions', 'statutValidation', 'isCooperative') + ['nav' => 'saisie']);
+        $canValidateTransactions = $this->canValidateTransactions();
+
+        return view('transactions.index', compact('transactions', 'statutValidation', 'isCooperative', 'canValidateTransactions') + ['nav' => 'saisie']);
     }
 
     public function create(Request $request)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $activites = Activite::pourUtilisateur($uid)
             ->where('statut', Activite::STATUT_EN_COURS)
@@ -87,7 +92,7 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $rules = [
             'activite_id' => 'required|integer|exists:activites,id',
@@ -107,7 +112,7 @@ class TransactionController extends Controller
 
         $request->validate(array_merge($rules, TransactionJustificatifService::validationRules()));
 
-        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+        $activite = Activite::pourUtilisateur($uid)
             ->with('exploitation:id,type')->findOrFail($request->activite_id);
 
         if ($activite->statut !== Activite::STATUT_EN_COURS) {
@@ -156,7 +161,8 @@ class TransactionController extends Controller
             }
         }
 
-        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
+        $estCoop = $this->isCooperativeContext();
+        $validationNiveauParDefaut = 0;
 
         $transaction = Transaction::create([
             'activite_id' => $request->activite_id,
@@ -172,6 +178,9 @@ class TransactionController extends Controller
             'statut_validation' => $estCoop
                 ? Transaction::STATUT_VALIDATION_EN_ATTENTE
                 : Transaction::STATUT_VALIDATION_VALIDEE,
+            'validation_niveau' => $estCoop ? $validationNiveauParDefaut : 1,
+            'validee_niveau1_par_user_id' => null,
+            'validee_niveau1_le' => null,
             'validee_par_user_id' => $estCoop
                 ? null
                 : (int) auth()->user()->id,
@@ -220,7 +229,7 @@ class TransactionController extends Controller
 
     public function edit(int $id)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
@@ -278,7 +287,7 @@ class TransactionController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
@@ -303,7 +312,7 @@ class TransactionController extends Controller
 
         $request->validate(array_merge($rules, TransactionJustificatifService::validationRules()));
 
-        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+        $activite = Activite::pourUtilisateur($uid)
             ->with('exploitation:id,type')->findOrFail($request->activite_id);
 
         if ($activite->statut !== Activite::STATUT_EN_COURS) {
@@ -358,7 +367,8 @@ class TransactionController extends Controller
             }
         }
 
-        $estCoop = $this->abonnementService->estPlanCooperatif(auth()->user());
+        $estCoop = $this->isCooperativeContext();
+        $validationNiveauParDefaut = 0;
 
         $transaction->update([
             'activite_id' => $request->activite_id,
@@ -373,6 +383,9 @@ class TransactionController extends Controller
             'statut_validation' => $estCoop
                 ? Transaction::STATUT_VALIDATION_EN_ATTENTE
                 : Transaction::STATUT_VALIDATION_VALIDEE,
+            'validation_niveau' => $estCoop ? $validationNiveauParDefaut : 1,
+            'validee_niveau1_par_user_id' => null,
+            'validee_niveau1_le' => null,
             'validee_par_user_id' => $estCoop
                 ? null
                 : (int) auth()->user()->id,
@@ -406,7 +419,7 @@ class TransactionController extends Controller
      */
     public function telechargerJustificatif(int $id)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
@@ -426,7 +439,7 @@ class TransactionController extends Controller
 
     public function destroy(int $id)
     {
-        $uid = (int) auth()->user()->id;
+        $uid = $this->ownerUserId();
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
@@ -447,21 +460,70 @@ class TransactionController extends Controller
 
     public function valider(int $id)
     {
-        $uid = (int) auth()->user()->id;
-        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+        $uid = $this->ownerUserId();
+        if (! $this->isCooperativeContext()) {
             return redirect()->route('transactions.index')
                 ->with('error', 'Validation manuelle disponible uniquement en plan Coopérative.');
+        }
+        if (! $this->canValidateTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Vous n’avez pas le rôle requis pour valider.');
         }
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
             $q->where('user_id', $uid);
         })->with('activite')->findOrFail($id);
 
+        $actor = auth()->user();
+        $requiresDouble = $this->cooperativeService->requiresDoubleValidation($transaction, $actor);
+        $coop = $this->cooperativeService->cooperativeFor($actor);
+
+        if (! $requiresDouble) {
+            $transaction->update([
+                'validation_niveau' => 1,
+                'statut_validation' => Transaction::STATUT_VALIDATION_VALIDEE,
+                'validee_par_user_id' => $actor->id,
+                'validee_le' => now(),
+            ]);
+            if ($coop) {
+                $this->cooperativeService->log($coop, $actor, 'transaction.validated', ['niveau' => 1], null, $transaction->id);
+            }
+
+            return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
+                ->with('success', 'Transaction validée.');
+        }
+
+        if ((int) $transaction->validation_niveau === 0) {
+            $transaction->update([
+                'validation_niveau' => 1,
+                'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+                'validee_niveau1_par_user_id' => $actor->id,
+                'validee_niveau1_le' => now(),
+                'validee_par_user_id' => null,
+                'validee_le' => null,
+            ]);
+            if ($coop) {
+                $this->cooperativeService->log($coop, $actor, 'transaction.validated.level1', ['double_validation' => true], null, $transaction->id);
+            }
+
+            return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
+                ->with('success', 'Niveau 1 validé. Validation finale requise.');
+        }
+
+        if ((int) $transaction->validation_niveau === 1 && (int) $transaction->validee_niveau1_par_user_id === (int) $actor->id) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Un autre validateur doit effectuer le niveau 2.');
+        }
+
         $transaction->update([
+            'validation_niveau' => 2,
             'statut_validation' => Transaction::STATUT_VALIDATION_VALIDEE,
-            'validee_par_user_id' => $uid,
+            'validee_par_user_id' => $actor->id,
             'validee_le' => now(),
         ]);
+        if ($coop) {
+            $this->cooperativeService->log($coop, $actor, 'transaction.validated.level2', ['double_validation' => true], null, $transaction->id);
+        }
 
         return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
             ->with('success', 'Transaction validée.');
@@ -469,10 +531,14 @@ class TransactionController extends Controller
 
     public function remettreEnAttente(int $id)
     {
-        $uid = (int) auth()->user()->id;
-        if (! $this->abonnementService->estPlanCooperatif(auth()->user())) {
+        $uid = $this->ownerUserId();
+        if (! $this->isCooperativeContext()) {
             return redirect()->route('transactions.index')
                 ->with('error', 'Action disponible uniquement en plan Coopérative.');
+        }
+        if (! $this->canValidateTransactions()) {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Vous n’avez pas le rôle requis pour modifier la validation.');
         }
 
         $transaction = Transaction::whereHas('activite.exploitation', function ($q) use ($uid) {
@@ -481,11 +547,42 @@ class TransactionController extends Controller
 
         $transaction->update([
             'statut_validation' => Transaction::STATUT_VALIDATION_EN_ATTENTE,
+            'validation_niveau' => 0,
+            'validee_niveau1_par_user_id' => null,
+            'validee_niveau1_le' => null,
             'validee_par_user_id' => null,
             'validee_le' => null,
         ]);
 
+        $actor = auth()->user();
+        $coop = $this->cooperativeService->cooperativeFor($actor);
+        if ($coop) {
+            $this->cooperativeService->log($coop, $actor, 'transaction.reset_to_pending', [], null, $transaction->id);
+        }
+
         return redirect()->route('transactions.index', ['statut_validation' => request()->input('statut_validation', 'all')])
             ->with('success', 'Transaction remise en attente.');
+    }
+
+    private function ownerUserId(): int
+    {
+        return (int) $this->cooperativeService->resolveOwner(auth()->user())->id;
+    }
+
+    private function isCooperativeContext(): bool
+    {
+        $owner = $this->cooperativeService->resolveOwner(auth()->user());
+
+        return $this->abonnementService->estPlanCooperatif($owner);
+    }
+
+    private function canValidateTransactions(): bool
+    {
+        $actor = auth()->user();
+        if ($this->cooperativeService->resolveOwner($actor)->id === $actor->id) {
+            return true;
+        }
+
+        return $this->cooperativeService->canValidateTransactions($actor);
     }
 }

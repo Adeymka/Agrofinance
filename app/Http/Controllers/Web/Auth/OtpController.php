@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
+use App\Models\CooperativeMember;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
@@ -50,6 +51,15 @@ class OtpController extends Controller
             'type_exploitation' => $data['type_exploitation'] ?? 'mixte',
             'pin_hash'          => null,
         ]);
+
+        CooperativeMember::query()
+            ->whereNull('user_id')
+            ->where('invited_phone', $user->telephone)
+            ->update([
+                'user_id' => $user->id,
+                'statut' => CooperativeMember::STATUT_ACTIVE,
+                'joined_at' => now(),
+            ]);
 
         Abonnement::create([
             'user_id'    => $user->id,

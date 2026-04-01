@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\CooperativeMember;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
@@ -28,6 +29,15 @@ class InscriptionController extends Controller
             'departement'       => $request->departement,
             'commune'           => $request->commune,
         ]);
+
+        CooperativeMember::query()
+            ->whereNull('user_id')
+            ->where('invited_phone', $user->telephone)
+            ->update([
+                'user_id' => $user->id,
+                'statut' => CooperativeMember::STATUT_ACTIVE,
+                'joined_at' => now(),
+            ]);
 
         $otp->genererEtEnvoyer($request->telephone);
 
