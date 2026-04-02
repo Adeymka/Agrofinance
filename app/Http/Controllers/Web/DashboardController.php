@@ -30,8 +30,17 @@ class DashboardController extends Controller
 
         $exploitationId = (int) $request->query('exploitation_id', 0);
         $triExploitations = (string) $request->query('tri_exploitations', 'rne_desc');
-        $periode = (string) $request->query('periode', 'all');
+        $periodeBrute = (string) $request->query('periode', 'all');
         $isCooperative = $this->abonnementService->estPlanCooperatif($user);
+
+        // Limiter les options de période selon le plan
+        $planActuel = $this->abonnementService->planActuel($user);
+        $optionsPeriodeDisponibles = in_array($planActuel, ['pro', 'cooperative'], true)
+            ? ['all', '12m', '90j', '30j']
+            : ['6m', '30j'];  // Gratuit/Essentielle: 6 mois max (voir dateDebutHistorique)
+        $periode = in_array($periodeBrute, $optionsPeriodeDisponibles, true)
+            ? $periodeBrute
+            : (in_array('6m', $optionsPeriodeDisponibles, true) ? '6m' : 'all');
         $seuilAlerte = $isCooperative ? (float) $request->query('seuil_alerte', 85) : 85.0;
         $seuilCritique = $isCooperative ? (float) $request->query('seuil_critique', 100) : 100.0;
         $seuilAlerte = max(1.0, min(100.0, $seuilAlerte));
@@ -55,14 +64,17 @@ class DashboardController extends Controller
         }
 
         $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
-        $finPeriode = now()->toDateString();
+        $finPeriode = null;  // Pour les indicateurs : campagne COMPLÈTE
+        $finPeriodeTransactions = now()->toDateString();  // Pour les transactions : AUJOURD'HUI seulement (sécurité)
         $debutPeriode = match ($periode) {
+            '6m' => now()->subMonths(6)->toDateString(),
             '30j' => now()->subDays(30)->toDateString(),
             '90j' => now()->subDays(90)->toDateString(),
             '12m' => now()->subMonths(12)->toDateString(),
             default => null,
         };
         $libellePeriodeSelection = match ($periode) {
+            '6m' => '6 derniers mois',
             '30j' => '30 derniers jours',
             '90j' => '90 derniers jours',
             '12m' => '12 derniers mois',
@@ -165,8 +177,7 @@ class DashboardController extends Controller
             ->when($activiteIds->isNotEmpty(), fn ($q) => $q->whereIn('activite_id', $activiteIds))
             ->when($activiteIds->isEmpty(), fn ($q) => $q->whereRaw('1 = 0'))
             ->when($dateDebutHistorique, fn ($q) => $q->where('date_transaction', '>=', $dateDebutHistorique))
-            ->when($debutPeriode, fn ($q) => $q->where('date_transaction', '>=', $debutPeriode))
-            ->where('date_transaction', '<=', $finPeriode)
+            ->where('date_transaction', '<=', $finPeriodeTransactions)
             ->with('activite:id,nom')
             ->orderByDesc('date_transaction')
             ->limit(20)
@@ -205,6 +216,7 @@ class DashboardController extends Controller
             'exploitationsResume' => $exploitationsResume,
             'triExploitations' => $triExploitations,
             'periodeSelection' => $periode,
+            'optionsPeriodeDisponibles' => $optionsPeriodeDisponibles,
             'seuilAlerte' => $seuilAlerte,
             'seuilCritique' => $seuilCritique,
             'isCooperative' => $isCooperative,

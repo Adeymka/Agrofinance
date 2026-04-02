@@ -45,15 +45,17 @@ class FinancialIndicatorsService
     {
         $debut = $this->mergeDateDebut($debut, $dateDebutMin);
 
-        $activite = Activite::with('transactions')->findOrFail($activiteId);
-        $transactions = $activite->transactions;
+        $activite = Activite::findOrFail($activiteId);
+        $query = $activite->transactions();
 
         if ($debut) {
-            $transactions = $transactions->where('date_transaction', '>=', $debut);
+            $query = $query->where('date_transaction', '>=', $debut);
         }
         if ($fin) {
-            $transactions = $transactions->where('date_transaction', '<=', $fin);
+            $query = $query->where('date_transaction', '<=', $fin);
         }
+
+        $transactions = $query->get();
 
         $depenses = $transactions->where('type', 'depense');
         $recettes = $transactions->where('type', 'recette');
@@ -170,7 +172,11 @@ class FinancialIndicatorsService
         }
 
         $PBt = collect($parActivite)->sum('PB');
+        $CVt = collect($parActivite)->sum('CV');
+        $CFt = collect($parActivite)->sum('CF');
         $CTt = collect($parActivite)->sum('CT');
+        $CIt = collect($parActivite)->sum('CI');
+        $VABt = collect($parActivite)->sum('VAB');
         $MBt = collect($parActivite)->sum('MB');
         $RNEt = collect($parActivite)->sum('RNE');
 
@@ -182,7 +188,11 @@ class FinancialIndicatorsService
             'par_activite' => $parActivite,
             'consolide' => [
                 'PB' => round($PBt, 2),
+                'CV' => round($CVt, 2),
+                'CF' => round($CFt, 2),
                 'CT' => round($CTt, 2),
+                'CI' => round($CIt, 2),
+                'VAB' => round($VABt, 2),
                 'MB' => round($MBt, 2),
                 'RNE' => round($RNEt, 2),
                 'RF' => $CTt > 0 ? round(($RNEt / $CTt) * 100, 2) : 0,

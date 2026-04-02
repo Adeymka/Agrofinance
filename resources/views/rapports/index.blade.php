@@ -252,14 +252,7 @@
 </div>
 
 {{-- ── Générer un rapport ── --}}
-@if ($activites->isEmpty())
-    <div class="rpt-upsell">
-        <div class="rpt-upsell-icon">📋</div>
-        <div class="rpt-upsell-title">Aucune campagne</div>
-        <p class="rpt-upsell-sub">Créez d'abord une campagne agricole pour pouvoir générer un rapport PDF.</p>
-        <a href="{{ route('activites.create') }}" class="rpt-upsell-btn">Créer une campagne</a>
-    </div>
-@elseif (! ($infoAbonnement['peut_pdf'] ?? false))
+@if (! ($infoAbonnement['peut_pdf'] ?? false))
     <div class="rpt-upsell">
         <div class="rpt-upsell-icon">🔒</div>
         <div class="rpt-upsell-title">Fonctionnalité Premium</div>
@@ -267,22 +260,37 @@
         <a href="{{ route('abonnement') }}" class="rpt-upsell-btn">Voir les plans →</a>
     </div>
 @else
+    @if($exploitations->count() > 1)
+        <div class="rpt-block">
+            <div class="rpt-block-title">Sélectionner une exploitation</div>
+            <form method="get" class="inline">
+                <div class="rpt-field">
+                    <div class="rpt-label">Exploitation</div>
+                    <select name="exploitation_id" onchange="this.form.submit()" class="rpt-select">
+                        @foreach ($exploitations as $exp)
+                            <option value="{{ $exp->id }}" @selected($exploitation->id === $exp->id)>{{ $exp->nom }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </form>
+        </div>
+    @endif
     <div class="rpt-block">
         <div class="rpt-block-title">Générer un nouveau rapport</div>
         <form method="POST" action="{{ route('rapports.generer') }}">
             @csrf
             <div class="rpt-field">
-                <div class="rpt-label">Campagne</div>
-                <select name="activite_id" required class="rpt-select">
-                    @foreach ($activites as $a)
-                        <option value="{{ $a->id }}" @selected(($activitePreselect ?? $activites->first()?->id) == $a->id)>{{ $a->nom }}</option>
+                <div class="rpt-label">Exploitation</div>
+                <select name="exploitation_id" class="rpt-select" required>
+                    @foreach ($exploitations as $exp)
+                        <option value="{{ $exp->id }}" @selected($exploitation->id === $exp->id)>{{ $exp->nom }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="rpt-field">
                 <div class="rpt-label">Type de rapport</div>
                 <select name="type" class="rpt-select">
-                    <option value="campagne">Rapport de campagne</option>
+                    <option value="standard">Rapport standard</option>
                     @if ($infoAbonnement['peut_dossier'] ?? false)
                         <option value="dossier_credit">Dossier crédit</option>
                     @endif
@@ -291,13 +299,20 @@
                     <p class="rpt-hint">Le dossier crédit est réservé aux plans Pro / Coopérative.</p>
                 @endif
             </div>
-            <div class="rpt-date-grid">
+            <div class="rpt-field">
+                <div class="rpt-label">Couverture historique</div>
+                <select name="periode_scope" class="rpt-select" id="periodeScope">
+                    <option value="all">Toute la période (depuis le début)</option>
+                    <option value="custom">Dates personnalisées</option>
+                </select>
+            </div>
+            <div class="rpt-date-grid" id="dateFields" style="display: none;">
                 <div>
-                    <div class="rpt-label">Période début</div>
+                    <div class="rpt-label">Début</div>
                     <input type="date" name="periode_debut" value="{{ old('periode_debut', now()->startOfMonth()->toDateString()) }}" class="rpt-input">
                 </div>
                 <div>
-                    <div class="rpt-label">Période fin</div>
+                    <div class="rpt-label">Fin</div>
                     <input type="date" name="periode_fin" value="{{ old('periode_fin', now()->toDateString()) }}" class="rpt-input">
                 </div>
             </div>
@@ -320,7 +335,7 @@
                 <div class="rpt-item-icon">📄</div>
                 <div class="rpt-item-body">
                     <div class="rpt-item-type">
-                        {{ $r->type === 'dossier_credit' ? 'Dossier crédit' : 'Campagne' }}
+                        {{ $r->type === 'dossier_credit' ? 'Dossier crédit' : 'Rapport standard' }}
                         @if($r->exploitation)— {{ $r->exploitation->nom }}@endif
                     </div>
                     <div class="rpt-item-meta">
@@ -344,6 +359,42 @@
 @endif
 
 <script>
+// Toggle date fields based on periode_scope (MOBILE)
+document.getElementById('periodeScope')?.addEventListener('change', function() {
+    const field = document.getElementById('dateFields');
+    if (field) field.style.display = this.value === 'custom' ? 'grid' : 'none';
+});
+if (document.getElementById('periodeScope')?.value === 'custom') {
+    const field = document.getElementById('dateFields');
+    if (field) field.style.display = 'grid';
+}
+
+// Toggle date fields - Desktop version
+document.getElementById('periodeScope_desk')?.addEventListener('change', function() {
+    const field = document.getElementById('dateFields_desk');
+    if (field) field.style.display = this.value === 'custom' ? 'grid' : 'none';
+});
+if (document.getElementById('periodeScope_desk')?.value === 'custom') {
+    const field = document.getElementById('dateFields_desk');
+    if (field) field.style.display = 'grid';
+}
+
+// Clear dates when "all" is selected before form submission
+document.querySelectorAll('form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+        // Check if Toute la période is selected (periodeScope = "all")
+        const periodescopeField = form.querySelector('[name="periode_scope"]');
+        if (periodescopeField && periodescopeField.value === 'all') {
+            // Clear the date fields
+            const debutField = form.querySelector('[name="periode_debut"]');
+            const finField = form.querySelector('[name="periode_fin"]');
+            if (debutField) debutField.value = '';
+            if (finField) finField.value = '';
+        }
+    });
+});
+
+// Handle copy buttons
 document.querySelectorAll('.js-copy').forEach(function (btn) {
     btn.addEventListener('click', function () {
         var u = btn.getAttribute('data-url');
@@ -356,25 +407,22 @@ document.querySelectorAll('.js-copy').forEach(function (btn) {
     });
 });
 </script>
-
-@else
-{{-- ════ DESKTOP (original) ════ --}}
+@else{{-- ════ DESKTOP (original) ════ --}}
     <p class="text-xs text-gray-500 mb-4 max-w-3xl leading-relaxed">Partage : le lien permet de consulter le PDF sans compte ; il cesse de fonctionner après la durée affichée. Ne le transmettez qu’à des personnes de confiance.</p>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-1">
             <div class="card">
                 <h2 class="text-sm font-semibold text-gray-800 mb-4">Générer un rapport</h2>
-                @if ($activites->isEmpty())
-                    <p class="text-sm text-gray-600">Créez une campagne en cours pour générer un PDF.</p>
-                @elseif (! ($infoAbonnement['peut_pdf'] ?? false))
+                @if (! ($infoAbonnement['peut_pdf'] ?? false))
                     <p class="text-sm text-gray-600">Plan actuel : <strong>{{ ucfirst($infoAbonnement['plan_metier'] ?? '—') }}</strong>. Les rapports PDF nécessitent <strong>Essentielle</strong> ou supérieur. <a href="{{ route('abonnement') }}" class="text-agro-vert font-medium underline">Voir les plans</a></p>
                 @else
                     <form method="POST" action="{{ route('rapports.generer') }}" class="space-y-4">
                         @csrf
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Campagne</label><select name="activite_id" required class="input-field">@foreach ($activites as $a)<option value="{{ $a->id }}" @selected(($activitePreselect ?? $activites->first()?->id) == $a->id)>{{ $a->nom }}</option>@endforeach</select></div>
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Type</label><select name="type" class="input-field"><option value="campagne">Campagne</option>@if ($infoAbonnement['peut_dossier'] ?? false)<option value="dossier_credit">Dossier crédit</option>@endif</select></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Exploitation</label><select name="exploitation_id" required class="input-field">@foreach ($exploitations as $exp)<option value="{{ $exp->id }}" @selected($exploitation->id === $exp->id)>{{ $exp->nom }}</option>@endforeach</select></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Type</label><select name="type" class="input-field"><option value="standard">Rapport standard</option>@if ($infoAbonnement['peut_dossier'] ?? false)<option value="dossier_credit">Dossier crédit</option>@endif</select></div>
                         @if (! ($infoAbonnement['peut_dossier'] ?? false))<p class="text-xs text-gray-500">Le rapport <strong>dossier crédit</strong> (Pro / Coopérative) n'est pas inclus dans votre plan.</p>@endif
-                        <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Couverture</label><select name="periode_scope" id="periodeScope_desk" class="input-field"><option value="all">Toute la période</option><option value="custom">Dates personnalisées</option></select></div>
+                        <div class="grid grid-cols-2 gap-3" id="dateFields_desk" style="display: none;">
                             <div><label class="block text-xs font-medium text-gray-600 mb-1">Début</label><input type="date" name="periode_debut" value="{{ old('periode_debut', now()->startOfMonth()->toDateString()) }}" class="input-field"></div>
                             <div><label class="block text-xs font-medium text-gray-600 mb-1">Fin</label><input type="date" name="periode_fin" value="{{ old('periode_fin', now()->toDateString()) }}" class="input-field"></div>
                         </div>
@@ -393,7 +441,7 @@ document.querySelectorAll('.js-copy').forEach(function (btn) {
                             @php $expire=$r->lien_expire_le; $valide=$expire&&$expire->isFuture(); $heures=$valide?max(1,(int)ceil(now()->diffInMinutes($expire)/60)):0; @endphp
                             <tr class="border-b border-gray-50">
                                 <td class="py-3 pr-3 whitespace-nowrap">{{ $r->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="py-3 pr-3">{{ $r->type === 'dossier_credit' ? 'Dossier crédit' : 'Campagne' }}</td>
+                                <td class="py-3 pr-3">{{ $r->type === 'dossier_credit' ? 'Dossier crédit' : 'Rapport standard' }}</td>
                                 <td class="py-3 pr-3">{{ $r->exploitation->nom ?? '—' }}</td>
                                 <td class="py-3 pr-3">
                                     @if ($valide && $r->lien_token)<span class="badge-vert">Valide ~{{ max(1,$heures) }} h</span><button type="button" class="text-xs text-agro-vert underline ml-2 js-copy" data-url="{{ route('rapports.partager', $r->lien_token) }}">Copier le lien</button>

@@ -290,9 +290,62 @@
 }
 .show-tx-amount--rec { color: var(--af-color-accent); }
 .show-tx-amount--dep { color: var(--af-color-danger); }
-.show-tx-edit { color: rgba(255, 255, 255, 0.3); display: flex; }
+.show-tx-edit { color: rgba(255, 255, 255, 0.55); display: flex; cursor: pointer; transition: color 0.15s; }
+.show-tx-edit:hover { color: rgba(255, 255, 255, 0.8); }
 .show-tx-edit svg { width: 14px; height: 14px; }
 .show-tx-pager { padding: 0 4px; margin-bottom: 12px; }
+/* Pagination customisée (mobile et desktop) */
+.show-tx-pager nav,
+nav[role="navigation"] { 
+    display: flex !important; 
+    justify-content: center !important; 
+    flex-wrap: wrap !important; 
+    gap: 3px !important; 
+}
+.show-tx-pager a, 
+.show-tx-pager button,
+.show-tx-pager svg,
+nav[role="navigation"] a,
+nav[role="navigation"] button,
+nav[role="navigation"] svg {
+    font-family: var(--font-ui), sans-serif !important;
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+.show-tx-pager a:hover,
+.show-tx-pager button:hover,
+nav[role="navigation"] a:hover,
+nav[role="navigation"] button:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+.show-tx-pager a.active,
+.show-tx-pager button[aria-current="page"],
+nav[role="navigation"] a.active,
+nav[role="navigation"] span[aria-current="page"] {
+    background: var(--af-color-accent) !important;
+    color: #fff !important;
+    border-color: var(--af-color-accent) !important;
+}
+.show-tx-pager button[disabled],
+nav[role="navigation"] button[disabled] {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+}
+/* Override Tailwind */
+nav a.relative { background: rgba(255, 255, 255, 0.08) !important; color: rgba(255, 255, 255, 0.7) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; }
+nav a.relative:hover { background: rgba(255, 255, 255, 0.12) !important; border-color: rgba(255, 255, 255, 0.3) !important; }
+nav span { background: var(--af-color-accent) !important; color: #fff !important; }
+nav button { background: rgba(255, 255, 255, 0.08) !important; color: rgba(255, 255, 255, 0.7) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; }
+nav button:hover { background: rgba(255, 255, 255, 0.12) !important; }
 .show-tx-empty {
     text-align: center;
     padding: 30px 20px;
@@ -549,12 +602,20 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.071-6.071a2.5 2.5 0 113.536 3.536L12.5 14.5H9v-3.5z"/>
                                     </svg>
                                 </a>
+                                <form method="POST" action="{{ route('transactions.destroy', $t->id) }}" class="inline" onsubmit="return confirm('Supprimer ?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="show-tx-edit" title="Supprimer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>
                 @endforeach
             </div>
-            <div class="show-tx-pager">{{ $transactions->links() }}</div>
+            <div class="show-tx-pager">{{ $transactions->links('vendor.pagination.custom') }}</div>
         @else
             <div class="show-tx-empty">
                 <p>Aucune transaction enregistrée.</p>
@@ -666,7 +727,7 @@
                 @endforelse
             </tbody>
         </table>
-        <div class="mt-4">{{ $transactions->links() }}</div>
+        <div class="mt-4">{{ $transactions->links('vendor.pagination.custom') }}</div>
     </div>
 
     @if($activite->statut === \App\Models\Activite::STATUT_EN_COURS)

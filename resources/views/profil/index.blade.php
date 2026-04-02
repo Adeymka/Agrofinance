@@ -61,8 +61,8 @@
     text-transform: uppercase;
 }
 .prf-block {
-    background: var(--af-glass-05);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--af-radius-lg);
     padding: 18px;
     margin-bottom: 14px;
@@ -90,7 +90,7 @@
 }
 .prf-input {
     width: 100%;
-    background: var(--af-glass-05);
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
@@ -117,7 +117,7 @@
 }
 .prf-select {
     width: 100%;
-    background: var(--af-glass-05);
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 16px;
@@ -137,7 +137,7 @@
 .prf-pin-row { display: flex; gap: 8px; }
 .prf-pin-input {
     flex: 1;
-    background: var(--af-glass-05);
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 14px 10px;
@@ -285,6 +285,12 @@
     line-height: 1.35;
     color: var(--af-text-muted);
 }
+
+/* En mode plein soleil, maintenir le fond du bloc affichage sombre */
+html.af-outdoor .prf-block {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.15);
+}
 </style>
 @endpush
 
@@ -337,15 +343,6 @@
             <div class="prf-field">
                 <div class="prf-label">Téléphone</div>
                 <input value="{{ $user->telephone }}" disabled class="prf-input">
-            </div>
-
-            <div class="prf-field">
-                <div class="prf-label">Type d'exploitation</div>
-                <select name="type_exploitation" class="prf-select">
-                    @foreach (['cultures_vivrieres' => 'Cultures vivrières', 'elevage' => 'Élevage', 'maraichage' => 'Maraîchage', 'transformation' => 'Transformation', 'mixte' => 'Mixte'] as $val => $lab)
-                        <option value="{{ $val }}" @selected(old('type_exploitation', $user->type_exploitation) === $val)>{{ $lab }}</option>
-                    @endforeach
-                </select>
             </div>
 
             <div class="prf-input-grid prf-field">
@@ -427,9 +424,28 @@
 
 @else
 {{-- ════ DESKTOP (original) ════ --}}
+<style>
+    /* Desktop: Affichage bloc en dark glassmorphe comme mobile */
+    .desktop-affichage-block {
+        background: rgba(0, 0, 0, 0.35) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    .desktop-affichage-block .text-gray-700,
+    .desktop-affichage-block .text-gray-900,
+    .desktop-affichage-block .text-gray-500 {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+    .desktop-affichage-block .border-gray-300 {
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .desktop-affichage-block input[type="checkbox"] {
+        accent-color: var(--af-color-accent);
+    }
+</style>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card space-y-6">
-            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4 desktop-affichage-block">
                 <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Affichage</p>
                 <label class="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" class="js-af-outdoor-toggle mt-1 h-4 w-4 rounded border-gray-300 text-agro-vert focus:ring-agro-vert" autocomplete="off">
@@ -455,14 +471,6 @@
                     <div><label class="block text-xs font-medium text-gray-600 mb-1">Nom</label><input name="nom" value="{{ old('nom', $user->nom) }}" required class="input-field"></div>
                 </div>
                 <div><label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label><input value="{{ $user->telephone }}" disabled class="input-field bg-gray-50 text-gray-500"></div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Type d'exploitation</label>
-                    <select name="type_exploitation" class="input-field">
-                        @foreach (['cultures_vivrieres' => 'Cultures vivrières', 'elevage' => 'Élevage', 'maraichage' => 'Maraîchage', 'transformation' => 'Transformation', 'mixte' => 'Mixte'] as $val => $lab)
-                            <option value="{{ $val }}" @selected(old('type_exploitation', $user->type_exploitation) === $val)>{{ $lab }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-xs font-medium text-gray-600 mb-1">Département</label><input name="departement" value="{{ old('departement', $user->departement) }}" class="input-field"></div>
                     <div><label class="block text-xs font-medium text-gray-600 mb-1">Commune</label><input name="commune" value="{{ old('commune', $user->commune) }}" class="input-field"></div>

@@ -27,7 +27,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">Campagne</label>
                 <select name="activite_id" id="selectActivite" required class="input-field">
                     @foreach ($activites as $a)
-                        <option value="{{ $a->id }}" data-exploitation-id="{{ $a->exploitation_id }}"
+                        <option value="{{ $a->id }}" data-exploitation-id="{{ $a->id }}"
                                 @selected(old('activite_id', $transaction->activite_id) == $a->id)>
                             {{ $a->exploitation->nom ?? '' }} — {{ $a->nom }}
                         </option>
@@ -48,11 +48,11 @@
                 <div class="grid grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                         <input type="radio" name="nature" value="variable" class="peer sr-only" @checked(old('nature', $transaction->nature) === 'variable' || ($transaction->type === 'depense' && $transaction->nature === 'variable'))>
-                        <div class="rounded-lg border-2 border-gray-200 p-3 text-center text-sm peer-checked:border-agro-vert peer-checked:bg-green-50">Variable</div>
+                        <div class="rounded-lg border-2 border-gray-200 p-3 text-center text-sm peer-checked:border-agro-vert peer-checked:bg-agro-vert peer-checked:text-white">Variable</div>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" name="nature" value="fixe" class="peer sr-only" @checked(old('nature', $transaction->nature) === 'fixe')>
-                        <div class="rounded-lg border-2 border-gray-200 p-3 text-center text-sm peer-checked:border-agro-vert peer-checked:bg-green-50">Fixe</div>
+                        <div class="rounded-lg border-2 border-gray-200 p-3 text-center text-sm peer-checked:border-agro-vert peer-checked:bg-agro-vert peer-checked:text-white">Fixe</div>
                     </label>
                 </div>
                 <p class="text-[11px] text-gray-500 leading-relaxed">Le reste avant charges fixes suit surtout les dépenses liées au volume ; le gain ou la perte finale prend en compte fixe et variable.</p>

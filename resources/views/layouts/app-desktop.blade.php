@@ -159,19 +159,21 @@
                     <span class="nav-text">Nouvelle saisie</span>
                 </a>
 
-                <a href="{{ route('cooperative.members') }}"
-                   class="nav-link {{ request()->routeIs('cooperative.*') ? 'nav-active' : '' }}"
-                   data-tooltip="Membres coopérative">
-                    <span class="nav-indicator"></span>
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M18 20a6 6 0 00-12 0m12 0H6m12 0h1.5a1.5 1.5 0 001.5-1.5v-.25a6.75 6.75 0 00-6.75-6.75H9.75A6.75 6.75 0 003 18.25v.25A1.5 1.5 0 004.5 20H6m6-11.25a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z"/>
-                        </svg>
-                    </span>
-                    <span class="nav-text">Membres coop</span>
-                </a>
+                @if($infoAbonnement && ($infoAbonnement['plan_metier'] ?? '') === 'cooperative')
+                    <a href="{{ route('cooperative.members') }}"
+                       class="nav-link {{ request()->routeIs('cooperative.*') ? 'nav-active' : '' }}"
+                       data-tooltip="Membres coopérative">
+                        <span class="nav-indicator"></span>
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M18 20a6 6 0 00-12 0m12 0H6m12 0h1.5a1.5 1.5 0 001.5-1.5v-.25a6.75 6.75 0 00-6.75-6.75H9.75A6.75 6.75 0 003 18.25v.25A1.5 1.5 0 004.5 20H6m6-11.25a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z"/>
+                            </svg>
+                        </span>
+                        <span class="nav-text">Membres coop</span>
+                    </a>
+                @endif
 
                 <a href="{{ route('rapports.index') }}"
                    class="nav-link {{ request()->routeIs('rapports.*') ? 'nav-active' : '' }}"

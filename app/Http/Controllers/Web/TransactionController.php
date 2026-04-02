@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Services\AbonnementService;
 use App\Services\CooperativeService;
 use App\Services\ExploitationCategorieSuggestionService;
+use App\Services\ExploitationCategorieDynamiqueService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\TransactionJustificatifService;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class TransactionController extends Controller
         private AbonnementService $abonnementService,
         private CooperativeService $cooperativeService,
         private ExploitationCategorieSuggestionService $categorieSuggestionService,
+        private ExploitationCategorieDynamiqueService $categorieDynamiqueService,
         private TransactionJustificatifService $justificatifService
     ) {}
 
@@ -72,15 +74,27 @@ class TransactionController extends Controller
         }
 
         $activitePourType = $activites->firstWhere('id', (int) ($activiteSelectionnee ?? $activites->first()?->id));
-        $typeExploitation = $activitePourType?->exploitation?->type
-            ?? Exploitation::where('user_id', $uid)->first()?->type
-            ?? 'cultures_vivrieres';
-        $categories = TransactionCategories::getByType($typeExploitation);
+        
+        // Génération dynamique des catégories basées sur les activités réelles
+        $exploitation = $activitePourType?->exploitation ?? Exploitation::where('user_id', $uid)->first();
+        $categories = $exploitation 
+            ? ExploitationCategorieDynamiqueService::genererParExploitation($exploitation)
+            : TransactionCategories::getByType('cultures_vivrieres');
+        
+        // typeExploitation conservé pour la rétrocompatibilité des templates
+        $typeExploitation = 'mixte';
 
-        $suggestionsByExploitation = $this->categorieSuggestionService->groupedForExploitationIds(
-            $activites->pluck('exploitation_id')
-        );
-        $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->exploitation_id]);
+        // ✅ Filtrer les suggestions UNIQUEMENT pour l'activité courante, pas toute l'exploitation
+        $activiteIdPourSuggestions = (int) ($activiteSelectionnee ?? $activites->first()?->id);
+        $suggestionsForCurrentActivity = $activiteIdPourSuggestions > 0
+            ? $this->categorieSuggestionService->groupedForActivityId($activiteIdPourSuggestions)
+            : ['depense' => [], 'recette' => []];
+
+        // Mapper suggestions par activite_id (non par exploitation_id) pour isoler les campagnes
+        $suggestionsByExploitation = $activites->mapWithKeys(fn ($a) => [
+            $a->id => ($a->id === $activiteIdPourSuggestions ? $suggestionsForCurrentActivity : ['depense' => [], 'recette' => []])
+        ]);
+        $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->id]);  // Mappe activite_id -> activite_id au lieu de exploitation_id
 
         return view('transactions.create', compact(
             'activites',
@@ -144,10 +158,10 @@ class TransactionController extends Controller
         }
 
         if ($libre === '') {
-            $allowed = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
-            if (! in_array($categorie, $allowed, true)) {
+            $allSlugs = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
+            if (! in_array($categorie, $allSlugs, true)) {
                 throw ValidationException::withMessages([
-                    'categorie' => ['Catégorie invalide pour votre type d’exploitation.'],
+                    'categorie' => ['Catégorie invalide pour votre exploitation.'],
                 ]);
             }
         }
@@ -205,7 +219,7 @@ class TransactionController extends Controller
             $transaction->update(['photo_justificatif' => $path]);
         }
 
-        $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
+        $allowedFsa = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
             (int) $activite->exploitation_id,
             $request->type,
@@ -258,11 +272,15 @@ class TransactionController extends Controller
                 ->with('error', 'Les transactions d’une campagne terminée ou abandonnée ne sont plus modifiables.');
         }
 
-        $typeExploitation = $transaction->activite->exploitation?->type ?? 'cultures_vivrieres';
-        $categories = TransactionCategories::getByType($typeExploitation);
+        // Génération dynamique des catégories
+        $exploitation = $transaction->activite->exploitation;
+        $categories = $exploitation
+            ? ExploitationCategorieDynamiqueService::genererParExploitation($exploitation)
+            : TransactionCategories::getByType('cultures_vivrieres');
+        $typeExploitation = 'mixte';
 
-        $allowedNow = TransactionCategories::flatSlugsForTransactionType(
-            $typeExploitation,
+        $allowedNow = self::getAllowedSlugsForExploitation(
+            $transaction->activite->exploitation,
             $transaction->type
         );
         $categorieSlugDefault = in_array($transaction->categorie, $allowedNow, true)
@@ -280,10 +298,12 @@ class TransactionController extends Controller
             ->with('exploitation:id,nom')
             ->get();
 
-        $suggestionsByExploitation = $this->categorieSuggestionService->groupedForExploitationIds(
-            $activites->pluck('exploitation_id')
-        );
-        $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->exploitation_id]);
+        // ✅ Filtrer les suggestions UNIQUEMENT pour l'activité courante (celle en édition)
+        $suggestionsForCurrentActivity = $this->categorieSuggestionService->groupedForActivityId($transaction->activite_id);
+        $suggestionsByExploitation = $activites->mapWithKeys(fn ($a) => [
+            $a->id => ($a->id === $transaction->activite_id ? $suggestionsForCurrentActivity : ['depense' => [], 'recette' => []])
+        ]);
+        $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->id]);  // Mappe activite_id -> activite_id au lieu de exploitation_id
 
         return view('transactions.edit', compact(
             'transaction',
@@ -423,7 +443,7 @@ class TransactionController extends Controller
             $transaction->update(['photo_justificatif' => $path]);
         }
 
-        $allowedFsa = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
+        $allowedFsa = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
             (int) $activite->exploitation_id,
             $request->type,
@@ -482,6 +502,40 @@ class TransactionController extends Controller
 
         return redirect()->route('activites.show', $activiteId)
             ->with('success', 'Transaction supprimée.');
+    }
+
+    /**
+     * Récupérer tous les slugs autorisés pour une exploitation donnée.
+     * Aggrège les slugs de toutes les activités de l'exploitation.
+     *
+     * @param  'depense'|'recette'  $transactionType
+     * @return list<string>
+     */
+    private static function getAllowedSlugsForExploitation(?Exploitation $exploitation, string $transactionType): array
+    {
+        if (!$exploitation) {
+            return TransactionCategories::flatSlugsForTransactionType('cultures_vivrieres', $transactionType);
+        }
+
+        $typesActivites = $exploitation
+            ->activitesActives()
+            ->distinct('type')
+            ->pluck('type')
+            ->filter(fn ($type) => $type !== null)
+            ->toArray();
+
+        if (empty($typesActivites)) {
+            return TransactionCategories::flatSlugsForTransactionType('cultures_vivrieres', $transactionType);
+        }
+
+        // Agréger les slugs de tous les types d'activités
+        $allSlugs = [];
+        foreach ($typesActivites as $type) {
+            $slugs = TransactionCategories::flatSlugsForTransactionType($type, $transactionType);
+            $allSlugs = array_merge($allSlugs, $slugs);
+        }
+
+        return array_values(array_unique($allSlugs));
     }
 
     public function valider(int $id)

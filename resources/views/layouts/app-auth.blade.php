@@ -312,8 +312,8 @@
     text-align: center;
 }
 .auth-mobile-type-card input:checked + .auth-mobile-type-card-inner {
-    background: rgba(74,222,128,0.12);
-    border-color: rgba(74,222,128,0.30);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(74,222,128,0.40);
 }
 .auth-mobile-type-emoji { font-size: 20px; line-height: 1; }
 .auth-mobile-type-label {

@@ -711,14 +711,26 @@
         <label for="periode-mobile" class="text-[11px] text-white/55">Période</label>
         <select id="periode-mobile" name="periode" onchange="this.form.submit()"
                 class="input-glass text-xs py-1.5 min-w-[170px]">
+            @if(in_array('all', $optionsPeriodeDisponibles ?? []))
             <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
+            @endif
+            @if(in_array('6m', $optionsPeriodeDisponibles ?? []))
+            <option value="6m" @selected(($periodeSelection ?? 'all') === '6m')>6 derniers mois</option>
+            @endif
+            @if(in_array('12m', $optionsPeriodeDisponibles ?? []))
             <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
+            @endif
+            @if(in_array('90j', $optionsPeriodeDisponibles ?? []))
             <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
+            @endif
+            @if(in_array('30j', $optionsPeriodeDisponibles ?? []))
             <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
+            @endif
         </select>
     </form>
 </div>
 <div class="mb-2">
+    @if($infoAbonnement['peut_multi'] ?? false)
     <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
         <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
         <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
@@ -736,6 +748,7 @@
             <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
         </select>
     </form>
+    @endif
 </div>
 <div class="dash-chips">
     @foreach($exploitationsResume as $exp)
@@ -860,7 +873,7 @@
         </div>
         Saisir
     </a>
-    <a href="{{ route('activites.index') }}" class="dash-quick-btn">
+    <a href="{{ route('activites.index', ['exploitation_id' => $exploitation->id]) }}" class="dash-quick-btn">
         <div class="dash-quick-icon dash-quick-icon-amber">
             <x-icon name="building-office-2" class="w-[19px] h-[19px] text-[var(--af-color-warning)]" />
         </div>
@@ -980,7 +993,7 @@
 <div style="margin-bottom: 24px;">
     <div class="dash-section-hd">
         <span class="dash-section-title">Mes campagnes</span>
-        <a href="{{ route('activites.create') }}" class="dash-section-link">+ Nouvelle</a>
+        <a href="{{ route('activites.create', ['exploitation_id' => $exploitation->id]) }}" class="dash-section-link">+ Nouvelle</a>
     </div>
 
     @foreach($activitesCards as $c)
@@ -1053,7 +1066,7 @@
     <div style="font-size:30px; margin-bottom:10px;">🌱</div>
     <p style="font-family:var(--font-display),sans-serif; font-size:14px; font-weight:600; color:rgba(255, 255, 255, 0.8); margin-bottom:6px;">Aucune campagne active</p>
     <p style="font-family:var(--font-ui),sans-serif; font-size:12px; color:var(--af-text-subtle); margin-bottom:14px;">Créez votre première campagne pour commencer à suivre vos résultats.</p>
-    <a href="{{ route('activites.create') }}"
+    <a href="{{ route('activites.create', ['exploitation_id' => $exploitation->id]) }}"
        style="display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui),sans-serif; font-size:12px; font-weight:600; color:white; background:var(--af-color-accent-dark); padding:8px 16px; border-radius:10px; text-decoration:none;">
         + Créer une campagne
     </a>
@@ -1068,7 +1081,7 @@
             <span class="dash-section-title">Dernières transactions</span>
             <p class="dash-consol-sub" style="margin-top:4px;">Jusqu'à 20 opérations les plus récentes</p>
         </div>
-        <a href="{{ route('activites.index') }}" class="dash-section-link">Voir tout</a>
+        <a href="{{ route('activites.index', ['exploitation_id' => $exploitation->id]) }}" class="dash-section-link">Voir tout</a>
     </div>
 
     <div style="background:var(--af-mobile-surface-muted); border:1px solid var(--af-glass-14); border-radius:var(--af-radius-lg); padding:4px 16px; backdrop-filter:blur(var(--af-blur-flash)); -webkit-backdrop-filter:blur(var(--af-blur-flash)); box-shadow:var(--af-shadow-card-lg);">
@@ -1150,10 +1163,21 @@
             <label for="periode-desktop" class="section-subtitle whitespace-nowrap">Période</label>
             <select id="periode-desktop" name="periode" onchange="this.form.submit()"
                     class="input-glass text-sm py-1.5 min-w-[210px]">
+                @if(in_array('all', $optionsPeriodeDisponibles ?? []))
                 <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
+                @endif
+                @if(in_array('6m', $optionsPeriodeDisponibles ?? []))
+                <option value="6m" @selected(($periodeSelection ?? 'all') === '6m')>6 derniers mois</option>
+                @endif
+                @if(in_array('12m', $optionsPeriodeDisponibles ?? []))
                 <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
+                @endif
+                @if(in_array('90j', $optionsPeriodeDisponibles ?? []))
                 <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
+                @endif
+                @if(in_array('30j', $optionsPeriodeDisponibles ?? []))
                 <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
+                @endif
             </select>
         </form>
         <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2">
@@ -1164,6 +1188,7 @@
             @if($heroActiviteId)
                 <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
             @endif
+            @if($infoAbonnement['peut_multi'] ?? false)
             <label for="tri-exploitations-desktop" class="section-subtitle whitespace-nowrap">Tri des exploitations</label>
             <select id="tri-exploitations-desktop" name="tri_exploitations" onchange="this.form.submit()"
                     class="input-glass text-sm py-1.5 min-w-[230px]">
@@ -1172,6 +1197,7 @@
                 <option value="mb_desc" @selected(($triExploitations ?? 'rne_desc') === 'mb_desc')>MB (du plus élevé)</option>
                 <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
             </select>
+            @endif
         </form>
         @if($isCooperative ?? false)
         <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2 flex-wrap">
@@ -1491,7 +1517,7 @@
                 <h2 class="section-title">Campagnes actives</h2>
                 <p class="section-subtitle mt-1">{{ count($resultats['par_activite'] ?? []) }} campagne(s) en cours</p>
             </div>
-            <a href="{{ route('activites.create') }}" class="font-ui text-xs font-semibold text-white/60 px-3.5 py-1.5 border border-white/15 rounded-lg hover:text-white hover:border-white/35 transition-colors">
+            <a href="{{ route('activites.create', ['exploitation_id' => $exploitation->id]) }}" class="font-ui text-xs font-semibold text-white/60 px-3.5 py-1.5 border border-white/15 rounded-lg hover:text-white hover:border-white/35 transition-colors">
                 + Nouvelle campagne
             </a>
         </div>

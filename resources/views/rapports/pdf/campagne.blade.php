@@ -74,7 +74,7 @@
         <tr><td><strong>Téléphone</strong></td><td>{{ $user->telephone }}</td></tr>
         <tr><td><strong>Département</strong></td><td>{{ $user->departement ?? 'Non renseigné' }}</td></tr>
         <tr><td><strong>Commune</strong></td><td>{{ $user->commune ?? 'Non renseignée' }}</td></tr>
-        <tr><td><strong>Type d'exploitation</strong></td><td>{{ $exploitation->type }}</td></tr>
+        <tr><td><strong>Type d'exploitation</strong></td><td>{{ $exploitation->type ?? 'Dynamique (selon les campagnes)' }}</td></tr>
     </table>
 
     <h2>Campagne : {{ $activite->nom }}</h2>

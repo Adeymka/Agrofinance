@@ -102,9 +102,9 @@
     transition: all 0.15s;
 }
 .txm-nature-pill.selected {
-    background: var(--af-green-tint-bg);
-    border-color: var(--af-green-icon-border);
-    color: var(--af-color-accent);
+    background: var(--af-color-accent);
+    border-color: var(--af-color-accent);
+    color: #000;
 }
 
 .txm-select {
@@ -576,7 +576,7 @@
                 <div class="txm-label">Campagne</div>
                 <select name="activite_id" id="selectActivite" required class="txm-select">
                     @foreach ($activites as $a)
-                        <option value="{{ $a->id }}" data-exploitation-id="{{ $a->exploitation_id }}"
+                        <option value="{{ $a->id }}" data-exploitation-id="{{ $a->id }}"
                                 @selected((string) $activiteSelectionnee === (string) $a->id)>
                             {{ $a->nom }}
                         </option>
@@ -1254,7 +1254,7 @@
                     <label class="block text-xs font-medium text-gray-600 mb-1">Campagne concernée</label>
                     <select name="activite_id" id="selectActivite" required class="input-field">
                         @foreach ($activites as $a)
-                            <option value="{{ $a->id }}" data-exploitation-id="{{ $a->exploitation_id }}"
+                            <option value="{{ $a->id }}" data-exploitation-id="{{ $a->id }}"
                                     @selected((string) $activiteSelectionnee === (string) $a->id)>
                                 {{ $a->exploitation->nom ?? '' }} — {{ $a->nom }}
                             </option>

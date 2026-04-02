@@ -151,6 +151,150 @@ class RapportService
     }
 
     /**
+     * Crée le rapport pour une exploitation entière (toutes ses campagnes).
+     *
+     * @return array{rapport: Rapport, indicateurs: array, token: string}
+     */
+    public function creerEtDispatcherExploitation(
+        User $user,
+        \App\Models\Exploitation $exploitation,
+        string $type,
+        ?string $periodeDebut = null,
+        ?string $periodeFin = null
+    ): array {
+        $token = Str::random(40);
+
+        // ✅ CORRECTION: Garder null si périodes non spécifiées (toute la période)
+        $debut = $periodeDebut !== null
+            ? Carbon::parse($periodeDebut)->toDateString()
+            : null;
+
+        $fin = $periodeFin !== null
+            ? Carbon::parse($periodeFin)->toDateString()
+            : null;
+
+        // LOG: Vérifier ce qui va en base de données
+        \Log::info('crierEtDispatcherExploitation:', [
+            'periode_debut_param' => $periodeDebut,
+            'periode_fin_param' => $periodeFin,
+            'periode_debut_stored' => $debut,
+            'periode_fin_stored' => $fin,
+        ]);
+
+        $rapport = Rapport::create([
+            'exploitation_id' => $exploitation->id,
+            'type' => $type,
+            'periode_debut' => $debut,
+            'periode_fin' => $fin,
+            'chemin_pdf' => '',
+            'lien_token' => $token,
+            'lien_expire_le' => now()->addHours(72),
+        ]);
+
+        $prepared = $this->preparerPdfExploitation($user, $exploitation, $rapport);
+
+        $this->stockerPdfLocal($prepared['chemin'], $prepared['binary']);
+
+        $rapport->update(['chemin_pdf' => $prepared['chemin']]);
+
+        return [
+            'rapport' => $rapport->fresh(),
+            'indicateurs' => $prepared['indicateurs'],
+            'token' => $token,
+        ];
+    }
+
+    /**
+     * Génère le binaire PDF pour une exploitation entière.
+     *
+     * @return array{chemin: string, binary: string, indicateurs: array}
+     */
+    public function preparerPdfExploitation(
+        User $user,
+        \App\Models\Exploitation $exploitation,
+        Rapport $rapport
+    ): array {
+        // ✅ CORRECTION: Gérer les dates null (toute la période)
+        $periodeDebut = $rapport->periode_debut?->toDateString();
+        $periodeFin = $rapport->periode_fin?->toDateString();
+
+        $floor = $this->abonnement->dateDebutHistorique($user)?->toDateString();
+
+        // LOG: Vérifier ce qui est passé au calcul
+        \Log::info('preparerPdfExploitation - Indicateurs:', [
+            'exploitation_id' => $exploitation->id,
+            'periode_debut' => $periodeDebut,
+            'periode_fin' => $periodeFin,
+            'floor' => $floor,
+        ]);
+
+        // Calcul consolidé de l'exploitation
+        $exploitationIndicateurs = new FinancialIndicatorsService();
+        $indicateurs = $exploitationIndicateurs->calculerExploitation(
+            $exploitation->id,
+            $floor,
+            $periodeDebut,
+            $periodeFin
+        );
+
+        // LOG: Résultats des calculs
+        \Log::info('Indicateurs calculés:', [
+            'PB' => $indicateurs['consolide']['PB'],
+            'CT' => $indicateurs['consolide']['CT'],
+            'RNE' => $indicateurs['consolide']['RNE'],
+            'RF' => $indicateurs['consolide']['RF'],
+        ]);
+
+        // Récupère toutes les activités actives et leurs transactions
+        $activites = $exploitation->activitesActives()
+            ->with('transactions')
+            ->get();
+
+        $effDebut = $periodeDebut;
+        // N'appliquer le floor que si une date de début est fournie ET qu'elle est avant le floor
+        if ($floor && $periodeDebut !== null && $periodeDebut < $floor) {
+            $effDebut = $floor;
+        }
+
+        $transactionsAll = [];
+        foreach ($activites as $activite) {
+            $txs = $activite->transactions()
+                ->when($effDebut, fn($q) => $q->where('date_transaction', '>=', $effDebut))
+                ->when($periodeFin, fn($q) => $q->where('date_transaction', '<=', $periodeFin))
+                ->get();
+            $transactionsAll = array_merge($transactionsAll, $txs->toArray());
+        }
+
+        $plancherAbonnementPdf = $floor
+            ? "Les données du rapport ne remontent pas avant le ".Carbon::parse($floor)->format('d/m/Y')." (limite liée à votre formule d'abonnement)."
+            : null;
+
+        $template = $rapport->type === 'dossier_credit'
+            ? 'rapports.pdf.dossier-credit-exploitation'
+            : 'rapports.pdf.exploitation';
+
+        $pdf = Pdf::loadView($template, [
+            'user' => $user,
+            'exploitation' => $exploitation,
+            'rapport' => $rapport,
+            'indicateurs' => $indicateurs,
+            'activites' => $activites,
+            'transactions' => collect($transactionsAll)->sortByDesc('date_transaction'),
+            'plancherAbonnementPdf' => $plancherAbonnementPdf,
+        ]);
+
+        $token = $rapport->lien_token ?? Str::random(40);
+        $nomFichier = "rapport_exploitation_{$rapport->id}_{$token}.pdf";
+        $chemin = 'rapports/'.$nomFichier;
+
+        return [
+            'chemin' => $chemin,
+            'binary' => $pdf->output(),
+            'indicateurs' => $indicateurs,
+        ];
+    }
+
+    /**
      * Écrit le PDF sur le disque local (utilisé aussi par {@see GenerateRapportPdfJob} avec try/catch).
      */
     public function stockerPdfLocal(string $chemin, string $binary): void

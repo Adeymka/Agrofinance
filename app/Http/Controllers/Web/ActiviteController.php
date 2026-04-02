@@ -18,14 +18,42 @@ class ActiviteController extends Controller
         private ActiviteStatutService $activiteStatutService
     ) {}
 
-    public function index()
+    /**
+     * Exploitation ciblée : ?exploitation_id= (GET) ou défaut = plus petite id (comportement historique).
+     */
+    private function exploitationPourRequete(Request $request): Exploitation
     {
-        $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)->first();
+        $userId = (int) auth()->user()->id;
+        $exploitationId = (int) ($request->input('exploitation_id') ?? $request->query('exploitation_id') ?? 0);
 
-        if (! $exploitation) {
+        if ($exploitationId > 0) {
+            return Exploitation::query()
+                ->where('user_id', $userId)
+                ->findOrFail($exploitationId);
+        }
+
+        return Exploitation::query()
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->firstOrFail();
+    }
+
+    public function index(Request $request)
+    {
+        $userId = (int) auth()->user()->id;
+
+        if (! Exploitation::query()->where('user_id', $userId)->exists()) {
             return redirect()->route('exploitations.create')
                 ->with('info', 'Créez d’abord votre exploitation.');
         }
+
+        // Récupérer TOUTES les exploitations de l'utilisateur
+        $exploitations = Exploitation::query()
+            ->where('user_id', $userId)
+            ->orderBy('nom')
+            ->get();
+
+        $exploitation = $this->exploitationPourRequete($request);
 
         $actives = $exploitation->activites()
             ->where('statut', Activite::STATUT_EN_COURS)
@@ -61,6 +89,7 @@ class ActiviteController extends Controller
 
         return view('activites.index', compact(
             'exploitation',
+            'exploitations',
             'actives',
             'terminees',
             'abandonnees',
@@ -70,21 +99,30 @@ class ActiviteController extends Controller
         ));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)->first();
+        $userId = (int) auth()->user()->id;
 
-        if (! $exploitation) {
+        if (! Exploitation::query()->where('user_id', $userId)->exists()) {
             return redirect()->route('exploitations.create')
                 ->with('info', 'Créez d’abord votre exploitation.');
         }
 
-        return view('activites.create', compact('exploitation'));
+        // Récupérer TOUTES les exploitations pour le sélecteur
+        $exploitations = Exploitation::query()
+            ->where('user_id', $userId)
+            ->orderBy('nom')
+            ->get();
+
+        $exploitation = $this->exploitationPourRequete($request);
+
+        return view('activites.create', compact('exploitation', 'exploitations'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'exploitation_id' => 'required|integer',
             'nom' => 'required|string|max:150',
             'type' => 'required|in:culture,elevage,transformation',
             'date_debut' => 'required|date',
@@ -92,7 +130,9 @@ class ActiviteController extends Controller
             'budget_previsionnel' => 'nullable|numeric|min:0',
         ]);
 
-        $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)->firstOrFail();
+        $exploitation = Exploitation::query()
+            ->where('user_id', (int) auth()->user()->id)
+            ->findOrFail((int) $request->input('exploitation_id'));
 
         Activite::create([
             'exploitation_id' => $exploitation->id,
@@ -104,7 +144,7 @@ class ActiviteController extends Controller
             'statut' => Activite::STATUT_EN_COURS,
         ]);
 
-        return redirect()->route('activites.index')
+        return redirect()->route('activites.index', ['exploitation_id' => $exploitation->id])
             ->with('success', "Campagne « {$request->nom} » créée !");
     }
 
@@ -161,14 +201,15 @@ class ActiviteController extends Controller
             if ($resultat['reason'] === 'not_found') {
                 abort(404);
             }
+            $expId = Activite::query()->pourUtilisateur((int) auth()->user()->id)->whereKey($id)->value('exploitation_id');
 
-            return redirect()->route('activites.index')
+            return redirect()->route('activites.index', array_filter(['exploitation_id' => $expId]))
                 ->with('error', $resultat['message']);
         }
 
         $nom = $resultat['activite']->nom;
 
-        return redirect()->route('activites.index')
+        return redirect()->route('activites.index', ['exploitation_id' => $resultat['activite']->exploitation_id])
             ->with('success', "Campagne « {$nom} » clôturée.");
     }
 
@@ -180,14 +221,15 @@ class ActiviteController extends Controller
             if ($resultat['reason'] === 'not_found') {
                 abort(404);
             }
+            $expId = Activite::query()->pourUtilisateur((int) auth()->user()->id)->whereKey($id)->value('exploitation_id');
 
-            return redirect()->route('activites.index')
+            return redirect()->route('activites.index', array_filter(['exploitation_id' => $expId]))
                 ->with('error', $resultat['message']);
         }
 
         $nom = $resultat['activite']->nom;
 
-        return redirect()->route('activites.index')
+        return redirect()->route('activites.index', ['exploitation_id' => $resultat['activite']->exploitation_id])
             ->with('success', "Campagne « {$nom} » marquée comme abandonnée.");
     }
 }

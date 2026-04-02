@@ -1,5 +1,10 @@
 import './bootstrap';
+import Alpine from 'alpinejs';
 import { enqueuePending, initOfflineTransactions, randomUuidV4, refreshOfflineBanner } from './offline-transactions';
+
+// Initialiser Alpine
+window.Alpine = Alpine;
+Alpine.start();
 
 (function () {
     var meta = document.querySelector('meta[name="api-token"]');

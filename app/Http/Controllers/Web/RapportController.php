@@ -23,13 +23,26 @@ class RapportController extends Controller
 
     public function index(Request $request)
     {
-        $exploitation = Exploitation::where('user_id', (int) auth()->user()->id)
-            ->with('activites')
-            ->first();
+        $uid = (int) auth()->user()->id;
+        $exploitations = Exploitation::where('user_id', $uid)
+            ->orderBy('nom')
+            ->get();
 
-        if (! $exploitation) {
+        if ($exploitations->isEmpty()) {
             return redirect()->route('exploitations.create')
-                ->with('info', 'Créez d’abord votre exploitation.');
+                ->with('info', "Créez d'abord votre exploitation.");
+        }
+
+        // Récupère l'exploitation sélectionnée ou la première par défaut
+        $exploitation = null;
+        $exploitationId = (int) $request->query('exploitation_id', 0);
+        
+        if ($exploitationId > 0) {
+            $exploitation = $exploitations->firstWhere('id', $exploitationId);
+        }
+        
+        if (! $exploitation) {
+            $exploitation = $exploitations->first();
         }
 
         $rapports = Rapport::where('exploitation_id', $exploitation->id)
@@ -47,14 +60,15 @@ class RapportController extends Controller
 
         $infoAbonnement = $this->abonnementService->infos(auth()->user());
 
-        return view('rapports.index', compact('exploitation', 'rapports', 'activites', 'activitePreselect', 'infoAbonnement'));
+        return view('rapports.index', compact('exploitation', 'exploitations', 'rapports', 'activites', 'activitePreselect', 'infoAbonnement'));
     }
 
     public function generer(Request $request)
     {
         $request->validate([
-            'activite_id' => 'required|integer|exists:activites,id',
-            'type' => 'required|in:campagne,dossier_credit',
+            'exploitation_id' => 'required|integer|exists:exploitations,id',
+            'type' => 'required|in:standard,dossier_credit',
+            'periode_scope' => 'nullable|in:all,custom',
             'periode_debut' => 'nullable|date',
             'periode_fin' => 'nullable|date',
         ]);
@@ -69,27 +83,47 @@ class RapportController extends Controller
         }
 
         $uid = (int) auth()->user()->id;
-
-        $activite = Activite::pourUtilisateur($uid)
-            ->with('exploitation')->findOrFail($request->activite_id);
-
         $user = auth()->user();
 
-        $periode = $this->rapportService->resoudrePeriode(
-            $activite,
-            $request->input('periode_debut'),
-            $request->input('periode_fin')
-        );
+        // Vérifier que l'exploitation appartient à l'utilisateur
+        $exploitation = Exploitation::where('user_id', $uid)
+            ->findOrFail($request->exploitation_id);
 
-        $this->rapportService->creerEtDispatcher(
+        // LOG: Données du formulaire
+        \Log::info('=== GENERER RAPPORT ===', [
+            'user_id' => $uid,
+            'exploitation_id' => $exploitation->id,
+            'exploitation_nom' => $exploitation->nom,
+            'type' => $request->type,
+            'periode_scope' => $request->input('periode_scope'),
+            'periode_debut_form' => $request->input('periode_debut'),
+            'periode_fin_form' => $request->input('periode_fin'),
+        ]);
+
+        // Déterminer les dates : si scope='all', ignorer les dates personnalisées
+        $periodeDebut = null;
+        $periodeFin = null;
+        if ($request->input('periode_scope') === 'custom') {
+            $periodeDebut = $request->input('periode_debut');
+            $periodeFin = $request->input('periode_fin');
+        }
+        // Sinon scope='all' ou null → passer null (illimité)
+
+        // LOG: Dates finales après traitement
+        \Log::info('Dates finales au service:', [
+            'periode_debut_passed' => $periodeDebut,
+            'periode_fin_passed' => $periodeFin,
+        ]);
+
+        $this->rapportService->creerEtDispatcherExploitation(
             $user,
-            $activite,
+            $exploitation,
             (string) $request->type,
-            $periode['debut'],
-            $periode['fin']
+            $periodeDebut,
+            $periodeFin
         );
 
-        return redirect()->route('rapports.index')
+        return redirect()->route('rapports.index', ['exploitation_id' => $exploitation->id])
             ->with('success', 'Rapport PDF généré !');
     }
 
