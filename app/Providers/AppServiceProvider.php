@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Activite;
 use App\Models\Exploitation;
+use App\Services\CooperativeService;
 use App\Models\Rapport;
 use App\Models\Transaction;
 use App\Models\User;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -74,5 +76,20 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('abonnement-actif', function (User $user): bool {
             return app(AbonnementService::class)->estActif($user);
         });
+
+        // Contexte multi-exploitations (campagnes) : même propriétaire que le tableau de bord (coop)
+        View::composer(
+            ['layouts.app-mobile', 'layouts.app-desktop', 'layouts.app', 'components.sidebar'],
+            function (\Illuminate\View\View $view): void {
+                $user = auth()->user();
+                if (! $user) {
+                    $view->with('exploitationNavId', null);
+
+                    return;
+                }
+                $ownerId = (int) app(CooperativeService::class)->resolveOwner($user)->id;
+                $view->with('exploitationNavId', Exploitation::navigationContextIdForUser($ownerId));
+            }
+        );
     }
 }

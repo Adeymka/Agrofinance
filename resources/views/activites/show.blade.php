@@ -246,19 +246,6 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .show-tx-item:last-child { border-bottom: none; }
-.show-tx-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.show-tx-icon-recette { background: var(--af-filter-active-bg); }
-.show-tx-icon-recette svg { width: 18px; height: 18px; color: var(--af-color-accent); }
-.show-tx-icon-depense { background: var(--af-red-tint-bg); }
-.show-tx-icon-depense svg { width: 18px; height: 18px; color: var(--af-color-danger); }
 .show-tx-body { flex: 1; min-width: 0; }
 .show-tx-cat {
     font-family: var(--font-ui), sans-serif;
@@ -502,6 +489,9 @@ nav button:hover { background: rgba(255, 255, 255, 0.12) !important; }
         <div class="show-hero-rne {{ $rne >= 0 ? 'show-hero-rne--pos' : 'show-hero-rne--neg' }}">
             {{ $rne >= 0 ? '+' : '−' }}{{ number_format(abs($rne), 0, ',', ' ') }}<span class="show-hero-rne-unit">FCFA</span>
         </div>
+        <p class="text-xs text-gray-500 mt-1" style="line-height:1.2;">
+            Calcul simplifié : RNE = PB − CT (ne tient pas compte des amortissements matériel ni des frais bancaires).
+        </p>
 
         {{-- KPI 2×4 --}}
         <div class="show-kpi-grid">
@@ -579,11 +569,6 @@ nav button:hover { background: rgba(255, 255, 255, 0.12) !important; }
                         $catLabel = ucfirst(str_replace('_', ' ', $t->categorie));
                     @endphp
                     <div class="show-tx-item">
-                        <div class="show-tx-icon {{ $isRec ? 'show-tx-icon-recette' : 'show-tx-icon-depense' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $isRec ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3' }}"/>
-                            </svg>
-                        </div>
                         <div class="show-tx-body">
                             <div class="show-tx-cat">{{ $catLabel }}</div>
                             <div class="show-tx-meta">

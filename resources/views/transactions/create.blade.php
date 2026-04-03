@@ -518,7 +518,7 @@
 @if ($activites->isEmpty())
     <div class="txm-empty-wrap">
         <p class="txm-empty-msg">Aucune campagne en cours.</p>
-        <a href="{{ route('activites.create') }}" class="txm-empty-cta">Créer une campagne</a>
+        <a href="{{ route('activites.create', array_filter(['exploitation_id' => $exploitationIdPourCampagne ?? null])) }}" class="txm-empty-cta">Créer une campagne</a>
     </div>
 @else
 
@@ -1098,7 +1098,7 @@
 @else
 {{-- ════ DESKTOP (original) ════ --}}
     @if ($activites->isEmpty())
-        <p class="text-sm text-gray-600">Aucune campagne en cours. <a href="{{ route('activites.create') }}" class="text-agro-vert font-medium underline">Créer une campagne</a>.</p>
+        <p class="text-sm text-gray-600">Aucune campagne en cours. <a href="{{ route('activites.create', array_filter(['exploitation_id' => $exploitationIdPourCampagne ?? null])) }}" class="text-agro-vert font-medium underline">Créer une campagne</a>.</p>
     @else
         @php
             $labelsType = [

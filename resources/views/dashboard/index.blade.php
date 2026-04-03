@@ -472,24 +472,6 @@
     border-bottom: 1px solid var(--af-mobile-divider-soft);
 }
 .dash-tx-item:last-child { border-bottom: none; }
-.dash-tx-icon {
-    width: 33px;
-    height: 33px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 16px;
-}
-.dash-tx-icon-recette {
-    background: var(--af-green-soft-bg);
-    border: 1px solid var(--af-green-soft-border);
-}
-.dash-tx-icon-depense {
-    background: var(--af-red-tint-bg);
-    border: 1px solid var(--af-red-tint-border);
-}
 .dash-tx-body { flex: 1; min-width: 0; }
 .dash-tx-categorie {
     font-family: var(--font-ui), sans-serif;
@@ -711,26 +693,14 @@
         <label for="periode-mobile" class="text-[11px] text-white/55">Période</label>
         <select id="periode-mobile" name="periode" onchange="this.form.submit()"
                 class="input-glass text-xs py-1.5 min-w-[170px]">
-            @if(in_array('all', $optionsPeriodeDisponibles ?? []))
             <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
-            @endif
-            @if(in_array('6m', $optionsPeriodeDisponibles ?? []))
-            <option value="6m" @selected(($periodeSelection ?? 'all') === '6m')>6 derniers mois</option>
-            @endif
-            @if(in_array('12m', $optionsPeriodeDisponibles ?? []))
             <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
-            @endif
-            @if(in_array('90j', $optionsPeriodeDisponibles ?? []))
             <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
-            @endif
-            @if(in_array('30j', $optionsPeriodeDisponibles ?? []))
             <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
-            @endif
         </select>
     </form>
 </div>
 <div class="mb-2">
-    @if($infoAbonnement['peut_multi'] ?? false)
     <form method="get" action="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
         <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
         <input type="hidden" name="periode" value="{{ $periodeSelection ?? 'all' }}">
@@ -748,7 +718,6 @@
             <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
         </select>
     </form>
-    @endif
 </div>
 <div class="dash-chips">
     @foreach($exploitationsResume as $exp)
@@ -1091,13 +1060,6 @@
                 $isRecette = $t->type === 'recette';
             @endphp
             <div class="dash-tx-item">
-                <div class="dash-tx-icon {{ $isRecette ? 'dash-tx-icon-recette' : 'dash-tx-icon-depense' }}">
-                    @if($isRecette)
-                        <x-icon name="trending-up" class="w-4 h-4 text-[var(--af-color-accent)]" />
-                    @else
-                        <x-icon name="trending-down" class="w-4 h-4 text-[var(--af-color-danger)]" />
-                    @endif
-                </div>
                 <div class="dash-tx-body">
                     <div class="dash-tx-categorie">{{ $catLabel }}</div>
                     <div class="dash-tx-meta">
@@ -1163,21 +1125,10 @@
             <label for="periode-desktop" class="section-subtitle whitespace-nowrap">Période</label>
             <select id="periode-desktop" name="periode" onchange="this.form.submit()"
                     class="input-glass text-sm py-1.5 min-w-[210px]">
-                @if(in_array('all', $optionsPeriodeDisponibles ?? []))
                 <option value="all" @selected(($periodeSelection ?? 'all') === 'all')>Toute période</option>
-                @endif
-                @if(in_array('6m', $optionsPeriodeDisponibles ?? []))
-                <option value="6m" @selected(($periodeSelection ?? 'all') === '6m')>6 derniers mois</option>
-                @endif
-                @if(in_array('12m', $optionsPeriodeDisponibles ?? []))
                 <option value="12m" @selected(($periodeSelection ?? 'all') === '12m')>12 derniers mois</option>
-                @endif
-                @if(in_array('90j', $optionsPeriodeDisponibles ?? []))
                 <option value="90j" @selected(($periodeSelection ?? 'all') === '90j')>90 derniers jours</option>
-                @endif
-                @if(in_array('30j', $optionsPeriodeDisponibles ?? []))
                 <option value="30j" @selected(($periodeSelection ?? 'all') === '30j')>30 derniers jours</option>
-                @endif
             </select>
         </form>
         <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2">
@@ -1188,7 +1139,6 @@
             @if($heroActiviteId)
                 <input type="hidden" name="campagne" value="{{ $heroActiviteId }}">
             @endif
-            @if($infoAbonnement['peut_multi'] ?? false)
             <label for="tri-exploitations-desktop" class="section-subtitle whitespace-nowrap">Tri des exploitations</label>
             <select id="tri-exploitations-desktop" name="tri_exploitations" onchange="this.form.submit()"
                     class="input-glass text-sm py-1.5 min-w-[230px]">
@@ -1197,7 +1147,6 @@
                 <option value="mb_desc" @selected(($triExploitations ?? 'rne_desc') === 'mb_desc')>MB (du plus élevé)</option>
                 <option value="nom_asc" @selected(($triExploitations ?? 'rne_desc') === 'nom_asc')>Nom (A → Z)</option>
             </select>
-            @endif
         </form>
         @if($isCooperative ?? false)
         <form method="get" action="{{ route('dashboard') }}" class="mb-3 inline-flex items-center gap-2 flex-wrap">

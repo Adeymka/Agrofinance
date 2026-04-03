@@ -63,6 +63,8 @@ class DashboardController extends Controller
             $exploitation = $exploitations->first();
         }
 
+        Exploitation::rememberContextForUser($uid, (int) $exploitation->id);
+
         $dateDebutHistorique = $this->abonnementService->dateDebutHistorique($user)?->toDateString();
         $finPeriode = null;  // Pour les indicateurs : campagne COMPLÈTE
         $finPeriodeTransactions = now()->toDateString();  // Pour les transactions : AUJOURD'HUI seulement (sécurité)

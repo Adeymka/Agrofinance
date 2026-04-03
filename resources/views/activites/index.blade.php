@@ -17,42 +17,6 @@
 @push('styles')
 <style>
 /* Tokens globaux : --af-* (app.css) */
-.expl-selector {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 0 0 12px 0;
-    margin-bottom: 16px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.expl-selector::-webkit-scrollbar { display: none; }
-.expl-chip {
-    flex-shrink: 0;
-    font-family: var(--font-ui), sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    background: var(--af-glass-06);
-    border: 1px solid var(--af-border-glass-soft);
-    color: var(--af-text-dim);
-    transition: all 0.15s;
-    white-space: nowrap;
-    text-decoration: none;
-    display: inline-block;
-}
-.expl-chip:active,
-.expl-chip:hover { background: var(--af-glass-08); }
-.expl-chip.active {
-    background: var(--af-filter-active-bg);
-    border-color: var(--af-filter-active-border);
-    color: var(--af-color-accent);
-    font-weight: 700;
-}
 .act-filters {
     display: flex;
     gap: 8px;
@@ -234,18 +198,6 @@ $activeTab = request('tab', 'en_cours');
     <p style="font-family:var(--font-ui),sans-serif; font-size:12px; color:var(--af-text-caption); margin-top:3px;">{{ $exploitation->nom }} · {{ $actives->count() }} en cours · {{ $terminees->count() }} terminée(s)</p>
 </div>
 
-{{-- ── Sélecteur d'exploitations (si multiples) ── --}}
-@if($exploitations->count() > 1)
-<div class="expl-selector">
-    @foreach($exploitations as $expl)
-    <a href="{{ route('activites.index', ['exploitation_id' => $expl->id]) }}"
-       class="expl-chip {{ $expl->id === $exploitation->id ? 'active' : '' }}">
-        {{ $expl->nom }}
-    </a>
-    @endforeach
-</div>
-@endif
-
 {{-- ── Filtres chips ── --}}
 <div class="act-filters">
     <a href="{{ route('activites.index', ['tab' => 'en_cours', 'exploitation_id' => $exploitation->id]) }}"
@@ -360,18 +312,6 @@ $activeTab = request('tab', 'en_cours');
 
 @else
 {{-- ════ DESKTOP (original) ════ --}}
-    {{-- ── Sélecteur d'exploitations (si multiples) ── --}}
-    @if($exploitations->count() > 1)
-    <div class="mb-6" style="max-width: 300px;">
-        <select onchange="window.location.href = '{{ route('activites.index') }}?exploitation_id=' + this.value;" class="input-glass">
-            @foreach($exploitations as $expl)
-            <option value="{{ $expl->id }}" {{ $expl->id === $exploitation->id ? 'selected' : '' }}>
-                {{ $expl->nom }}
-            </option>
-            @endforeach
-        </select>
-    </div>
-    @endif
     <div class="mb-6 flex gap-4 border-b border-gray-200 flex-wrap">
         <button type="button" data-tab="1" class="tab-btn border-b-2 border-agro-vert text-agro-vert font-semibold pb-2 px-2">En cours ({{ $actives->count() }})</button>
         <button type="button" data-tab="2" class="tab-btn text-gray-500 pb-2 px-2 border-b-2 border-transparent">Terminées ({{ $terminees->count() }})</button>
@@ -385,7 +325,7 @@ $activeTab = request('tab', 'en_cours');
                 <tbody>
                     @forelse($actives as $a)
                         @php $ind = $indicateursParActivite[$a->id] ?? []; @endphp
-                        <tr class="border-b border-gray-50">
+                        <tr class="border-b border-gray-50 hover:bg-gray-50">
                             <td class="py-3 pr-4 font-medium">{{ $a->nom }}</td>
                             <td class="py-3 pr-4">{{ $a->type }}</td>
                             <td class="py-3 pr-4">{{ $a->date_debut?->format('d/m/Y') }}</td>

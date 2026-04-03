@@ -7,6 +7,7 @@ use App\Models\Activite;
 use App\Models\Exploitation;
 use App\Services\AbonnementService;
 use App\Services\ActiviteStatutService;
+use App\Services\CooperativeService;
 use App\Services\FinancialIndicatorsService;
 use Illuminate\Http\Request;
 
@@ -15,43 +16,54 @@ class ActiviteController extends Controller
     public function __construct(
         private FinancialIndicatorsService $service,
         private AbonnementService $abonnementService,
-        private ActiviteStatutService $activiteStatutService
+        private ActiviteStatutService $activiteStatutService,
+        private CooperativeService $cooperativeService
     ) {}
 
+    private function ownerUserId(): int
+    {
+        return (int) $this->cooperativeService->resolveOwner(auth()->user())->id;
+    }
+
     /**
-     * Exploitation ciblée : ?exploitation_id= (GET) ou défaut = plus petite id (comportement historique).
+     * Exploitation ciblée : paramètre, puis session, puis première id (comportement par défaut).
      */
     private function exploitationPourRequete(Request $request): Exploitation
     {
-        $userId = (int) auth()->user()->id;
+        $userId = $this->ownerUserId();
         $exploitationId = (int) ($request->input('exploitation_id') ?? $request->query('exploitation_id') ?? 0);
 
         if ($exploitationId > 0) {
-            return Exploitation::query()
-                ->where('user_id', $userId)
-                ->findOrFail($exploitationId);
+            $exp = Exploitation::query()->where('user_id', $userId)->findOrFail($exploitationId);
+            Exploitation::rememberContextForUser($userId, $exp->id);
+
+            return $exp;
         }
 
-        return Exploitation::query()
-            ->where('user_id', $userId)
-            ->orderBy('id')
-            ->firstOrFail();
+        $sessionId = (int) session('last_exploitation_id', 0);
+        if ($sessionId > 0) {
+            $exp = Exploitation::query()->where('user_id', $userId)->find($sessionId);
+            if ($exp) {
+                Exploitation::rememberContextForUser($userId, $exp->id);
+
+                return $exp;
+            }
+        }
+
+        $exp = Exploitation::query()->where('user_id', $userId)->orderBy('id')->firstOrFail();
+        Exploitation::rememberContextForUser($userId, $exp->id);
+
+        return $exp;
     }
 
     public function index(Request $request)
     {
-        $userId = (int) auth()->user()->id;
+        $userId = $this->ownerUserId();
 
         if (! Exploitation::query()->where('user_id', $userId)->exists()) {
             return redirect()->route('exploitations.create')
                 ->with('info', 'Créez d’abord votre exploitation.');
         }
-
-        // Récupérer TOUTES les exploitations de l'utilisateur
-        $exploitations = Exploitation::query()
-            ->where('user_id', $userId)
-            ->orderBy('nom')
-            ->get();
 
         $exploitation = $this->exploitationPourRequete($request);
 
@@ -89,7 +101,6 @@ class ActiviteController extends Controller
 
         return view('activites.index', compact(
             'exploitation',
-            'exploitations',
             'actives',
             'terminees',
             'abandonnees',
@@ -101,22 +112,16 @@ class ActiviteController extends Controller
 
     public function create(Request $request)
     {
-        $userId = (int) auth()->user()->id;
+        $userId = $this->ownerUserId();
 
         if (! Exploitation::query()->where('user_id', $userId)->exists()) {
             return redirect()->route('exploitations.create')
                 ->with('info', 'Créez d’abord votre exploitation.');
         }
 
-        // Récupérer TOUTES les exploitations pour le sélecteur
-        $exploitations = Exploitation::query()
-            ->where('user_id', $userId)
-            ->orderBy('nom')
-            ->get();
-
         $exploitation = $this->exploitationPourRequete($request);
 
-        return view('activites.create', compact('exploitation', 'exploitations'));
+        return view('activites.create', compact('exploitation'));
     }
 
     public function store(Request $request)
@@ -130,9 +135,13 @@ class ActiviteController extends Controller
             'budget_previsionnel' => 'nullable|numeric|min:0',
         ]);
 
+        $userId = $this->ownerUserId();
+
         $exploitation = Exploitation::query()
-            ->where('user_id', (int) auth()->user()->id)
+            ->where('user_id', $userId)
             ->findOrFail((int) $request->input('exploitation_id'));
+
+        Exploitation::rememberContextForUser($userId, $exploitation->id);
 
         Activite::create([
             'exploitation_id' => $exploitation->id,
@@ -153,6 +162,8 @@ class ActiviteController extends Controller
         $activite = Activite::pourUtilisateur((int) auth()->user()->id)
             ->with('transactions')
             ->findOrFail($id);
+
+        Exploitation::rememberContextForUser($this->ownerUserId(), (int) $activite->exploitation_id);
 
         $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
 

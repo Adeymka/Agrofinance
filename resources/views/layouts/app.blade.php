@@ -67,7 +67,7 @@
                 <x-icon name="home" class="w-6 h-6 mb-0.5" />
                 Accueil
             </a>
-            <a href="{{ route('activites.index') }}" class="flex flex-col items-center py-2 {{ $nav === 'activites' ? 'text-agro-vert font-semibold' : 'text-gray-500' }}">
+            <a href="{{ route('activites.index', array_filter(['exploitation_id' => $exploitationNavId ?? null])) }}" class="flex flex-col items-center py-2 {{ $nav === 'activites' ? 'text-agro-vert font-semibold' : 'text-gray-500' }}">
                 <x-icon name="leaf" class="w-6 h-6 mb-0.5" />
                 Activités
             </a>

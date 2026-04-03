@@ -131,7 +131,7 @@
                     <span class="nav-text">Exploitations</span>
                 </a>
 
-                <a href="{{ route('activites.index') }}"
+                <a href="{{ route('activites.index', array_filter(['exploitation_id' => $exploitationNavId ?? null])) }}"
                    class="nav-link {{ request()->routeIs('activites.*') ? 'nav-active' : '' }}"
                    data-tooltip="Campagnes">
                     <span class="nav-indicator"></span>

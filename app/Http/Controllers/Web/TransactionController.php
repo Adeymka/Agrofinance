@@ -96,13 +96,17 @@ class TransactionController extends Controller
         ]);
         $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->id]);  // Mappe activite_id -> activite_id au lieu de exploitation_id
 
+        $exploitationIdPourCampagne = $activitePourType?->exploitation_id
+            ?? Exploitation::where('user_id', $uid)->orderBy('id')->value('id');
+
         return view('transactions.create', compact(
             'activites',
             'activiteSelectionnee',
             'categories',
             'typeExploitation',
             'suggestionsByExploitation',
-            'activiteVersExploitation'
+            'activiteVersExploitation',
+            'exploitationIdPourCampagne'
         ) + [
             'nav' => 'saisie',
             'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),
@@ -305,6 +309,8 @@ class TransactionController extends Controller
         ]);
         $activiteVersExploitation = $activites->mapWithKeys(fn ($a) => [$a->id => $a->id]);  // Mappe activite_id -> activite_id au lieu de exploitation_id
 
+        $exploitationIdPourCampagne = (int) $transaction->activite->exploitation_id;
+
         return view('transactions.edit', compact(
             'transaction',
             'categories',
@@ -313,7 +319,8 @@ class TransactionController extends Controller
             'categorieSelectionnee',
             'categorieLibre',
             'suggestionsByExploitation',
-            'activiteVersExploitation'
+            'activiteVersExploitation',
+            'exploitationIdPourCampagne'
         ) + [
             'nav' => 'saisie',
             'slugsCi' => TransactionCategories::slugsChargesIntermediaires(),

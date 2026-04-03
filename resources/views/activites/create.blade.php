@@ -7,23 +7,7 @@
     <div class="max-w-2xl">
         <form method="POST" action="{{ route('activites.store') }}" class="card space-y-4">
             @csrf
-            
-            {{-- Sélecteur d'exploitation (si multiples) --}}
-            @if($exploitations->count() > 1)
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Exploitation</label>
-                <select name="exploitation_id" required class="input-field">
-                    @foreach($exploitations as $expl)
-                    <option value="{{ $expl->id }}" {{ $expl->id === $exploitation->id ? 'selected' : '' }}>
-                        {{ $expl->nom }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            @else
-            <input type="hidden" name="exploitation_id" value="{{ $exploitation->id }}">
-            @endif
-            
+            <input type="hidden" name="exploitation_id" value="{{ old('exploitation_id', $exploitation->id) }}">
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Nom</label>
                 <input name="nom" value="{{ old('nom') }}" required placeholder="Ex : Maïs grande saison 2025" class="input-field">
@@ -36,7 +20,7 @@
                         'elevage' => 'Élevage',
                         'transformation' => 'Transformation',
                     ] as $v => $label)
-                        <label class="flex items-center gap-2 cursor-pointer rounded-xl border border-gray-200 p-3 has-[:checked]:border-agro-vert has-[:checked]:bg-emerald-900/40">
+                        <label class="flex items-center gap-2 cursor-pointer rounded-xl border border-gray-200 p-3 has-[:checked]:border-agro-vert has-[:checked]:bg-agro-vert-clair">
                             <input type="radio" name="type" value="{{ $v }}" class="text-agro-vert" @checked(old('type') === $v) required>
                             <span class="text-sm font-medium">{{ $label }}</span>
                         </label>
