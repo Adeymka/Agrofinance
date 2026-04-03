@@ -14,6 +14,7 @@ use App\Services\ExploitationCategorieSuggestionService;
 use App\Services\ExploitationCategorieDynamiqueService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\TransactionJustificatifService;
+use App\Services\TransactionSlugService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -162,7 +163,7 @@ class TransactionController extends Controller
         }
 
         if ($libre === '') {
-            $allSlugs = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
+            $allSlugs = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $request->type);
             if (! in_array($categorie, $allSlugs, true)) {
                 throw ValidationException::withMessages([
                     'categorie' => ['Catégorie invalide pour votre exploitation.'],
@@ -223,7 +224,7 @@ class TransactionController extends Controller
             $transaction->update(['photo_justificatif' => $path]);
         }
 
-        $allowedFsa = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
+        $allowedFsa = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
             (int) $activite->exploitation_id,
             $request->type,
@@ -283,7 +284,7 @@ class TransactionController extends Controller
             : TransactionCategories::getByType('cultures_vivrieres');
         $typeExploitation = 'mixte';
 
-        $allowedNow = self::getAllowedSlugsForExploitation(
+        $allowedNow = TransactionSlugService::allowedSlugsForExploitation(
             $transaction->activite->exploitation,
             $transaction->type
         );
@@ -375,8 +376,6 @@ class TransactionController extends Controller
             ]);
         }
 
-        $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
-
         $libre = trim((string) $request->input('categorie_libre', ''));
         $categorie = $libre !== '' ? $libre : trim((string) $request->input('categorie', ''));
 
@@ -387,10 +386,10 @@ class TransactionController extends Controller
         }
 
         if ($libre === '') {
-            $allowed = TransactionCategories::flatSlugsForTransactionType($typeExploitation, $request->type);
+            $allowed = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $request->type);
             if (! in_array($categorie, $allowed, true)) {
                 throw ValidationException::withMessages([
-                    'categorie' => ['Catégorie invalide pour votre type d’exploitation.'],
+                    'categorie' => ['Catégorie invalide pour votre exploitation.'],
                 ]);
             }
         }
@@ -450,7 +449,7 @@ class TransactionController extends Controller
             $transaction->update(['photo_justificatif' => $path]);
         }
 
-        $allowedFsa = self::getAllowedSlugsForExploitation($activite->exploitation, $request->type);
+        $allowedFsa = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $request->type);
         $this->categorieSuggestionService->recordIfCustom(
             (int) $activite->exploitation_id,
             $request->type,
@@ -509,40 +508,6 @@ class TransactionController extends Controller
 
         return redirect()->route('activites.show', $activiteId)
             ->with('success', 'Transaction supprimée.');
-    }
-
-    /**
-     * Récupérer tous les slugs autorisés pour une exploitation donnée.
-     * Aggrège les slugs de toutes les activités de l'exploitation.
-     *
-     * @param  'depense'|'recette'  $transactionType
-     * @return list<string>
-     */
-    private static function getAllowedSlugsForExploitation(?Exploitation $exploitation, string $transactionType): array
-    {
-        if (!$exploitation) {
-            return TransactionCategories::flatSlugsForTransactionType('cultures_vivrieres', $transactionType);
-        }
-
-        $typesActivites = $exploitation
-            ->activitesActives()
-            ->distinct('type')
-            ->pluck('type')
-            ->filter(fn ($type) => $type !== null)
-            ->toArray();
-
-        if (empty($typesActivites)) {
-            return TransactionCategories::flatSlugsForTransactionType('cultures_vivrieres', $transactionType);
-        }
-
-        // Agréger les slugs de tous les types d'activités
-        $allSlugs = [];
-        foreach ($typesActivites as $type) {
-            $slugs = TransactionCategories::flatSlugsForTransactionType($type, $transactionType);
-            $allSlugs = array_merge($allSlugs, $slugs);
-        }
-
-        return array_values(array_unique($allSlugs));
     }
 
     public function valider(int $id)

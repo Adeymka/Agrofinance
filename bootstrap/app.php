@@ -21,7 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscribed'   => \App\Http\Middleware\VerifierAbonnement::class,
         ]);
         // Détection plateforme sur toutes les routes web (partage $layout dans les vues)
-        $middleware->web(append: \App\Http\Middleware\DetectPlatform::class);
+        $middleware->web(append: [
+            \App\Http\Middleware\DetectPlatform::class,
+            \App\Http\Middleware\SecurityHeadersMiddleware::class,
+        ]);
+        $middleware->api(append: [
+            \App\Http\Middleware\SecurityHeadersMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // XAMPP : URL souvent .../public/api/... donc is('api/*') est faux — on détecte le segment "api"

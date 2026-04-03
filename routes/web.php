@@ -13,9 +13,14 @@ use App\Http\Controllers\Web\CooperativeController;
 use App\Http\Controllers\Web\ProfilController;
 use App\Http\Controllers\Web\PublicController;
 use App\Http\Controllers\Web\RapportController;
+use App\Http\Controllers\PwaController;
 use App\Http\Controllers\Web\TransactionController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+// PWA : manifest + SW dérivés de APP_URL (pas de chemins XAMPP en dur)
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.sw');
 
 Route::get('/', function () {
     return Auth::check()

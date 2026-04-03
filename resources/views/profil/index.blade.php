@@ -410,6 +410,12 @@ html.af-outdoor .prf-block {
             <span class="prf-manage-link-text">Gérer mon abonnement</span>
             <span class="prf-manage-link-arrow">›</span>
         </a>
+        @if($abonnement && $abonnement->plan === 'cooperative')
+            <a href="{{ route('cooperative.members') }}" class="prf-manage-link" style="margin-top:10px;border-color:rgba(74,222,128,0.22);">
+                <span class="prf-manage-link-text">Membres &amp; coopérative</span>
+                <span class="prf-manage-link-arrow">›</span>
+            </a>
+        @endif
     </div>
 
     {{-- ── Déconnexion ── --}}
@@ -500,6 +506,11 @@ html.af-outdoor .prf-block {
                 <p class="text-sm text-gray-600">Aucun abonnement actif listé.</p>
             @endif
             <a href="{{ route('abonnement') }}" class="btn-outline w-full inline-block text-center py-3">Gérer mon abonnement →</a>
+            @if($abonnement && $abonnement->plan === 'cooperative')
+                <a href="{{ route('cooperative.members') }}" class="btn-outline w-full inline-block text-center py-3 mt-3 border-emerald-500/40 text-emerald-800 hover:bg-emerald-50/80">
+                    Membres &amp; coopérative →
+                </a>
+            @endif
         </div>
     </div>
 @endif

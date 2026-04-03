@@ -7,18 +7,25 @@ use App\Models\Activite;
 use App\Models\Exploitation;
 use App\Services\AbonnementService;
 use App\Services\ActiviteStatutService;
+use App\Services\CooperativeService;
 use Illuminate\Http\Request;
 
 class ActiviteController extends Controller
 {
     public function __construct(
         private AbonnementService $abonnementService,
-        private ActiviteStatutService $activiteStatutService
+        private ActiviteStatutService $activiteStatutService,
+        private CooperativeService $cooperativeService
     ) {}
+
+    private function ownerUserId(): int
+    {
+        return (int) $this->cooperativeService->resolveOwner(auth()->user())->id;
+    }
 
     public function index()
     {
-        $activites = Activite::pourUtilisateur((int) auth()->user()->id)
+        $activites = Activite::pourUtilisateur($this->ownerUserId())
             ->with('exploitation:id,nom')->latest()->get();
 
         return response()->json([
@@ -39,8 +46,8 @@ class ActiviteController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Sécurité : vérifier que l'exploitation appartient à l'utilisateur
-        $exploitation = Exploitation::where('user_id', auth()->user()->id)
+        // Sécurité : exploitation du propriétaire (aligné web / coop)
+        $exploitation = Exploitation::where('user_id', $this->ownerUserId())
             ->findOrFail($request->exploitation_id);
 
         $activite = Activite::create([
@@ -63,10 +70,10 @@ class ActiviteController extends Controller
 
     public function show(int $id)
     {
-        $activite = Activite::pourUtilisateur((int) auth()->user()->id)
+        $activite = Activite::pourUtilisateur($this->ownerUserId())
             ->with('transactions')->findOrFail($id);
 
-        $dateMin = $this->abonnementService->dateDebutHistorique(auth()->user())?->toDateString();
+        $dateMin = $this->abonnementService->dateDebutHistorique($this->cooperativeService->resolveOwner(auth()->user()))?->toDateString();
 
         $payload = $activite->toArray();
         if ($dateMin) {
@@ -86,7 +93,7 @@ class ActiviteController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $activite = Activite::pourUtilisateur((int) auth()->user()->id)->findOrFail($id);
+        $activite = Activite::pourUtilisateur($this->ownerUserId())->findOrFail($id);
 
         $request->validate([
             'nom' => 'sometimes|string|max:255',
@@ -111,7 +118,7 @@ class ActiviteController extends Controller
 
     public function cloturer(int $id)
     {
-        $resultat = $this->activiteStatutService->cloturer($id, (int) auth()->user()->id);
+        $resultat = $this->activiteStatutService->cloturer($id, $this->ownerUserId());
 
         if (! $resultat['ok']) {
             if ($resultat['reason'] === 'not_found') {
@@ -133,7 +140,7 @@ class ActiviteController extends Controller
 
     public function abandonner(int $id)
     {
-        $resultat = $this->activiteStatutService->abandonner($id, (int) auth()->user()->id);
+        $resultat = $this->activiteStatutService->abandonner($id, $this->ownerUserId());
 
         if (! $resultat['ok']) {
             if ($resultat['reason'] === 'not_found') {

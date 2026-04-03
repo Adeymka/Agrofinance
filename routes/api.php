@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AbonnementController;
 use App\Http\Controllers\Api\ActiviteController;
+use App\Http\Controllers\Api\CooperativeController;
 use App\Http\Controllers\Api\Auth\ConnexionController;
 use App\Http\Controllers\Api\Auth\InscriptionController;
 use App\Http\Controllers\Api\Auth\MeController;
@@ -76,6 +77,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/indicateurs/exploitation/{id}', [IndicateurController::class, 'parExploitation']);
 
         Route::get('/dashboard', DashboardController::class);
+
+        // Coopérative (plan coop — aligné routes web)
+        Route::get('/cooperative/membres', [CooperativeController::class, 'membres']);
+        Route::post('/cooperative/membres/inviter', [CooperativeController::class, 'inviter'])
+            ->middleware('throttle:20,1');
 
         // Module Rapports (route fixe avant {id})
         Route::get('/rapports', [RapportController::class, 'index']);

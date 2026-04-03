@@ -304,6 +304,47 @@
 .dash-quick-icon-green  { background: var(--af-green-icon-bg); border: 1px solid var(--af-green-icon-border); }
 .dash-quick-icon-amber  { background: var(--af-amber-tint-bg);  border: 1px solid var(--af-amber-tint-border); }
 .dash-quick-icon-blue   { background: var(--af-blue-tint-bg);  border: 1px solid var(--af-blue-tint-border); }
+.dash-quick-icon-coop   { background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.28); }
+
+/* Lien coopérative (plan coop) — pleine largeur sous les raccourcis */
+.dash-coop-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    background: var(--af-mobile-surface-card);
+    border: 1px solid rgba(74, 222, 128, 0.22);
+    border-radius: var(--af-radius-lg);
+    text-decoration: none;
+    color: var(--af-text-body-strong);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--af-blur-card-mobile)) saturate(180%);
+    box-shadow: var(--af-shadow-card);
+    transition: background 0.15s;
+}
+.dash-coop-link:active { background: var(--af-mobile-surface-press); }
+.dash-coop-link-meta {
+    flex: 1;
+    min-width: 0;
+}
+.dash-coop-link-title { display: block; letter-spacing: -0.01em; }
+.dash-coop-link-sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--af-text-muted);
+    margin-top: 3px;
+}
+.dash-coop-link-arrow {
+    color: var(--af-color-accent);
+    font-size: 18px;
+    font-weight: 700;
+    opacity: 0.85;
+}
 
 /* ── Section header ── */
 .dash-section-hd {
@@ -856,6 +897,19 @@
     </a>
 </div>
 
+@if(($infoAbonnement['plan_metier'] ?? '') === 'cooperative')
+    <a href="{{ route('cooperative.members') }}" class="dash-coop-link">
+        <div class="dash-quick-icon dash-quick-icon-coop">
+            <x-icon name="users" class="w-[19px] h-[19px] text-[var(--af-color-accent)]" />
+        </div>
+        <span class="dash-coop-link-meta">
+            <span class="dash-coop-link-title">Membres &amp; coopérative</span>
+            <span class="dash-coop-link-sub">Invitations, rôles, audit</span>
+        </span>
+        <span class="dash-coop-link-arrow" aria-hidden="true">›</span>
+    </a>
+@endif
+
 {{-- ── Indicateurs consolidés (parité web) ── --}}
 <div class="dash-consol-intro">
     <div class="dash-section-hd" style="margin-bottom:4px;">
@@ -1214,6 +1268,12 @@
                     @if($heroActiviteId)
                         <a href="{{ route('activites.show', $heroActiviteId) }}" class="btn-glass-green text-sm px-4 py-2">
                             Voir le détail
+                        </a>
+                    @endif
+                    @if(($infoAbonnement['plan_metier'] ?? '') === 'cooperative')
+                        <a href="{{ route('cooperative.members') }}" class="btn-glass text-sm px-4 py-2 inline-flex items-center gap-2 border-emerald-500/35">
+                            <x-icon name="users" class="w-4 h-4 text-emerald-300 shrink-0" />
+                            Coopérative
                         </a>
                     @endif
                     @if(($infoAbonnement['peut_pdf'] ?? false) && $heroActiviteId)

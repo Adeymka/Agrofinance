@@ -11,6 +11,7 @@ use App\Services\AbonnementService;
 use App\Services\CooperativeService;
 use App\Services\FinancialIndicatorsService;
 use App\Services\TransactionJustificatifService;
+use App\Services\TransactionSlugService;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -101,12 +102,8 @@ class TransactionController extends Controller
                 ], 422);
             }
 
-            $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
-            $slugConnu = in_array(
-                $data['categorie'],
-                TransactionCategories::flatSlugsForTransactionType($typeExploitation, $data['type']),
-                true
-            );
+            $allowedSlugs = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $data['type']);
+            $slugConnu = in_array($data['categorie'], $allowedSlugs, true);
 
             if (($data['type'] ?? '') === 'depense'
                 && ! $slugConnu
@@ -148,12 +145,8 @@ class TransactionController extends Controller
                 }
             }
 
-            $typeExploitation = $activite->exploitation?->type ?? 'cultures_vivrieres';
-            $slugConnu = in_array(
-                $data['categorie'],
-                TransactionCategories::flatSlugsForTransactionType($typeExploitation, $data['type']),
-                true
-            );
+            $allowedSlugs = TransactionSlugService::allowedSlugsForExploitation($activite->exploitation, $data['type']);
+            $slugConnu = in_array($data['categorie'], $allowedSlugs, true);
 
             $nature = null;
             $intrant = null;
@@ -255,12 +248,8 @@ class TransactionController extends Controller
 
         $cat = $request->input('categorie', $transaction->categorie);
         $typeEff = $request->input('type', $transaction->type);
-        $typeExploitation = $transaction->activite->exploitation?->type ?? 'cultures_vivrieres';
-        $slugConnu = in_array(
-            $cat,
-            TransactionCategories::flatSlugsForTransactionType($typeExploitation, $typeEff),
-            true
-        );
+        $allowedSlugs = TransactionSlugService::allowedSlugsForExploitation($transaction->activite->exploitation, $typeEff);
+        $slugConnu = in_array($cat, $allowedSlugs, true);
 
         if ($typeEff === 'depense') {
             if ($slugConnu) {
