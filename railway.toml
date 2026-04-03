@@ -1,0 +1,13 @@
+# Railway — https://docs.railway.com/reference/config-as-code
+# 1) Variables : APP_KEY, APP_URL, DB_* (liées au service MySQL du même projet).
+# 2) Migrations : une fois la DB OK, onglet du service → Shell (ou CLI) :
+#    php artisan migrate --force
+#    (Ne pas chaîner migrate au démarrage : en cas d’erreur DB, le conteneur CRASH en boucle.)
+# 3) « Service non exposé » : Settings → Networking → générer un domaine public.
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "php artisan serve --host=0.0.0.0 --port $PORT"
+restartPolicyType = "ON_FAILURE"
