@@ -8,7 +8,7 @@
  *  - Images statiques     → Stale-While-Revalidate
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const SHELL_CACHE   = `agro-shell-${CACHE_VERSION}`;
 const IMAGE_CACHE   = `agro-images-${CACHE_VERSION}`;
 const PAGE_CACHE    = `agro-pages-${CACHE_VERSION}`;
@@ -16,18 +16,27 @@ const PAGE_CACHE    = `agro-pages-${CACHE_VERSION}`;
 // Chemin de base de l'application (sous-dossier XAMPP)
 const BASE = '/agrofinanceplus/public';
 
-// Ressources pré-cachées lors de l'installation (shell de l'app)
+// Ressources pré-cachées lors de l'installation.
+// ATTENTION : ne pas inclure BASE+'/' (la racine redirige selon l'état d'auth → 302,
+// ce qui fait échouer cache.addAll() et plante toute l'installation du SW).
 const SHELL_ASSETS = [
-    BASE + '/',
     BASE + '/offline',
     BASE + '/manifest.json',
 ];
 
 // ── Install : pré-cache du shell ──────────────────────────────────────────────
+// On utilise Promise.allSettled via des add() individuels :
+// si une ressource échoue on logge l'erreur sans bloquer l'installation.
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(SHELL_CACHE).then((cache) => {
-            return cache.addAll(SHELL_ASSETS);
+            return Promise.allSettled(
+                SHELL_ASSETS.map((url) =>
+                    cache.add(url).catch((err) => {
+                        console.warn('[SW] Impossible de pré-cacher :', url, err);
+                    })
+                )
+            );
         }).then(() => self.skipWaiting())
     );
 });
